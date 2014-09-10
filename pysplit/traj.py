@@ -600,7 +600,8 @@ class Trajectory:
             self.fdata = fdatlist[0]
             self.flatitude = self.fdata[:, self.header.index('Latitude')]
             self.flongitude = self.fdata[:, self.header.index('Longitude')]
-            self.fdistance = ta.distance_overearth(self.flatitude,self.flongitude)
+            self.fdistance = ta.distance_overearth(self.flatitude,
+                                                   self.flongitude)
             self.ftotal_dist = ta.sum_distance(self.fdistance)
 
 
@@ -654,6 +655,13 @@ class TrajectoryGroup(object):
         self.trajcount = len(traj_object_list)
         self.directory,_ = os.path.split(traj_object_list[0].fullpath)
 
+        self.map_prefs = {'mapcorners' : [None, None, None, None],
+                          'projection' : 'cyl',
+                          'standard_pm' : [None, None, None, None],
+                          'mapcolor' : 'dark',
+                          'shapefiles' : (None, None, None),
+                          'labels' : (None, None)}
+
 
     def __add__(self, other):
         """
@@ -667,6 +675,7 @@ class TrajectoryGroup(object):
             contain some of the same trajectories
 
         Returns
+        -------
         new_self : TrajectoryGroup
             A new TrajectoryGroup from the combination of self and other
 
@@ -686,6 +695,255 @@ class TrajectoryGroup(object):
         new_tg = TrajectoryGroup(traj_ls)
 
         return new_tg
+
+
+    def get_map_prefs(self):
+        """
+        Prints the current dictionary of map_prefs
+
+        """
+
+        print 'Current Map Settings:'
+
+        for key, num in zip(self.map_prefs, range(1, 7)):
+            print '\t', num, '. ', key, ' : ', self.map_prefs[key]
+
+        print '\n'
+
+
+    def set_map_prefs(self):
+        """
+        Adjust the basemap settings.
+
+        Basemap settings
+        -----------------
+        mapcorners : list of floats
+            Used to construct the map view for conic, cylindrical projections.
+            Adjusts orientation of map in other projections.
+            Lower left longitude, latitude; upper right longitude, latitude.
+
+        projection : string
+            Lambert Conformal Conic : 'cconic'
+            Albers Equal Area Conic : 'eaconic'
+            Equal Area Cylindrical : 'eacyl'
+            Equidistant Cylindrical (default) : 'cyl'
+            Orthographic : 'ortho'
+            Polar Stereographic (conformal) : 'npstere', 'spstere'
+            Polar Azimuthal (equal area) : 'nplaea', 'splaea'
+
+        standard_pm : list of floats
+            lon_0
+                The longitude of central point in all projections except polar
+                In polar projections, the longitude that will be oriented
+                    to the 12:00 position.
+            lat_0
+                The latitude of central point in all projections except polar
+                In polar projections, this is the boundinglat, which indicates
+                    the lowest latitude to appear on the map
+            lat_1, lat_2
+                Standard parallels in cylindrical and conic projections
+                Not necessary to define orthographic or polar projections
+
+        mapcolor : string
+            'dark' or 'light'
+            The grayscheme of the basemap
+
+        shapefiles : tuple of strings
+            Default (None, None, None).
+            Shapefile path, color, linewidth.  Leave as deafault to not
+                plot shapefiles.
+
+        labels : tuple of strings
+            Default (None, None).
+            Label group, full or relative path to label file.
+            Label group choices:  ['all'|'important'|'justcave'|'cave']
+            If path to label file does not exist, the user will be presented
+                with several options, including one to make
+                and edit a label file
+
+        """
+
+        self.get_map_prefs()
+
+        keep_editing = True
+        default_labels = (None, None)
+        default_shapefiles = (None, None, None)
+
+        while keep_editing:
+
+            if self.map_prefs['mapcorners'][0] is None:
+                to_edit = ['1', '2', '3', '4', '5', '6']
+
+            else:
+                print ('Enter the number(s) of the map preference settings ',
+                       'you would like to edit: \t')
+
+                to_edit = raw_input()
+                to_edit = to_edit.replace(',', ' ').split()
+
+            if '1' in to_edit:
+                print 'Enter the following coordinate pairs:\n'
+                lowerleft = raw_input('The lat, lon of lower left corner: \t')
+                upperright = raw_input('The lat, lon of upper right corner: \t')
+
+                lowerleftlat, lowerleftlon = decompose(lowerleft, 2)
+                upperrightlat, upperrightlon = decompose(upperright, 2)
+
+                self.map_prefs['mapcorners'] = [lowerleftlon, lowerleftlat,
+                                                upperrightlon, upperrightlat]
+
+
+            if '2' in to_edit:
+                # Edit the projection
+                proj_dict = {'1' : 'cconic',
+                             '2' : 'eaconic',
+                             '3' : 'eacyl',
+                             '4' : 'cyl',
+                             '5' : 'ortho',
+                             '6' : {'N' : 'npstere', 'S' : 'spstere'},
+                             '7' : {'N' : 'nplaea',  'S' : 'splaea'}}
+
+                print ('\nChoose a projection from the list by entering ',
+                       'its number:\n')
+                print ('\t 1. Lambert Conformal Conic\n'
+                       '\t 2. Albers Equal Area Conic\n'
+                       '\t 3. Equal Area Cylindrical\n'
+                       '\t 4. Equidistant Cylindrical (Basemap default)\n'
+                       '\t 5. Orthographic\n'
+                       '\t 6. Polar Stereographic (Conformal)\n'
+                       '\t 7. Polar Azimuthal (Equal-Area)\n')
+                proj = raw_input()
+
+                if proj == '6' or proj == '7':
+                    print 'You have chosen a polar projection: '
+                    hem = raw_input('Please indicate which pole: \t')
+                    hem = hem[0].upper()
+
+                    self.map_prefs['projection'] = proj_dict[proj][hem]
+
+                else:
+                    self.map_prefs['projection'] = proj_dict[proj]
+
+
+            if '3' in to_edit:
+                # Input the standard parallels and meridians
+                print 'Set the orientation of the map: '
+                if self.map_prefs['projection'][1] != 'p':
+
+                    lonlat0 = raw_input('Orthographic, Conic, or Cylindrical: '+
+                                        ' Provide the central lat, lon: \t')
+
+                    lat_0, lon_0 = decompose(lonlat0, 2)
+
+                    if proj != 'ortho':
+                        standard_parallels = raw_input('Conic or Cylindrical: '+
+                                                       'Input two standard ' +
+                                                       ' parallels: \t')
+
+                        lat_1, lat_2 = decompose(standard_parallels, 2)
+                    else:
+                        lat_1 = 0.0
+                        lat_2 = 0.0
+                else:
+                    lon_0 = float(raw_input('Polar:  Provide the longitude ' +
+                                            'to be oriented vertically at ' +
+                                            ' the top of the map: \t'))
+                    lat_0 = float(raw_input('\t Provide the bounding latitude: \t'))
+
+                    lat_1 = 0.0
+                    lat_2 = 0.0
+
+                self.map_prefs['standard_pm'] = [lon_0, lat_0, lat_1, lat_2]
+
+            if '4' in to_edit:
+                mapcolor_opts = {'1' : 'dark',
+                                 '2' : 'light'}
+
+                print '\nChoose color scheme for map by entering its number:\n'
+                print ('\t 1. dark\n'
+                       '\t 2. light\n')
+
+                mc = raw_input()
+
+                self.map_prefs['mapcolor'] = mapcolor_opts[mc]
+
+            if '5' in to_edit:
+                yesno_shapefile = raw_input('Plot a shapefile?  Y/N: \t')
+
+                if yesno_shapefile[0].upper() == 'Y':
+                    shape_path = raw_input('\nEnter the full or relative ' +
+                                            'path to the shapefile: \t')
+                    shape_color = raw_input('Enter the shapefile outline ' +
+                                            'color (color name or ' +
+                                            'hexidecimal color code): \t')
+                    shape_lw = int(raw_input('Enter the shapefile ' +
+                                             'outline linewidth: \t'))
+
+                    self.map_prefs['shapefiles'] = (shape_path, shape_color,
+                                                    shape_lw)
+                else:
+                    self.map_prefs['shapefiles'] = default_shapefiles
+
+            if '6' in to_edit:
+                use_labels = raw_input('Label map?  Y/N: \t')
+
+                if use_labels[0].upper() == 'Y':
+                    label_path = raw_input('\nEnter the full or relative ' +
+                                           'path to existing or new ' +
+                                           'label file: \t')
+
+                    _, label_path = mm.labelfile_reader(label_path)
+
+                    label_dict = {'1' : 'all',
+                                  '2' : 'important',
+                                  '3' : 'cave',
+                                  '4' : 'justcave'}
+
+                    print '\n Available label groups:\n'
+
+                    print ('\t 1. All (countries, oceans, seas, caves)\n'
+                           '\t 2. Important (countries, oceans)\n'
+                           '\t 3. Cave (countries, oceans, caves)\n'
+                           '\t 4. Justcave (caves) \n')
+
+                    lg = raw_input()
+
+                    label_group = label_dict[lg]
+
+                    self.map_prefs['labels'] = (label_group, label_path)
+
+                else:
+                    self.map_prefs['labels'] = default_labels
+
+
+            self.get_map_prefs()
+
+            prefs_ok = raw_input('\nAre map settings ok?  Y/N\t')
+
+            if prefs_ok[0].upper() == 'Y':
+                keep_editing = False
+
+
+
+    def get_basemap(self, figsize=(15,15), ax=None):
+        """
+        Takes the current map_prefs and creates the basemap.
+
+        """
+
+        if self.map_prefs['mapcorners'][0] is None:
+            self.set_map_prefs()
+
+
+        cavemap = mm.make_basemap(self.map_prefs['mapcorners'],
+                                  self.map_prefs['standard_pm'],
+                                  self.map_prefs['projection'], figsize,
+                                  self.map_prefs['labels'],
+                                  self.map_prefs['shapefiles'],
+                                  self.map_prefs['mapcolor'], ax)
+
+        return cavemap
+
 
     def hystats(self, variable, sort_bytime='month', iterable=True):
         """
@@ -1123,14 +1381,12 @@ class TrajectoryGroup(object):
         return clustergroup
 
 
-    def map_data(self, mapcorners, standard_pm, variable, point_size,
+    def map_data(self, variable, point_size,
                  colorbar_label, add_traj=False, add_scatter=True,
                  traj_color='black', linewidth=2.0, color_max=None,
                  color_min=0.0, colormap='blues', scatter_alpha=1.0,
                  tickdiv=5, figsize=(20,20), variable_transform='linear',
-                 sizevar=None, sizevar_transform='linear',
-                 labels=(None,None), projection='cyl',
-                 mapcolor='light', shapefiles=(None,None,None)):
+                 sizevar=None, sizevar_transform='linear'):
         """
         Maps the trajectories in trajectory group as scatter/lines.
 
@@ -1142,19 +1398,6 @@ class TrajectoryGroup(object):
 
         Parameters
         ----------
-        mapcorners : list of floats
-            Used to construct the map view for conic, cylindrical projections.
-            Adjusts orientation of map in other projections.
-            Lower left longitude, latitude; upper right longitude, latitude.
-        standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat, which
-                indicates the lowest latitude that should appear on the map.
-                lat_1 and lat_2 not required
         variable : string
             Must be in `header`.  Th variable to plot as color change
         point_size : int
@@ -1162,7 +1405,6 @@ class TrajectoryGroup(object):
             point_size is multiplied with the sizevar
         colorbar_label : string
             Label for colorbar
-
 
         Keyword Arguments
         -----------------
@@ -1198,32 +1440,17 @@ class TrajectoryGroup(object):
         sizevar_transform : string
             Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
             Determines how data of sizevar is transformed, if at all
-        labels : tuple of strings
-            Default (None,None).  Label group, label file full or relative path.
-            Determines what label groups are applied, if any:
-            Label group choices:  ['all'|'important'|'justcave'|'cave']
-            If path to label file does not exist, the user will be presented
-            with several options, including one to make and edit a label file
-            template.
-        projection : string
-            Default 'cyl'.
-            ['cyl'|'eacyl'|'cconic'|'eaconic'|'ortho'|
-             'npstere'|'spstere'|'nplaea'|'splaea']
-            See mm.make_basemap() documentation for more information
-        mapcolor : string
-            Default 'light'.  ['dark'|'light'].  The overall gray colorscheme of
-            the map background.
-        shapefiles : string
-            Default (None, None, None).  File, color, linewidth
 
         Returns
         -------
         cavemap : plot
             plot of HYSPLIT trajectory data
+
         """
 
-        cavemap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                        labels, shapefiles, mapcolor)
+        # Make basemap from self.map_prefs
+        cavemap = self.get_basemap(figsize=figsize)
+
         if add_traj:
 
             colorlist = []
@@ -1283,9 +1510,8 @@ class TrajectoryGroup(object):
         return cavemap
 
 
-    def map_data_verticalplot(self, mapcorners, standard_pm, variable,
-                              point_size, colorbar_label, verticallevels,
-                              vertplot_xlabel, vertplot_ylabel,
+    def map_data_verticalplot(self, variable, point_size, colorbar_label,
+                              verticallevels, vertplot_xlabel, vertplot_ylabel,
                               vertplot_yticks, hspace, add_scatter='all',
                               add_traj='none', traj_color='black',
                               color_max=None, color_min=0.0,
@@ -1295,9 +1521,7 @@ class TrajectoryGroup(object):
                               scatter_alpha=1.0, tickdiv=5, figsize=(20,20),
                               relative_mapsize=8, variable_transform='linear',
                               vary_size=False, sizevar=None,
-                              sizevar_transform='linear', labels=(None,None),
-                              projection='cyl', mapcolor='light',
-                              shapefiles=(None,None,None)):
+                              sizevar_transform='linear'):
 
         """
         Similar to map_data(), except below the map, a user-specified variable
@@ -1309,19 +1533,6 @@ class TrajectoryGroup(object):
 
         Parameters
         ----------
-        mapcorners : list of floats
-            Used to construct the map view for conic, cylindrical projections.
-            Adjusts orientation of map in other projections.
-            Lower left longitude, latitude; upper right longitude, latitude.
-        standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat, which
-                indicates the lowest latitude that should appear on the map.
-                lat_1 and lat_2 not required
         variable : string
             The variable to plot as color change
         point_size : int
@@ -1390,22 +1601,6 @@ class TrajectoryGroup(object):
         sizevar_transform : string
             Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
             Determines how data of sizevar is transformed, if at all
-        labels : tuple of strings
-            Default (None,None).  Label group, label file full or relative path.
-            Determines what label groups are applied, if any:
-            Label group choices:  ['all'|'important'|'justcave'|'cave']
-            If path to label file does not exist, the user will be presented
-            with several options, including one to make and edit a label file
-        projection : string
-            Default 'cyl'.
-            ['cyl'|'eacyl'|'cconic'|'eaconic'|'ortho'|
-             'npstere'|'spstere'|'nplaea'|'splaea']
-            See mm.make_basemap() documentation for more information
-        mapcolor : string
-            Default 'light'.  ['dark'|'light'].  The overall gray colorscheme of
-            the map background.
-        shapefiles : string
-            Default (None, None, None).  File, color, linewidth
 
         """
 
@@ -1423,8 +1618,7 @@ class TrajectoryGroup(object):
             ax1.invert_yaxis()
 
         # Initialize the basemap on the first axis
-        cavemap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                  labels, shapefiles, mapcolor, ax=ax0)
+        cavemap = self.get_basemap(figsize=figsize, ax=ax0)
 
         # Prepare to draw individual trajectories
         if add_traj != 'none':
@@ -1540,11 +1734,9 @@ class TrajectoryGroup(object):
         return cavemap
 
 
-    def map_moisture(self, mapcorners, standard_pm, uptake, scale, point_size,
+    def map_moisture(self, uptake, scale, point_size,
                      colorbar_label, color_max=None, color_min=None,
-                     scatter_alpha=1.0, tickdiv=5, figsize=(20,20),
-                     labels=(None, None), projection='cyl',
-                     mapcolor='dark',shapefiles=(None,None,None)):
+                     scatter_alpha=1.0, tickdiv=5, figsize=(20,20)):
         """
         Plot moisture uptakes as a scatter plot.
 
@@ -1554,18 +1746,6 @@ class TrajectoryGroup(object):
 
         Parameters
         ----------
-        mapcorners : list of floats
-            Used to construct the map view for conic, cylindrical projections.
-            Adjusts orientation of map in other projections.
-            Lower left longitude, latitude; upper right longitude, latitude.
-        standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat, which
-                indicates the lowest latitude that should appear on the map.
         uptake : string
             ['both'|'above'|'below'|'all points']
         scale : string
@@ -1591,22 +1771,6 @@ class TrajectoryGroup(object):
             Default 5. Number of nice ticks on the colorbar.  4,5,6 recommended
         figsize : tuple of ints
             Size of figure
-        labels : tuple of strings
-            Default (None,None).  Label group, label file full or relative path.
-            Determines what label groups are applied, if any:
-            Label group choices:  ['all'|'important'|'justcave'|'cave']
-            If path to label file does not exist, the user will be presented
-            with several options, including one to make and edit a label file
-        projection : string
-            Default 'cyl'.
-            ['cyl'|'eacyl'|'cconic'|'eaconic'|'ortho'|
-             'npstere'|'spstere'|'nplaea'|'splaea']
-            See mm.make_basemap() documentation for more information
-        mapcolor : string
-            Default 'dark'.  ['dark'|'light'].  The overall gray colorscheme of
-            the map background.
-        shapefiles : string
-            Default (None, None, None).  File, color, linewidth
 
         Returns
         -------
@@ -1614,9 +1778,8 @@ class TrajectoryGroup(object):
 
         """
 
-        # Create Basemap
-        cavemap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                  labels, shapefiles, mapcolor)
+        # Create Basemap from self.map_prefs
+        cavemap = self.get_basemap(figsize=figsize)
 
         # Get moisture parameters
         lon_col = self.trajectories[0].moisture_header.index('longitude')
@@ -1702,28 +1865,15 @@ class TrajectoryGroup(object):
         return cavemap
 
 
-    def gridmap(self, mapcorners, standard_pm, colorbar_label, usecontourf=False,
-                mapcount=False, ismoisture=False, color_max=None, color_min=None,
+    def gridmap(self, colorbar_label, usecontourf=False, mapcount=False,
+                ismoisture=False, color_max=None, color_min=None,
                 colormap='blues', scatter_alpha=1.0, tickdiv=5,
-                figsize=(20,20), labels=(None, None), projection='cyl',
-                mapcolor='dark', shapefiles=(None,None,None)):
+                figsize=(20,20)):
         """
         Create a pcolor plot of gridded data.
 
         Parameters
         ----------
-        mapcorners : list of floats
-            Used to construct the map view for conic, cylindrical projections.
-            Adjusts orientation of map in other projections.
-            Lower left longitude, latitude; upper right longitude, latitude.
-        standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat, which
-                indicates the lowest latitude that should appear on the map.
         colorbar_label : string
             Label for colorbar
 
@@ -1749,22 +1899,6 @@ class TrajectoryGroup(object):
             Default 5. Number of nice ticks on the colorbar.  4,5,6 recommended
         figsize : tuple of ints
             Size of figure
-        labels : tuple of strings
-            Default (None,None).  Label group, label file full or relative path.
-            Determines what label groups are applied, if any:
-            Label group choices:  ['all'|'important'|'justcave'|'cave']
-            If path to label file does not exist, the user will be presented
-            with several options, including one to make and edit a label file
-        projection : string
-            Default 'cyl'.
-            ['cyl'|'eacyl'|'cconic'|'eaconic'|'ortho'|
-             'npstere'|'spstere'|'nplaea'|'splaea']
-            See mm.make_basemap() documentation for more information
-        mapcolor : string
-            Default 'dark'.  ['dark'|'light'].  The overall gray colorscheme of
-            the map background.
-        shapefiles : string
-            Default (None, None, None).  File, color, linewidth
 
         Returns
         -------
@@ -1772,9 +1906,8 @@ class TrajectoryGroup(object):
 
         """
 
-        # Make Basemap
-        cavemap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                  labels, shapefiles, mapcolor)
+        # Make Basemap from self.map_prefs
+        cavemap = self.get_basemap(figsize=figsize)
 
         colormap = mm.get_colormap(colormap)
 
@@ -1995,36 +2128,17 @@ class ClusterGroup:
         self.totaltrajcount = sum(totaltraj)
 
 
-    def map_clusters(self, mapcorners, standard_pm, figsize=(20,20),
-                     color_var='mean_mf', color_min=0.0,
+    def map_clusters(self, color_var='mean_mf', color_min=0.0,
                      color_max=None, color_transform='linear',
                      color_adjust=1.0, width_var='count',
                      width_transform='linear', width_adjust=1.0,
-                     colormap='blues', labels=(None,None),
-                     projection='cyl', mapcolor='light',
-                     shapefiles=(None,None,None)):
+                     colormap='blues', figsize=(20,20)):
         """
         Plots mean cluster paths with color and width scaled to some variable.
 
         Creates a map where each cluster trajectory is plotted with a color
             determined by the mean variable value and a width by the trajectory
             count.  Color and width scaled according to user preferences.
-            Map label preferences passed to make_basemap().
-
-        Parameters
-        ----------
-        mapcorners : list of floats
-            Used to construct the map view for conic and cyl projections.
-            Lower left longitude, latitude; upper right longitude, latitude.
-        standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat,
-                the lowest latitude that should appear on the map.
-                lat_1 and lat_2 not required
 
         Keyword Arguments
         -----------------
@@ -2054,22 +2168,8 @@ class ClusterGroup:
         colormap : string
             Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
             Passed to a dictionary which retrieves the indicated colormap
-        labels : tuple of strings
-            Default (None,None).  Label group, label file full or relative path.
-            Determines what label groups are applied, if any:
-            Label group choices:  ['all'|'important'|'justcave'|'cave']
-            If path to label file does not exist, the user will be presented
-            with several options, including one to make and edit a label file
-        projection : string
-            Default 'cyl'.
-            ['cyl'|'eacyl'|'cconic'|'eaconic'|'ortho'|
-             'npstere'|'spstere'|'nplaea'|'splaea']
-            See make_basemap() documentation for more information
-        mapcolor : string
-            Default 'light'.  ['dark'|'light'].  The overall gray colorscheme of
-            the map background.
-        shapefiles : string
-            Default (None, None, None).  File, color, linewidth
+        figsize : tuple of ints
+            Size of figure
 
         Returns
         -------
@@ -2079,9 +2179,8 @@ class ClusterGroup:
 
         """
 
-        # Make basemap
-        cavemap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                  labels, shapefiles, mapcolor)
+        # Make basemap from self.map_prefs
+        cavemap = self.get_basemap(figsize=figsize)
 
         # Acquire transforms
         c_transf = get_transform(color_transform)
@@ -2140,11 +2239,8 @@ class ClusterGroup:
         return cavemap
 
 
-    def trajplot_clusterplot(self, mapcorners, standard_pm, figsize=(20,20),
-                             colors=None, orientation='horizontal',
-                             cluster_lw='relative', traj_lw=3,
-                             labels=(None,None), projection='cyl',
-                             mapcolor='light', shapefiles=(None,None,None)):
+    def trajplot_clusterplot(self, colors=None, orientation='horizontal',
+                             cluster_lw='relative', traj_lw=3, figsize=(20,20)):
 
         """
         Plots trajectories on one map and cluster paths on another.
@@ -2154,21 +2250,6 @@ class ClusterGroup:
             will also be the same color.  The linewidth of the cluster mean
             path will reflect the number of member trajectories unless
             specified otherwise.
-
-        Parameters
-        ----------
-        mapcorners : list of floats
-            Used to construct the map view for conic and cyl projections.
-            Lower left longitude, latitude; upper right longitude, latitude.
-        standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat,
-                the lowest latitude that should appear on the map.
-                lat_1 and lat_2 not required
 
         Keyword Arguments
         -----------------
@@ -2185,21 +2266,6 @@ class ClusterGroup:
             absolute number of member trajectories in the cluster
         traj_lw : int
             Default 3.  The linewdith of each trajectory.
-        labels : tuple of strings
-            Default (None,None).  Label group, label file full or relative path.
-            Determines what label groups are applied, if any:
-            Label group choices:  ['all'|'important'|'justcave'|'cave']
-            If path to label file does not exist, the user will be presented
-            with several options, including one to make and edit a label file
-            Default 'cyl'.
-            ['cyl'|'eacyl'|'cconic'|'eaconic'|'ortho'|
-             'npstere'|'spstere'|'nplaea'|'splaea']
-            See make_basemap() documentation for more information
-        mapcolor : string
-            Default 'light'.  ['dark'|'light'].  The overall gray colorscheme of
-            the map background.
-        shapefiles : string
-            Default (None, None, None).  File, color, linewidth
 
         Returns
         -------
@@ -2252,11 +2318,9 @@ class ClusterGroup:
         # Make figure
         fig, (ax_t, ax_c) = plt.subplots(row, col, figsize=figsize)
 
-        # Make a map on each axis object
-        trajmap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                  labels, shapefiles, mapcolor, ax=ax_t)
-        clusmap = mm.make_basemap(mapcorners, standard_pm, projection, figsize,
-                                  labels, shapefiles, mapcolor, ax=ax_c)
+        # Make a map on each axis object using self.map_prefs
+        trajmap = self.get_basemap(figsize=figsize, ax=ax_t)
+        clusmap = self.get_basemap(figsize=figsize, ax=ax_c)
 
         # Plot
         for cluster, color, lw in zip(self.clusters, colors, cluster_lw):
@@ -2372,3 +2436,36 @@ def do_nothing(x):
     Does nothing
     """
     return x
+
+
+def decompose(stringinput, desired_num):
+    """
+    Takes a string of numbers, removes commas and separates into a list,
+        then converts items into floats, which may or may not
+        be unpacked when decompose() is called.
+
+    Parameters
+    ----------
+    stringinput : string
+    desired_num : int
+
+    Returns
+    -------
+    float_input : list of floats
+
+    """
+
+    # Split
+    stringinput = stringinput.replace(',', ' ').split()
+
+    # Check that we have the number of things that we want
+    if len(stringinput) != desired_num:
+        raise ValueError('You have entered the wrong number of inputs.' +
+                         '  Please enter ' + str(desired_num) + ' items.')
+
+    # Convert strings to floats
+    float_input = []
+    for item in stringinput:
+        float_input.append(float(item))
+
+    return float_input

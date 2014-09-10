@@ -146,7 +146,7 @@ def make_basemap(mapcorners, standard_pm, projection, figsize, labels,
 
     # Draw labels
     if labels[0] is not None:
-        label_list = labelfile_reader(labels[1])
+        label_list, _ = labelfile_reader(labels[1])
         if label_list is not None:
             cavemap = map_labeller(cavemap, ax, labels[0], label_list)
 
@@ -306,7 +306,7 @@ def labelfile_reader(labelfile):
 
             break
 
-    return labels
+    return labels, labelfile
 
 
 
@@ -403,9 +403,23 @@ def map_labeller(cavemap, ax, labels, label_list):
                  'off' : (0.0, 1.0),
                  'add' : r'$\bigstar$'}
 
+    city_dict = {'name' : cities_labels,
+                 'coord' : cities_coords,
+                 'ha' : 'right',
+                 'va' : 'center',
+                 'fs' : 15,
+                 'wt' : 'normal',
+                 'fst' : 'normal',
+                 'zrd' : 15,
+                 'off' : (0.0, 1.0),
+                 'add' : r'$\bullet$'}
+
     # Initialize dictionary of map label-group options
-    label_masterdict = {'all' : [country_dict, ocean_dict, sea_dict, cave_dict],
+    label_masterdict = {'all_1' : [country_dict, ocean_dict, sea_dict, cave_dict],
+                        'all_2' : [country_dict, ocean_dict, sea_dict, city_dict],
                         'important' : [country_dict, ocean_dict],
+                        'city' : [city_dict, country_dict, ocean_dict],
+                        'justcity': [city_dict],
                         'cave' : [cave_dict, country_dict, ocean_dict],
                         'justcave' : [cave_dict]}
 
