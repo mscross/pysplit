@@ -199,9 +199,6 @@ def load_clusterfile(clusterfilename):
 
     Returns
     -------
-    clusterarray_list : list of ndarrays
-        One array per unique cluster.  Each contains the cluster number and
-        trajectory number of constituent trajectories
     traj_inds : list of lists of ints
         Lists of lists of trajectory numbers belonging to each cluster
     totalclusters : int
@@ -271,4 +268,4 @@ def load_clusterfile(clusterfilename):
     finally:
         os.chdir(orig_dir)
 
-    return clusterarray_list, traj_inds, totalclusters
+    return traj_inds, totalclusters

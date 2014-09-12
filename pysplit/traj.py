@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import os
-import fnmatch
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
 import matplotlib.cm as cm
@@ -41,7 +40,14 @@ class Trajectory:
         self.data = trajdata
         self.header = trajheader
         self.fullpath = path
-        _, self.filename = os.path.split(self.fullpath)
+        self.folder, self.filename = os.path.split(self.fullpath)
+
+        if os.path.isdir(os.path.join(self.folder, 'clippedtraj')):
+            self.cfolder = os.path.join(self.folder, 'clippedtraj')
+            if os.path.exists(os.path.join(self.cfolder,
+                                           self.filename + 'CLIPPED')):
+                self.cfilename = self.filename + 'CLIPPED'
+                self.cfullpath = os.path.join(self.cfolder, self.cfilename)
 
         self.latitude = self.data[:, self.header.index('Latitude')]
         self.longitude = self.data[:, self.header.index('Longitude')]
@@ -1335,7 +1341,7 @@ class TrajectoryGroup(object):
         infile = open(os.path.join(self.directory, 'INFILE'), 'w')
 
         for traj in self.trajectories:
-            output = str(traj.fullpath)
+            output = str(traj.cfullpath)
             output = output.replace ('\\', '/')
             infile.writelines(output + '\n')
             infile.flush()
@@ -1362,7 +1368,7 @@ class TrajectoryGroup(object):
 
         """
 
-        clusteringdata, traj_inds, totalclusters = hh.load_clusterfile(cfile)
+        traj_inds, totalclusters = hh.load_clusterfile(cfile)
 
         all_clusters = []
         i = 0

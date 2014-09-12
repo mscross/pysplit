@@ -189,7 +189,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                         forwards_and_backwards(hysplit_working, basename,
                                                filename, output_dir, new_name,
                                                meteofiles)
-
+                    # Check that a file of same name isn't in destination already
                     try_to_remove(os.path.join(output_dir, new_name))
 
                     # Move the trajectory file to output directory
@@ -293,11 +293,12 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     alt  = float(last_step_data[trajheader.index('Altitude (magl)')])
     run  = (float(last_step_data[trajheader.index('Time step (hr)')])) * -1
 
-    # Make forward trajectory repository if it doesn't exist
-    if not os.path.isdir(os.path.join(output_dir, 'forwardtraj')):
-        os.mkdir(os.path.join(output_dir,'forwardtraj'))
-
     output_fdir = os.path.join(output_dir, 'forwardtraj')
+
+    # Make forward trajectory repository if it doesn't exist
+    if not os.path.isdir(output_fdir):
+        os.mkdir(output_fdir)
+
 
     # Remove (if present) any existing CONTROL or temp files
     try_to_remove(os.path.join(hysplit_working, control_fname))
@@ -338,6 +339,89 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
 
     return None
 
+
+def clip_traj(output_dir, new_name):
+    """
+    Creates a new back trajectory file with all meteorological data
+        clipped off, perfect for clustering multiline files.
+
+    New file lives in subdirectory in output_dir
+
+    Parameters
+    ----------
+    output_dir : string
+        Full or relative path to back trajectory output directory
+    new_name : string
+        Back trajectory basename plus month, altitude, season, YYMMDDHH
+
+    Returns
+    -------
+    None, creates a file
+
+    """
+
+    # Open back trajectory file
+    originaltraj = open(os.path.join(output_dir, new_name), 'r')
+
+    # Initialize
+    part1 = []
+    part2 = []
+    clipped_fname = newname + 'CLIPPED'
+
+
+    # Get file header information
+    while True:
+        line = originaltraj.readline()
+
+        if 'PRESSURE' in line:
+            break
+
+        part1.append(line)
+
+    # See if data is multiline or not
+    datacolumns = line.split()[1:]
+    num_datacolumns = 12 + len(datacolumns)
+
+    multiline = Flase
+    if num_datacolumns > 20:
+        multiline = True
+
+    # Put in data header line
+    line = '     1 PRESSURE\n'
+    part1.append(line)
+
+    while True:
+        line = originaltraj.readline()
+
+        if line == '':
+            part2.append(line)
+            break
+
+        if multiline:
+            line = line + originaltraj.readline()
+
+        # Put clipped data lines into list
+        part2.append(line[:92] + '\n')
+
+    originaltraj.close()
+
+    output_cdir = os.path.join(output_dir, 'clippedtraj')
+
+    if not os.path.isdir(output_cdir):
+        os.mkdir(output_cdir)
+
+    # Remove file if it exists
+    try_to_remove(os.path.join(output_cdir, clipped_fname))
+
+    clippedtraj = open(os.path.join(output_cdir, clipped_fname), 'w')
+
+    clippedtraj.writelines(part1)
+    clippedtraj.writelines(part2)
+
+    clippedtraj.flush()
+    clippedtraj.close()
+
+    return None
 
 
 def try_to_remove(string):
