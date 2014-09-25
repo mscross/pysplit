@@ -15,11 +15,11 @@ __all__ = ['Trajectory',
 		   'get_transform',
 		   'square_it',
 		   'do_nothing',
-		   'make_basemap',
+		   'MapDesign',,
+		   'get_colormap',
 		   'labelfile_generator',
 		   'labelfile_reader',
 		   'map_labeller',
-		   'get_colormap',
 		   'hysplit_file_processor',
 		   'hysplit_filelister',
 		   'load_hysplitfile',
@@ -41,15 +41,33 @@ __all__ = ['Trajectory',
 		   'maxmin_diff',
 		   'generate_trajectories',
 		   'forwards_and_backwards',
+		   'clip_traj',
 		   'try_to_remove',
-		   'meteofile_lister']
+		   'meteofile_lister',
+		   'getband_latslons',
+		   'getsurface_getvar',
+		   'file_lister',
+		   'file_dates',
+		   'grib_lister',
+		   'hdf_lister',
+		   'averager',
+		   'windplot',
+		   'plot_othervar',
+		   'oni_file_reader',
+		   'oni_file_interrogator',
+		   'enso_plotprep',
+		   'enso_winddata',
+		   'enso_vardata',
+		   'enso_windanomaly',
+		   'enso_varanomaly']
 
 
 from .traj import (Trajectory, TrajectoryGroup, Cluster, ClusterGroup,
 				   data_prep, get_transform, square_it, do_nothing)
 
-from .mapmaker import (make_basemap, labelfile_generator, labelfile_reader,
-					   map_labeller, get_colormap)
+from .mapmaker import MapDesign, get_colormap
+
+from .map_labeller import map_labeller, labelfile_reader, labelfile_generator
 
 from .hy_processor import hysplit_file_processor
 
@@ -63,5 +81,13 @@ from .traj_accessory import (tracemean_vector, great_circle_bearing,
 							 grid_data, maxmin_diff)
 
 from .trajectory_generator import (generate_trajectories,
-								   forwards_and_backwards, try_to_remove,
-								   meteofile_lister)
+								   forwards_and_backwards, clip_traj,
+								   try_to_remove, meteofile_lister)
+
+from .grib_reader import (getband_latslons, getsurface_getvar, file_lister,
+						  file_dates, grib_lister, hdf_lister, averager,
+						  windplot, plot_othervar)
+
+from .enso import (oni_file_reader, oni_file_interrogator, enso_plotprep,
+				   enso_winddata, enso_vardata, enso_windanomaly,
+				   enso_varanomaly)

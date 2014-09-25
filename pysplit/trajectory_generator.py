@@ -6,8 +6,9 @@ import itertools
 
 def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                           years, years_isrange, months, months_isrange, hours,
-                          altitudes, coordinates, sim_length, isbackward,
-                          meteo_type='gdas', get_forward=True):
+                          altitudes, coordinates, run, isbackward,
+                          meteo_type='gdas1', get_forward=True,
+                          get_clippedtraj=True):
     """
     Run sequence of HYSPLIT simulations over a given time and set of altitudes.
 
@@ -155,7 +156,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                     control = open(os.path.join(hysplit_working, filename), 'w')
 
                     # Populate trajectory start information
-                    control_stuff = [yr + "{0:02}{1:02}{2:02}\n".format(mon, day, hour),
+                    control_stuff = [yr + " {0:02} {1:02} {2:02}\n".format(mon, day, hour),
                                      "1\n",
                                      "{0!s} {1!s} {2!s}".format(coordinates[0], coordinates[1], alt),
                                      '.0\n',
@@ -195,6 +196,10 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                     # Move the trajectory file to output directory
                     os.rename(os.path.join(hysplit_working, basename),
                               os.path.join(output_dir, new_name))
+
+                    if get_clippedtraj:
+                        clip_traj(output_dir, new_name)
+
 
     finally:
         os.chdir(orig_dir)
@@ -366,7 +371,7 @@ def clip_traj(output_dir, new_name):
     # Initialize
     part1 = []
     part2 = []
-    clipped_fname = newname + 'CLIPPED'
+    clipped_fname = new_name + 'CLIPPED'
 
 
     # Get file header information
@@ -382,7 +387,7 @@ def clip_traj(output_dir, new_name):
     datacolumns = line.split()[1:]
     num_datacolumns = 12 + len(datacolumns)
 
-    multiline = Flase
+    multiline = False
     if num_datacolumns > 20:
         multiline = True
 

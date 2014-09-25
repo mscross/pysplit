@@ -81,7 +81,7 @@ def load_hysplitfile(filename):
     # Get through meteofile info at the head of the file
     while True:
         line = hyfile.readline()
-        if 'RAINFALL' in line:
+        if 'PRESSURE' in line:
             break
 
     # Begin constructing header
