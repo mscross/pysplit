@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import grib_reader as gr
-import pysplit
+
 
 def oni_file_reader(working_dir):
     """
@@ -142,7 +142,6 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     years_ofinterest = year_array[yargs]
 
     return years_ofinterest
-
 
 
 def enso_plotprep(working_dir, monthstring, phase, strength,

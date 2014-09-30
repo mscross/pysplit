@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
 import matplotlib.cm as cm
 import matplotlib.colors as clrs
-from mpl_toolkits.basemap import Basemap
 import mapmaker as mm
 import hyfile_handler as hh
 import traj_accessory as ta

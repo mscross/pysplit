@@ -77,25 +77,16 @@ class MapDesign(object):
             self.labelgroup = None
 
 
-    def __dir__(self):
-        """
-        Get a list of the MapDesign attribute names
-
-        """
-
-        return [self.mapcorners, self.projection, self.standard_pm,
-                self.mapcolor, self.shapefiles, self.labels, self.labelgroup]
-
 
     def view_prefs(self):
         """
         Prints the current design elements
 
         """
-        pref_list = self.__dir__()
+        pref_list = self.__dict__.keys()
 
         for pref, num in zip(pref_list, range(1, len(pref_list)+1)):
-            print '\t', num, '. ', pref, ' : ', getattr(self, pref)
+            print '\t', num,'. ', pref, ' : ', getattr(self, pref)
 
         print '\n'
 
@@ -297,7 +288,7 @@ class MapDesign(object):
             meridian_labels = [0,0,0,0]
             parallel_labels = [0,0,0,0]
 
-        elif projection[1:] == 'plaea' or projection[1:] == 'pstere':
+        elif self.projection[1:] == 'plaea' or self.projection[1:] == 'pstere':
             # Polar steroegraphic (conformal) or polar azimuthal(equal-area)
             cavemap = Basemap(projection = self.projection,
                               boundinglat = self.standard_pm[1],

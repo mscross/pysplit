@@ -15,7 +15,7 @@ __all__ = ['Trajectory',
 		   'get_transform',
 		   'square_it',
 		   'do_nothing',
-		   'MapDesign',,
+		   'MapDesign',
 		   'get_colormap',
 		   'labelfile_generator',
 		   'labelfile_reader',
@@ -67,7 +67,7 @@ from .traj import (Trajectory, TrajectoryGroup, Cluster, ClusterGroup,
 
 from .mapmaker import MapDesign, get_colormap
 
-from .map_labeller import map_labeller, labelfile_reader, labelfile_generator
+from .maplabeller import map_labeller, labelfile_reader, labelfile_generator
 
 from .hy_processor import hysplit_file_processor
 

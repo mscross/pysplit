@@ -1,13 +1,16 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import matplotlib.ticker as tk
 from mpl_toolkits.basemap import shiftgrid
-from scipy.interpolate import griddata
 import gdal
 import ogr
 from gdalconst import *
-import pysplit as ps
+import mapmaker as mm
+import fnmatch
 import pyhdf.SD
+import itertools
+import os
 
 
 def getband_latslons(level, variable, datafile):
@@ -76,10 +79,6 @@ def getsurface_getvar(datafile):
     datafile : string
         The file whose metadata is retrieved
 
-    Returns
-    -------
-    Nothing
-
     """
 
     dataset = gdal.Open(datafile, GA_ReadOnly)
@@ -105,31 +104,90 @@ def getsurface_getvar(datafile):
 
 
 def file_lister(filedates, startstring, data_dir):
+    """
+    Get a list of files that have both 1 of a series of dates
+        and match startstring.
 
+    Parameters
+    ----------
+    filedates : list of strings
+        List of 6 character strings representing years and months
+        of interest
+    startstring : string
+        Initial part of file names
+    data_dir : string
+        Full or relative path to the data directory
+
+    Returns
+    -------
+    filelist : list of files
+        List of files that have both startstring and one of the
+        dates of interest
+
+    """
+
+    # Initialize
     orig_dir = os.getcwd()
     filelist = []
 
     try:
         os.chdir(data_dir)
 
+        # Get list of files
         _, _, files = next(os.walk('.'))
-        for eachfile, date in itertools.product(files, filesdates):
+
+        # Find matching files
+        for eachfile, date in itertools.product(files, filedates):
+            matchstring = startstring + '*' + date + '*'
             if fnmatch.fnmatch(eachfile, startstring +'*'+date+'*'):
                 filelist.append(eachfile)
+
     finally:
         os.chdir(orig_dir)
 
-    return filelist
+    completefilenames=[]
+
+    for f in filelist:
+        completefilenames.append(os.path.join(data_dir, f))
+
+    return completefilenames
 
 
 def file_dates(years, years_isrange, months, months_isrange):
+    """
+    Constructs list of YYYYMM date strings from the given
+        years and months of interest
+
+    Parameters
+    ----------
+    years : list of ints
+        The years of interest
+    years_isrange : Boolean
+        Indicates whether to use `years` as is or to construct
+        a range of years between years[0] and years[-1]
+    months : list of ints
+        The months of interest
+    months_isrange : Boolean
+        Indicates whether to use `months` as is or to construct
+        a range of months between months[0] and months[-1]
+
+    Returns
+    -------
+    dates : list of strings
+        LIst of strings representing dates in the format YYYYMM
+
+    """
+
     dates = []
+
     if years_isrange:
         years = range(years[0], years[-1]+1)
     if months_isrange:
         months = range(months[0], months[-1]+1)
+
     for y, m in itertools.product(years, months):
         dates.append('{0:04}{1:02}'.format(y, m))
+
     return dates
 
 
@@ -184,7 +242,7 @@ def grib_lister(level, var, filedates, startstring, data_dir):
             gribdatalist.append(bandval)
 
 
-    return gribdata, latitudes, longitudes
+    return gribdatalist, latitudes, longitudes
 
 
 def hdf_lister(filedates, startstring, data_dir):
@@ -211,7 +269,7 @@ def hdf_lister(filedates, startstring, data_dir):
 
     """
 
-    filelist = file_lister(filesdates, startstring, data_dir)
+    filelist = file_lister(filedates, startstring, data_dir)
     hdfdatalist = []
 
     for files in filelist:
@@ -224,12 +282,10 @@ def hdf_lister(filedates, startstring, data_dir):
 
         hdfdatalist.append(precipdata)
 
-
     longitudes = np.arange(-180.0, 180.0, 0.25)
-
     latitudes = np.arange(-49.875, 50.125, 0.25)
 
-    return hdfdata, longitudes, latitudes
+    return hdfdatalist, longitudes, latitudes
 
 
 def averager(gridded_data):
@@ -266,16 +322,22 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
     ----------
     mapdesign_obj : MapDesign
         Holds map design parameters
-    uband
-    vband
-    latitudes
-    longitudes
+    uband : (M, N) ndarray of floats
+        Array of the U component of wind velocity
+    vband : (M, N) ndarray of floats
+        Array of the V component of wind velocity
+    latitudes : (M) ndarray of floats
+        Array of latitudes of uband, vband
+    longitudes : (N) ndarray of floats
+        Array of longitudes of uband, vband
 
     Keyword Arguments
     -----------------
     vectors : string
         Default 'arrows'.  Determines whether vectors ('arrows') with a scale or
         wind barbs ('barbs') are plotted
+    figsize : tuple of ints or floats
+        Default (20,20).  The size of the figure.
     scale : tuple of floats
         Default (20.0, 85.0, 5.0).  (min, max, step) for contouring
     colormap : string
@@ -304,7 +366,7 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
 
     # Plot data
     w = windmap.contourf(lons, lats, windspeed, zorder=13,
-                         cmap=ps.get_colormap(colormap),
+                         cmap=mm.get_colormap(colormap),
                          levels=levels, latlon=True)
 
     # Set up colorbar
@@ -355,12 +417,10 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
     return windmap
 
 
-def plot_othervar(mapdesign_obj, level, years, months, var,
-                  working_dir, years_range=True, filetype='ncar',
+def plot_othervar(mapdesign_obj, vardata, latitudes, longitudes,
+                  filetype='ncar', cbar_label=None,
                   figsize=(20,20), scale=(0.0, None, 50),
-                  scalemin=0.0,
-                  scalemax=None, numberof_scalediv=50, call_averager=[True],
-                  colormap='jet', scaleticks=None, rescale=None):
+                  colormap='jet', scaleticks=None):
     """
     For plotting any variable that is not wind.  Interrogates ncar (grib) or
         trmm (hdf) files on any surface and plots data from specified years or
@@ -390,6 +450,8 @@ def plot_othervar(mapdesign_obj, level, years, months, var,
     filetype : string
         Default 'ncar'; grib_lister() is called.
         If 'trmm', hdf_lister() is called
+    scale : tuple of floats
+        Default (0.0, None, 50).  (minimum, maximum, scale divisions)
     scalemin : float
         Default 0.0.  Lowest value to contour
     scalemax : float
@@ -400,9 +462,7 @@ def plot_othervar(mapdesign_obj, level, years, months, var,
         Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
         Passed to a dictionary which retrieves the indicated colormap to
         use for contour plotting
-    scaleticks : int
-        Default None.  The number of tick marks on the colorbar.
-        If None, tick marks will be chosen for the user
+
 
     Returns
     -------
@@ -411,22 +471,14 @@ def plot_othervar(mapdesign_obj, level, years, months, var,
 
     """
 
-
-    if scalemax is None:
-        scalemax = varband.max()
-
     # Make basemap
     varmap = mapdesign_obj.make_basemap(figsize)
 
     # Set the contour levels
-    levels = np.linspace(scalemin, scalemax, numberof_scalediv)
+    if scale[1] is None:
+        scale[1] = varband.max()
 
-    # Set up the colorbar ticks and ticklabels if number of ticks is specified
-    if scaleticks is None:
-        ticklist = None
-    else:
-        ticklist = np.linspace(scalemin, scalemax, scaleticks)
-        ticklabels = [str(i) for i in ticklist]
+    levels = np.linspace(scale[0], scale[1], scale[2])
 
     # Make grid
     lons, lats = np.meshgrid(longitudes, latitudes)
@@ -440,12 +492,15 @@ def plot_othervar(mapdesign_obj, level, years, months, var,
                         cmap=ps.get_colormap(colormap),
                         zorder=13, levels=levels, latlon=True)
 
-    # Set up the colorbar and ticks, tick labels, and parameters
-    cbar = varmap.colorbar(v, location='right', pad='5%', ticks=ticklist)
-    cbar.set_label(var, rotation=270, fontsize=16, labelpad=20)
+    # Set up the colorbar and ticks
+    cbar = varmap.colorbar(v, location='right', pad='5%')
+    cbar.locator = tk.MaxNLocator(ticks, integer=False)
+    cbar.ax.tick_params(labelsize=16)
+    cbar.update_ticks()
 
-    if scaleticks is not None:
-        cbar.ax.set_yticklabels(ticklabels)
+    if cbar_label is not None:
+        cbar.set_label(cbar_label, rotation=270, fontsize=18, labelpad=20)
+
 
     cbar.ax.tick_params(labelsize=14)
 
