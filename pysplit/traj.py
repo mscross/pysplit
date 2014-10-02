@@ -1140,7 +1140,8 @@ class TrajectoryGroup(object):
                  traj_color='black', linewidth=2.0, color_max=None,
                  color_min=0.0, colormap='blues', scatter_alpha=1.0,
                  tickdiv=5, figsize=(20,20), variable_transform='linear',
-                 sizevar=None, sizevar_transform='linear'):
+                 sizevar=None, sizevar_transform='linear', aspect=20,
+                 shrink=1.0):
         """
         Maps the trajectories in trajectory group as scatter/lines.
 
@@ -1195,6 +1196,10 @@ class TrajectoryGroup(object):
         sizevar_transform : string
             Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
             Determines how data of sizevar is transformed, if at all
+        aspect : int
+            Default 20. The height, width ratio of the colorbar.
+        shrink : float
+            Default 1.0. Adjust size of colobar to fraction of old one.
 
         Returns
         -------
@@ -1254,7 +1259,8 @@ class TrajectoryGroup(object):
                                  alpha = scatter_alpha)
 
 
-            cbar = cavemap.colorbar(cm, location='bottom', pad='5%')
+            cbar = cavemap.colorbar(cm, location='bottom', pad='5%',
+                                    aspect=aspect, shrink=shrink)
 
             cbar.locator = tk.MaxNLocator(tickdiv, integer=False)
             cbar.ax.tick_params(labelsize=16)
@@ -1276,7 +1282,8 @@ class TrajectoryGroup(object):
                               scatter_alpha=1.0, tickdiv=5, figsize=(20,20),
                               relative_mapsize=8, variable_transform='linear',
                               vary_size=False, sizevar=None,
-                              sizevar_transform='linear'):
+                              sizevar_transform='linear', aspect=20,
+                              shrink=1.0):
 
         """
         Similar to map_data(), except below the map, a user-specified variable
@@ -1357,6 +1364,10 @@ class TrajectoryGroup(object):
         sizevar_transform : string
             Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
             Determines how data of sizevar is transformed, if at all
+        aspect : int
+            Default 20. The height, width ratio of the colorbar.
+        shrink : float
+            Default 1.0. Adjust size of colobar to fraction of old one.
 
         """
 
@@ -1455,7 +1466,7 @@ class TrajectoryGroup(object):
             # Initialize colorbar
             cax = fig.add_axes([cax_pos[0], cax_pos[1],
                                 cax_pos[2], cax_pos[3]])
-            cbar = plt.colorbar(cm, cax=cax)
+            cbar = plt.colorbar(cm, cax=cax, aspect=aspect, shrink=shrink)
 
             # Format colorbar ticks and labels
             cbar.locator = tk.MaxNLocator(tickdiv, integer=False)
@@ -1492,7 +1503,8 @@ class TrajectoryGroup(object):
 
     def map_moisture(self, uptake, scale, point_size,
                      colorbar_label, color_max=None, color_min=None,
-                     scatter_alpha=1.0, tickdiv=5, figsize=(20,20)):
+                     scatter_alpha=1.0, tickdiv=5, figsize=(20,20),
+                     aspect=20, shrink=1.0):
         """
         Plot moisture uptakes as a scatter plot.
 
@@ -1527,6 +1539,10 @@ class TrajectoryGroup(object):
             Default 5. Number of nice ticks on the colorbar.  4,5,6 recommended
         figsize : tuple of ints
             Size of figure
+        aspect : int
+            Default 20. The height, width ratio of the colorbar.
+        shrink : float
+            Default 1.0. Adjust size of colobar to fraction of old one.
 
         Returns
         -------
@@ -1610,7 +1626,8 @@ class TrajectoryGroup(object):
                                          vmax=color_max, latlon=True,
                                          zorder=20, edgecolor='none')
 
-        cbar = cavemap.colorbar(cm, location='bottom', pad='5%')
+        cbar = cavemap.colorbar(cm, location='bottom', pad='5%', aspect=aspect,
+                                shrink=shrink)
 
         cbar.locator = tk.MaxNLocator(tickdiv, integer=False)
         cbar.ax.tick_params(labelsize=16)
@@ -1624,7 +1641,7 @@ class TrajectoryGroup(object):
     def gridmap(self, colorbar_label, usecontourf=False, mapcount=False,
                 ismoisture=False, color_max=None, color_min=None,
                 colormap='blues', scatter_alpha=1.0, tickdiv=5,
-                figsize=(20,20)):
+                figsize=(20,20), aspect=20, shrink=1.0):
         """
         Create a pcolor plot of gridded data.
 
@@ -1655,6 +1672,10 @@ class TrajectoryGroup(object):
             Default 5. Number of nice ticks on the colorbar.  4,5,6 recommended
         figsize : tuple of ints
             Size of figure
+        aspect : int
+            Default 20. The height, width ratio of the colorbar.
+        shrink : float
+            Default 1.0. Adjust size of colobar to fraction of old one.
 
         Returns
         -------
@@ -1700,7 +1721,8 @@ class TrajectoryGroup(object):
             cm = cavemap.pcolormesh(x, y, data, latlon=True, cmap=colormap,
                                     vmin=color_min, vmax=color_max, zorder=20)
 
-        cbar = cavemap.colorbar(cm, location='bottom', pad='5%')
+        cbar = cavemap.colorbar(cm, location='bottom', pad='5%', aspect=aspect,
+                                shrink=shrink)
 
         cbar.locator = tk.MaxNLocator(tickdiv, integer=False)
         cbar.ax.tick_params(labelsize=16)
