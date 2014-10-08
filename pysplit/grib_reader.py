@@ -308,9 +308,10 @@ def averager(gridded_data):
 
 
 
-def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
-             vectors='arrows', figsize=(20,20), scale=(20.0, 85.0, 5.0),
-             colormap='jet'):
+def windplot(basemap, uband, vband, latitudes, longitudes, figsize=(20,20),
+             vectors_only=False, vectors='arrows', scale=(20.0, 85.0, 5.0),
+             colormap='jet', contour_zorder=13, vector_zorder=20,
+             cbar_size=(20,1.0), reverse_cbar=False, cbar_position='right'):
     """
     Map winds at a particular pressure level.
 
@@ -320,8 +321,9 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
 
     Parameters
     ----------
-    mapdesign_obj : MapDesign
-        Holds map design parameters
+    basemap : MapDesign object or Basemap object
+        Object containing the parameters to intialize Basemap or a
+        previously-made Basemap, probably with data already plotted on it
     uband : (M, N) ndarray of floats
         Array of the U component of wind velocity
     vband : (M, N) ndarray of floats
@@ -333,16 +335,31 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
 
     Keyword Arguments
     -----------------
+    figsize : tuple of ints
+        Default (20,20).  Dimensions of figure
+    vectors_only : Boolean
+        Default False.  If True, wind contour plotting is skipped
     vectors : string
         Default 'arrows'.  Determines whether vectors ('arrows') with a scale or
         wind barbs ('barbs') are plotted
-    figsize : tuple of ints or floats
-        Default (20,20).  The size of the figure.
     scale : tuple of floats
         Default (20.0, 85.0, 5.0).  (min, max, step) for contouring
     colormap : string
-        Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
+        Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
         Passed to a dictionary which retrieves the indicated colormap
+    contour_zorder : int
+        Default 13.  The zorder of the filled contours.
+    vector_zorder : int
+        Default 20.  The zorder of the vectors.
+    cbar_size : tuple of int, float
+        Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
+        colorbar, the fractional size of the colorbar.
+    reverse_cbar : Boolean
+        Default False.  If True, colorbar will be reversed (values will
+        still map to same colors)
+    cbar_position : string
+        Default 'right'.  ['bottom'|'right'].  The location of the
+        colorbar relative to the map.
 
     Returns
     -------
@@ -352,8 +369,11 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
 
     """
 
-    # Make basemap
-    windmap = mapdesign_obj.make_basemap(figsize)
+    # Initialize basemap
+    try:
+        windmap = basemap.make_basemap(figsize)
+    except AttributeError:
+        windmap = basemap
 
     # Calculate windspeed
     windspeed = np.sqrt(uband**2 + vband**2)
@@ -364,18 +384,22 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
     # Make grid for contour plot
     lons, lats = np.meshgrid(longitudes, latitudes)
 
-    # Plot data
-    w = windmap.contourf(lons, lats, windspeed, zorder=13,
-                         cmap=mm.get_colormap(colormap),
-                         levels=levels, latlon=True)
+    if not vectors_only:
 
-    # Set up colorbar
-    cbar = windmap.colorbar(w, location='right', pad='3%')
-    cbar.set_label('Wind Speed (m/s)', rotation=270, fontsize=18, labelpad=24)
-    cbar.ax.tick_params(labelsize=16)
+        # Plot data as filled contours
+        w = windmap.contourf(lons, lats, windspeed, zorder=contour_zorder,
+                             cmap=mm.get_colormap(colormap),
+                             levels=levels, latlon=True)
 
-    # Make grid and plot wind vectors with scale if not 'none'
-    if not vectors is 'none':
+        # Set up colorbar
+        cbar = windmap.colorbar(w, location=cbar_position, pad='3%',
+                                aspect=cbar_size[0], shrink=cbar_size[1])
+        cbar.ax.tick_params(labelsize=16)
+
+        mm.edit_cbar(cbar, cbar_position, reverse_cbar, 'Wind Speed (m/s/)')
+
+    # Make grid and plot wind vectors
+    if vectors is not None:
 
         # Make grid for wind barbs/ vectors
         # First, rearrange grid so that it start with a positive longitude
@@ -397,30 +421,30 @@ def windplot(mapdesign_obj, uband, vband, latitudes, longitudes,
                                        longitudes, start=False)
             vband, newlons = shiftgrid(longitudes[longitudes.size/2], vband,
                                        longitudes, start=False)
-
             longitudes = newlons
 
         # Transform vectors to lie correctly on projection
         u, v, lns, lts = windmap.transform_vector(uband[::-1,:], vband[::-1,:],
                                                   longitudes, latitudes[::-1],
                                                   12, 16, returnxy=True)
-        # Plot vectors
+        # Plot vectors as arrows or barbs
         if vectors is 'arrows':
-            q = windmap.quiver(lns, lts, u, v, zorder=21, scale=1000)
+            q = windmap.quiver(lns, lts, u, v, zorder=vector_zorder, scale=1000)
             qkey = plt.quiverkey(q, 0.25, 0.05, 60, '60 m/s', labelpos='W',
                                  labelcolor='red', fontproperties={'size':20},
-                                 zorder=18, color='red')
+                                 zorder=vector_zorder, color='red')
 
         elif vectors is 'barbs':
-            q = windmap.barbs(lns, lts, u, v, zorder=21)
+            q = windmap.barbs(lns, lts, u, v, zorder=vector_zorder)
 
     return windmap
 
 
-def plot_othervar(mapdesign_obj, vardata, latitudes, longitudes,
-                  filetype='ncar', cbar_label=None,
-                  figsize=(20,20), scale=(0.0, None, 50),
-                  colormap='jet', scaleticks=None):
+def plot_othervar(basemap, vardata, latitudes, longitudes,
+                  filetype='ncar', figsize=(20,20),
+                  scale=(0.0, None, 50), colormap='jet',
+                  zorder=13, cbar_label=None, cbar_size=(20,1.0),
+                  reverse_cbar=False, cbar_position='right'):
     """
     For plotting any variable that is not wind.  Interrogates ncar (grib) or
         trmm (hdf) files on any surface and plots data from specified years or
@@ -428,41 +452,41 @@ def plot_othervar(mapdesign_obj, vardata, latitudes, longitudes,
 
     Parameters
     ----------
-    mapdesign_obj
-    level : string
-        Surface that the data is on (pressure level, surface, or below surface)
-    years : list of ints
-        The years to include.  An inclusive range of years (years_range=True),
-        or a list of years (years_range=False).
-    months : list of ints
-        The months to include
-    var : string
-        The variable name corresponding to GRIB_ELEMENT.
-        To view variable names, use getsurface_getvar().
-    working_dir : string
-        Location of data files
+    basemap : MapDesign object or Basemap object
+        Object containing the parameters to intialize Basemap or a
+        previously-made Basemap, probably with data already plotted on it
+    vardata : (M, N) ndarray of floats
+        Data array
+    latitudes : (M) ndarray of floats
+        Array of latitudes of vardata
+    longitudes : (N) ndarray of floats
+        Array of longitudes of vardata
 
     Keyword Arguments
     -----------------
-    years_range : Boolean
-        Default True, indicates that years represents a range of years;
-        if False, a list of years
     filetype : string
-        Default 'ncar'; grib_lister() is called.
-        If 'trmm', hdf_lister() is called
+        Default 'ncar'.  ['ncar'|'trmm'].  TRMM data has a different
+        orientation than NCAR data and must be transposed before plotting.
+    figsize : tuple of ints
+        Default (20,20).  Dimensions of figure
     scale : tuple of floats
-        Default (0.0, None, 50).  (minimum, maximum, scale divisions)
-    scalemin : float
-        Default 0.0.  Lowest value to contour
-    scalemax : float
-        Default None.  Maximum contour is based on the data or given value.
-    numberof_scalediv : int
-        Default 50.  The number of steps between scalemin and scalemax.
+        Default (0.0, None, 50).  (minimum, maximum, # of scale divisions)
     colormap : string
         Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-        Passed to a dictionary which retrieves the indicated colormap to
-        use for contour plotting
-
+        Passed to a dictionary which retrieves the indicated colormap
+    zorder : int
+        Default 13.  The zorder of the contours.
+    cbar_label : string
+        Default None.  Label for colorbar
+    cbar_size : tuple of int, float
+        Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
+        colorbar, the fractional size of the colorbar.
+    reverse_cbar : Boolean
+        Default False.  If True, colorbar will be reversed (values will
+        still map to same colors)
+    cbar_position : string
+        Default 'bottom'.  ['bottom'|'right'].  The location of the
+        colorbar relative to the map.
 
     Returns
     -------
@@ -471,8 +495,11 @@ def plot_othervar(mapdesign_obj, vardata, latitudes, longitudes,
 
     """
 
-    # Make basemap
-    varmap = mapdesign_obj.make_basemap(figsize)
+    # Initalize basemap
+    try:
+        varmap = basemap.make_basemap(figsize)
+    except AttributeError:
+        varmap = basemap
 
     # Set the contour levels
     if scale[1] is None:
@@ -490,18 +517,17 @@ def plot_othervar(mapdesign_obj, vardata, latitudes, longitudes,
     # Make the contour plot
     v = varmap.contourf(lons, lats, varband,
                         cmap=ps.get_colormap(colormap),
-                        zorder=13, levels=levels, latlon=True)
+                        zorder=zorder, levels=levels, latlon=True)
 
     # Set up the colorbar and ticks
-    cbar = varmap.colorbar(v, location='right', pad='5%')
+    cbar = varmap.colorbar(v, location=cbar_position, pad='5%',
+                           aspect=cbar_size[0], shrink=cbar_size[1])
+
     cbar.locator = tk.MaxNLocator(ticks, integer=False)
     cbar.ax.tick_params(labelsize=16)
     cbar.update_ticks()
 
-    if cbar_label is not None:
-        cbar.set_label(cbar_label, rotation=270, fontsize=18, labelpad=20)
-
-
-    cbar.ax.tick_params(labelsize=14)
+    # Edit the colorbar direction and label orientation
+    mm.edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label)
 
     return varmap

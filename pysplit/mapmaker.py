@@ -369,3 +369,37 @@ def get_colormap(colormap):
     colorscheme = colormap_dict[colormap]
 
     return colorscheme
+
+
+def edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label):
+    """
+    Edit the colorbar direction and label.
+
+    Parameters
+    ----------
+    cbar : matplotlib colorbar
+        The colorbar to edit.
+    cbar_position : string
+        Default 'bottom'.  ['bottom'|'right'].  The location of the
+        colorbar relative to the map.
+    reverse_cbar : Boolean
+        Default False.  If True, colorbar will be reversed (values will
+        still map to same colors)
+    cbar_label : string
+        Default None.  Label for colorbar
+
+    """
+
+    rotation_dict = {'right' : (270, 24),
+                     'bottom' : (0, 10)}
+
+    if reverse_cbar:
+        if cbar_position is 'bottom':
+            cbar.ax.invert_xaxis()
+        else:
+            cbar.ax.invert_yaxis()
+
+    if cbar_label is not None:
+        rotation, labelpad = rotation_dict[cbar_position]
+        cbar.set_label(cbar_label, labelpad=labelpad, fontsize=16,
+                       rotation=rotation)
