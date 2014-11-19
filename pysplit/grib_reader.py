@@ -61,9 +61,9 @@ def getband_latslons(level, variable, datafile):
     geotransform = dataset.GetGeoTransform(0)
 
     # Generate longitudes and latitudes
-    longitudes = np.linspace(geotransform[0], 360.0 + geotransform[0], 512,
-                             endpoint=False)
-    latitudes = np.linspace(geotransform[3], -1.0 * geotransform[3], 256)
+    longitudes = np.linspace(geotransform[0], 360.0 + geotransform[0],
+                             band.XSize, endpoint=False)
+    latitudes = np.linspace(geotransform[3], -1.0 * geotransform[3], band.YSize)
 
     return bandnum, latitudes, longitudes
 
@@ -192,7 +192,8 @@ def file_dates(years, years_isrange, months, months_isrange):
 
 
 
-def grib_lister(level, var, filedates, startstring, data_dir):
+def grib_lister(level, var, startstring, data_dir, filedates=None,
+                filenames=None):
     """
     Gets a list of GRIB files, figures out which band to look at, then opens
         files and reads in data to an array to be averaged.
@@ -222,7 +223,13 @@ def grib_lister(level, var, filedates, startstring, data_dir):
     """
 
     # Get a list of files that meet the timeframe and data criteria
-    filelist = file_lister(filedates, startstring, data_dir)
+    if filedates is not None:
+        filelist = file_lister(filedates, startstring, data_dir)
+    elif filenames is not None:
+        filelist = filenames
+    else:
+        raise ValueError('No data files indicated!')
+
     gribdatalist = []
 
     # Get the number of the band that contains the desired data

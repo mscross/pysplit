@@ -298,6 +298,10 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     alt  = float(last_step_data[trajheader.index('Altitude (magl)')])
     run  = (float(last_step_data[trajheader.index('Time step (hr)')])) * -1
 
+    # Sometimes startheight is greater than modeltop at 10000 m
+    if alt >= 10000:
+        alt = 9999
+
     output_fdir = os.path.join(output_dir, 'forwardtraj')
 
     # Make forward trajectory repository if it doesn't exist
@@ -501,7 +505,7 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         # If it is February and not a leap year, there are only four week files
         if (mon == 2) & (isleap is False):
             for week in weeks[0:4]:
-                fname = f + months[mon] + str(year)[-2:] + week
+                fname = f + months[mon-1] + str(year)[-2:] + week
                 midweeks.append(fpath + fname)
 
         # Otherwise, there are five week files

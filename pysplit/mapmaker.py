@@ -15,7 +15,7 @@ class MapDesign(object):
 
     def __init__(self, mapcorners, standard_pm, projection='cyl',
                  mapcolor='light', shapefiles=[],
-                 labels=None):
+                 labels=None, area_threshold=10000, resolution='c'):
         """
         Initialize MapDesign object.
 
@@ -66,6 +66,8 @@ class MapDesign(object):
         self.standard_pm = standard_pm
         self.mapcolor = mapcolor
         self.shapefiles = shapefiles
+        self.area_threshold = area_threshold
+        self.resolution = resolution
 
         self.edit_projection(projection)
 
@@ -89,6 +91,30 @@ class MapDesign(object):
             print '\t', num,'. ', pref, ' : ', getattr(self, pref)
 
         print '\n'
+
+
+
+    def adjust_res(self, area_threshold=None, resolution=None):
+
+        auto_thresh = {None : 10000,
+                       'c'  : 10000,
+                       'l'  : 1000,
+                       'i'  : 100,
+                       'h'  : 10,
+                       'f'  : 1}
+
+        if resolution is not None:
+            if resolution == 'none':
+                self.resolution = None
+            else:
+                self.resolution = resolution
+
+        if resolution is not None:
+            if resolution == 'auto':
+                self.area_threshold = auto_thresh[self.resolution]
+            else:
+                self.area_threshold = area_threshold
+
 
 
     def edit_mapcorners(self, mapcorners):
@@ -246,8 +272,8 @@ class MapDesign(object):
                               lat_1 = self.standard_pm[2],
                               lat_2 = self.standard_pm[3],
                               lon_0 = self.standard_pm[0],
-                              area_thresh = 1000,
-                              resolution = 'h',
+                              area_thresh = self.area_threshold,
+                              resolution = self.resolution,
                               ax = ax)
 
         elif self.projection is 'eaconic':
@@ -261,8 +287,8 @@ class MapDesign(object):
                               lat_2 = self.standard_pm[3],
                               lon_0 = self.standard_pm[0],
                               lat_0 = self.standard_pm[1],
-                              area_thresh = 1000,
-                              resolution = 'h',
+                              area_thresh = self.area_threshold,
+                              resolution = self.resolution,
                               ax = ax)
 
         elif self.projection is 'eacyl':
@@ -272,8 +298,8 @@ class MapDesign(object):
                               urcrnrlon = self.mapcorners[2],
                               urcrnrlat = self.mapcorners[3],
                               projection = 'cea',
-                              area_thresh = 1000,
-                              resolution = 'h',
+                              area_thresh = self.area_threshold,
+                              resolution = self.resolution,
                               ax = ax)
 
         elif self.projection is 'ortho':
@@ -281,8 +307,8 @@ class MapDesign(object):
             cavemap = Basemap(projection = 'ortho',
                               lon_0 = self.standard_pm[0],
                               lat_0 = self.standard_pm[1],
-                              area_thresh = 1000,
-                              resolution = 'h',
+                              area_thresh = self.area_threshold,
+                              resolution = self.resolution,
                               ax = ax)
 
             meridian_labels = [0,0,0,0]
@@ -293,8 +319,8 @@ class MapDesign(object):
             cavemap = Basemap(projection = self.projection,
                               boundinglat = self.standard_pm[1],
                               lon_0 = self.standard_pm[0],
-                              area_thresh = 1000,
-                              resolution = 'h',
+                              area_thresh = self.area_threshold,
+                              resolution = self.resolution,
                               ax = ax)
 
         else:
@@ -303,8 +329,8 @@ class MapDesign(object):
                               llcrnrlat = self.mapcorners[1],
                               urcrnrlon = self.mapcorners[2],
                               urcrnrlat = self.mapcorners[3],
-                              area_thresh = 1000,
-                              resolution = 'h',
+                              area_thresh = self.area_threshold,
+                              resolution = self.resolution,
                               ax = ax)
 
         # Draw labels
@@ -344,7 +370,6 @@ class MapDesign(object):
         return cavemap
 
 
-
 def get_colormap(colormap):
     """
     Dictionary of available colormaps.
@@ -371,34 +396,54 @@ def get_colormap(colormap):
     return colorscheme
 
 
-def edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label):
+def make_cbar(data, datamap, cbar_position, cbar_size, divisions, reverse_cbar,
+              cbar_label):
     """
-    Edit the colorbar direction and label.
+    Make a colorbar with a certain number of divisions
 
     Parameters
     ----------
-    cbar : matplotlib colorbar
-        The colorbar to edit.
+    data : matplotlib pyplot
+        The plot for which a colorbar is needed
+    datamap : Axis object
+        The axis on which data is plotted
     cbar_position : string
         Default 'bottom'.  ['bottom'|'right'].  The location of the
         colorbar relative to the map.
+    cbar_size : tuple of int, float
+        Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
+        colorbar, the fractional size of the colorbar.
+    divisions : int
+        The number of tick divisions on the colorbar
     reverse_cbar : Boolean
-        Default False.  If True, colorbar will be reversed (values will
-        still map to same colors)
+        If True, colorbar is flipped over short axis.
+        Value-color mapping is unaffected.
     cbar_label : string
-        Default None.  Label for colorbar
+        Colorbar label
 
     """
 
+    # Initialize colorbar
+    cbar = datamap.colorbar(data, location=cbar_position, pad='5%',
+                            aspect=cbar_size[0], shrink=cbar_size[1])
+
+    # Adjust ticks and tick labels
+    cbar.locator = tk.MaxNLocator(divisions, integer=False)
+    cbar.ax.tick_params(labelsize=16)
+    cbar.update_ticks()
+
+    # Initialize dictionary
     rotation_dict = {'right' : (270, 24),
                      'bottom' : (0, 10)}
 
+    # Reverse colorbar
     if reverse_cbar:
         if cbar_position is 'bottom':
             cbar.ax.invert_xaxis()
         else:
             cbar.ax.invert_yaxis()
 
+    # Label colorbar
     if cbar_label is not None:
         rotation, labelpad = rotation_dict[cbar_position]
         cbar.set_label(cbar_label, labelpad=labelpad, fontsize=16,

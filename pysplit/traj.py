@@ -1776,7 +1776,7 @@ class ClusterGroup(object):
 
 
 
-    def map_clusters(self, basemap, figsize=(20,20)), color_var='mean_mf',
+    def map_clusters(self, basemap, figsize=(20,20), color_var='mean_mf',
                      color_scale=(0.0, None), color_transform='linear',
                      width_var='count', width_transform='linear',
                      width_adjust=1.0, colormap='blues'):
