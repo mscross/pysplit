@@ -4,9 +4,10 @@ descr = """PySPLIT (a.k.a. `pysplit`): HYSPLIT Toolbox for Python.
 
 This package is designed to be used with the desktop version of NOAA Air
 Research Laboratory's HYSPLIT model (https://ready.arl.noaa.gov/HYSPLIT.php).
-PySPLIT contains functions and classes designed to work with HYSPLIT to
+PySPLIT contains functions and classes ready to work with HYSPLIT to
 automatically generate trajectories, and to analyze and visualize
-trajectory paths and meteorology.
+trajectory paths and meteorology.  PySPLIT can also work with grib
+and hdf datasets to visualize gridded meteorological data.
 
 """
 

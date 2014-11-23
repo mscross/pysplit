@@ -24,7 +24,10 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
     One trajectory per simulation file is output.  Output may be multiline,
         depending on number of variables selected in SETUP (maximum 7 of 9
         may be selected for single-line output).  Multiline output not
-        supported in some applications (clustering).
+        supported in some applications (clustering).  To cluster multiline
+        output, set get_clippedtraj=True.  Clipped trajectories have all data
+        removed except for their path information, so they are single-line
+        output and supported for clustering operations.
 
     Parameters
     ----------
@@ -52,11 +55,11 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         be generated.
     hours : list of ints
         Parcel launching times in UTC.
+    altitudes : list of ints
+        The altitudes in meters above ground level to launch parcels from
     coordinates : tuple of floats
         The parcel starting location in decimal degrees.
         Format is (latitude, longitude)
-    altitudes : list of ints
-        The altitudes in meters above ground level to launch parcels from
     run : int
         Length (hours) of simulation.  If necessary, sign is corrected to
         match isbackward argument.
@@ -71,6 +74,10 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         Default True.  [True|False].  If True and isbackward is also True,
         then a forward trajectory will be calculated from earliest point of
         each back trajectory and stored in a subfolder in output_dir
+    get_clippedtraj : Boolean
+        Default True.  [True|False].  Outputs trajectory files with
+        single-line timesteps containing only path information.  Provides
+        clustering support to multiline files.
 
     Returns
     -------
@@ -453,6 +460,8 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
     meteo_path : string
         first part of meteorology file path name
         ex. 'C:/hysplit4/working/gdas1.'
+    meteo_type : string
+        ['gdas1'|'era-interim'].  The type of ARL-formatted data files provided.
     mon : int
         int representing the month
     isleap : Boolean

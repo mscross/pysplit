@@ -67,6 +67,8 @@ class Trajectory:
 
         self.season_t0 = season_dict[self.month[0]]
 
+        self.trajcolor = 'black'
+        self.linewidth = 2
 
 
     def set_rainstatus(self, rainy_criterion='rainfall', check_steps=1,
@@ -125,6 +127,41 @@ class Trajectory:
         self.rainstatus = is_rainy
 
 
+    def set_trajcolor(color=None):
+        """
+        Set the color of the trajectory path as it will appear in
+            map_data_line()
+
+        Keyword Arguments
+        -----------------
+        color : string or tuple of floats
+            Default None.  If None, self.trajcolor will be reset to black.
+
+        """
+
+        if color is None:
+            self.trajcolor = 'black'
+        else:
+            self.trajcolor = color
+
+
+    def set_linewidth(lw=None):
+        """
+        Set the linewidth of the trajectory path as it will appear in
+            map_data_line()
+
+        Keyword Arguments
+        -----------------
+        lw : int or float
+            Default None.  If None, self.linewidth will be reset to 2.
+        """
+
+        if lw is None:
+            self.linewidth = 2
+        else:
+            self.linewidth = lw
+
+
     def set_vector(self):
         """
         Calculate mean bearing of trajectory and bearings between timesteps
@@ -146,10 +183,14 @@ class Trajectory:
             self.relative_humidity = self.data[:, self.header.index('RELHUMID')]
         else:
             if hasattr(self, 'mixing_ratio'):
-                self.relative_humidity = ta.convert_w2rh(self)
+                self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
+                                                         self.temperature,
+                                                         self.pressure)
             else:
                 self.set_mixingratio()
-                self.relative_humidity = ta.convert_w2rh(self)
+                self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
+                                                         self.temperature,
+                                                         self.pressure)
 
 
     def set_mixingratio(self):
@@ -1055,7 +1096,6 @@ class TrajectoryGroup(object):
         self.datestrings = datestrs
 
 
-
     def set_raincount(self, reset_traj_rainstatus=False,
                       rainy_criterion='rainfall', check_steps=1,
                       rh_threshold=0.8):
@@ -1124,7 +1164,6 @@ class TrajectoryGroup(object):
             infile.writelines(output + '\n')
             infile.flush()
 
-
     def spawn_clusters(self, cfile):
         """
         Acquires the distribution of trajectories from `cfile` and
@@ -1165,163 +1204,197 @@ class TrajectoryGroup(object):
         return clustergroup
 
 
-    def map_data(self, basemap, variable, figsize=(20,20), add_traj=False,
-                 traj_zorder=19, traj_color='black', linewidth=2.0,
-                 add_scatter=True, scatter_size=25, color_scale=(0.0, None, 5),
-                 colormap='blues', scatter_alpha=1.0,
-                 variable_transform='linear', sizevar=None,
-                 sizevar_transform='linear', cbar_label=None,
-                 cbar_size=(20,1.0), reverse_cbar=False,
-                 cbar_position='bottom'):
+    def map_data_line(self, basemap, ax=None, figsize=(20,20), zorder=19,
+                      show_timesteps=False, show_paths=True):
         """
-        Maps the trajectories in trajectory group as scatter/lines.
+        Make a plot of the trajectories in the TrajectoryGroup.
 
-        Data may be scatter plotted as
-        color change and is transformed or not according to user preferences.
-        Scatter plot may have second variable plotted as size.  User may choose
-        to view trajectories as lines rather than/in addition to scatter.
-        Labels, projection, and shapefiles are passed to mm.make_basemap().
+        Trajectory color and linewidth is controlled by the trajectory
+            attributes of the same names.  Use trajectory.set_color() and
+            trajectory.set_lw() to adjust.
 
         Parameters
         ----------
-        basemap : MapDesign object or Basemap object
-            Object containing the parameters to intialize Basemap or a
-            previously-made Basemap, probably with data already plotted on it
-        variable : string
-            Must be in `header`.  Th variable to plot as color change
+        basemap : MapDesign or Basemap instance
+            MapDesign instances contain the parameters to initialize a Basemap.
+            If a MapDesign is provided, the Basemap may be initialized on a
+            given axis using the kwarg `ax`.  If ax is None, then new figure,
+            axis, and Basemap instances will be created.
+            A previously-generated Basemap may be provided instead of a
+            MapDesign.
 
         Keyword Arguments
         -----------------
+        ax : matplotlib axes instance
+            Default None.  The axis on which to draw a new Basemap, if `basemap`
+            is not a Basemap instance.  If None, and `basemap` is a MapDesign
+            instance, then new figure and axis instances will be created.
         figsize : tuple of ints
-            Default (20,20).  Dimensions of figure
-        add_traj : Boolean
-            Default False, trajectory lines not plotted
-        traj_zorder : int
-            Default 19.  The zorder of the trajectories.
-            Scatter zorder = traj_zorder + 1
-        traj_color : string or tuple
-            Default 'black'.  Trajectory color.  Flat, or grayscale based on
-            starting altitude.
-        linewidth : float
-            Default 2.0. Width in points of trajectory line.
-        add_scatter : Boolean
-            Default True, scatter points are plotted
-        scatter_size : int
-            Default 25.  The size of scatter points.  If sizevar is not None,
-            scatter_size is multiplied with the sizevar
-        color_scale : tuple of floats, int
-            Default (0.0, None, 5).  (min, max, divisions)
-            The minimum, maximum values on the colorbar- if max is None,
-            the max will be the maximum value of the data.
-            Divisions- the number of nice ticks on the colorbar.
-            4, 5, 6 recommended.
-        colormap : string
-            Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-            Passed to a dictionary which retrieves the indicated colormap
-        scatter_alpha : float
-            Default 1.0.  The opacity of the scatter points
-        variable_transform : string
-            Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
-            Determines how data of variable is transformed, if at all
-        sizevar : string
-            Default None.  The variable to plot as a change in marker size.
-        sizevar_transform : string
-            Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
-            Determines how data of sizevar is transformed, if at all
-        cbar_label : string
-            Default None.  Label for colorbar
-        cbar_size : tuple of int, float
-            Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
-            colorbar, the fractional size of the colorbar.
-        reverse_cbar : Boolean
-            Default False.  If True, colorbar will be reversed (values will
-            still map to same colors)
-        cbar_position : string
-            Default 'bottom'.  ['bottom'|'right'].  The location of the
-            colorbar relative to the map.
+            Default (20,20).  The size of a new figure instance, if one must be
+            created.
+        zorder : int
+            Default 19.  The zorder of the Trajectory lines on the map.
+        show_timesteps : Boolean
+            Default False.  If True, marker points will be plotted.
+        show_paths : Boolean
+            Default True.  If False, linestyle will be none.
 
         Returns
         -------
-        cavemap : plot
-            plot of HYSPLIT trajectory data
+        fig : matplotlib Figure instance, optional
+            Newly created Figure instance.  Only returned if a new figure and
+            axis had to be created, i.e. ax=None and `basemap` is a
+            MapDesign instance.
+        ax : matplotlib Axes instance, optional
+            Newly created Axes instance.  ONly returned if a new figure and
+            axis had to be created, i.e. ax=None and `basemap` is a MapDesign
+            instance.
+        cavemap : Basemap instance
+            Basemap instance with Trajectory paths plotted on it.
 
         """
 
+        # Initialize basemap on given or new figure, axis
         try:
-            # Make basemap from self.map_prefs
-            cavemap = basemap.make_basemap(figsize)
+            if ax is None:
+                fig, ax, cavemap = basemap.make_basemap(figsize)
+            else:
+                cavemap = basemap.make_basemap(figsize, ax=ax)
         except AttributeError:
             cavemap = basemap
 
+        # Style dictionaries
+        mdict = {True : 'o',
+                 False : None}
+        lsdict = {True : '-',
+                  False : ''}
 
-        if add_traj:
+        for traj in self.trajectories:
+            cavemap.plot(traj.longitude, traj.latitude, color=traj.color,
+                         linewidth=traj.linewidth, marker=mdict[show_timesteps],
+                         linestyle=lsdict[show_paths], markeredgecolor='none')
 
-            colorlist = []
-
-            if type(traj_color) is tuple:
-                min_height = traj_color[0]
-                max_height = traj_color[1]
-
-            for traj in self.trajectories:
-                # Calculate the correct grayscale value of the trajectory
-                # based on given minimum and maximum height
-                # Lower altitude trajectories are darker gray
-
-                if type(traj_color) is tuple:
-                    grey_val = ((((traj.altitude[0] - min_height)/
-                                  (max_height   - min_height))*(1.0-0.25))+0.25)
-
-                    colorlist.append(str(grey_val))
-
-                # If (min, max) not given, trajectories will be all traj_color
-                else:
-                    colorlist.append(traj_color)
-
-            for traj, color in zip(self.trajectories, colorlist):
-                cavemap.plot(traj.longitude, traj.latitude, color=color,
-                             linewidth=linewidth, latlon=True,
-                             zorder=traj_zorder)
-
-        if add_scatter:
-
-            data, lons, lats = data_prep(self, variable, variable_transform)
-            colormap = mm.get_colormap(colormap)
-
-            print data
-
-            if color_scale[1] == None:
-                color_scale[1] = data.max()
-
-            if sizevar is not None:
-                data2 = data_prep(self, sizevar, sizevar_transform)
-                data2 = data2 * scatter_size
-                scatter_size = data2
-
-            cm = cavemap.scatter(lons, lats, c=data, s=scatter_size,
-                                 cmap=colormap, vmin=color_scale[0],
-                                 vmax=color_scale[1], latlon=True,
-                                 zorder=traj_zorder+1, edgecolor='none',
-                                 alpha=scatter_alpha)
+        try:
+            return fig, ax, cavemap
+        except:
+            return cavemap
 
 
-            cbar = cavemap.colorbar(cm, location=cbar_position, pad='5%',
-                                    aspect=cbar_size[0], shrink=cbar_size[1])
+    def map_data_scatter(self, basemap, variable, ax=None, figsize=(20,20),
+                         zorder=19, ptsize=25, color_min=None, color_max=None,
+                         colormap='blues', alpha=1.0, rescale='linear',
+                         sizevar=None, size_rescale='linear'):
+        """
+        Make a scatter plot of the trajectories in the TrajectoryGroup.
 
-            cbar.locator = tk.MaxNLocator(color_scale[2], integer=False)
-            cbar.ax.tick_params(labelsize=16)
+        Data may be scatter plotted as color change and is rescaled or not
+        according to user preferences.
 
-            cbar.update_ticks()
+        Scatter plot may have second variable plotted as size.
 
-            mm.edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label)
+        Parameters
+        ----------
+        basemap : MapDesign or Basemap instance
+            MapDesign instances contain the parameters to initialize a Basemap.
+            If a MapDesign is provided, the Basemap may be initialized on a
+            given axis using the kwarg `ax`.  If ax is None, then new
+            figure, axis, and Basemap instances will be created.
+            A previously-generated Basemap may be provided instead of a
+            MapDesign.
+        variable : string
+            Trajectory attribute name.  The variable plotted as a color change.
 
-        return cavemap
+        Keyword Arguments
+        -----------------
+        ax : matplotlib axes instance
+            Default None.  The axis on which to draw a new Basemap, if
+            `basemap` is not a Basemap instance.  If None, and `basemap` is a
+            MapDesign instance, then new figure and axis instances
+            will be created.
+        figsize : tuple of ints
+            Default (20,20).  The size of a new figure instance, if one must be
+            created.
+        zorder : int
+            Default 19.  The zorder of the Trajectory lines on the map.
+        ptsize : int
+            Default 25.  The size of the scatter points.
+        color_min : int or float
+            Default None.  The minimum value for color mapping.  If None,
+            color_min will be the minimum value of the data.
+        color_max : int or float
+            Default None.  The maximum value for color mapping.  If None,
+            color_max will be the maximum value of the data.
+        colormap : string
+            Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
+            The matplotlib colormap the data values are mapped to.
+        alpha : float
+            Default 1.0.  The opacity of the scatter points
+        rescale : string
+            Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
+            Determines how data of variable is rescaled, if at all
+        sizevar : string
+            Default None.  The variable to plot as a change in marker size.
+        size_rescale : string
+            Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
+            Determines how data of sizevar is rescaled, if at all
+
+        Returns
+        -------
+        fig : matplotlib Figure instance, optional
+            Newly created Figure instance.  Only returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        ax : matplotlib Axes instance, optional
+            Newly created Axes instance.  ONly returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        cavemap : Basemap instance
+            Basemap instance with Trajectory data plotted on it.
+        cm : matplotlib PathCollection instance
+            Mappable for use in creating colorbars.  Colorbars may be created
+            using make_cbar() or make_cax_cbar().
+
+        """
+
+        # Initialize basemap on given or new figure, axis
+        try:
+            if ax is None:
+                fig, ax, cavemap = basemap.make_basemap(figsize)
+            else:
+                cavemap = basemap.make_basemap(figsize, ax=ax)
+        except AttributeError:
+            cavemap = basemap
+
+        # Gather color variable into one array, prepare data
+        data, lons, lats = scatterprep(self, variable, rescale)
+
+        if color_min is None:
+            color_min = data.min()
+
+        if color_max == None:
+            color_max = data.max()
+
+        # Gather size variable into one array, prepare data
+        if sizevar is not None:
+            data2 = scatterprep(self, sizevar, size_rescale)
+            data2 = data2 * ptsize
+            ptsize = data2
+
+        colormap = mm.get_colormap(colormap)
+
+        cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=colormap,
+                             vmin=color_min, vmax=color_max, latlon=True,
+                             zorder=zorder, edgecolor='none', alpha=alpha)
+
+        try:
+            return fig, ax, cavemap, cm
+        except:
+            return cavemap, cm
 
 
-    def map_moisture(self, basemap, uptake, scale, figsize=(20,20),
-                     scatter_size=25, color_scale=(None, None, 5),
-                     scatter_alpha=1.0, scatter_zorder=20, cbar_label=None,
-                     cbar_size=(20,1.0), reverse_cbar=False,
-                     cbar_position='bottom'):
+    def map_moisture(self, basemap, uptake, scale, ax=None, figsize=(20,20),
+                     zorder=20, ptsize=25, color_min=None, color_max=None,
+                     alpha=1.0):
         """
         Plot moisture uptakes as a scatter plot.
 
@@ -1331,9 +1404,13 @@ class TrajectoryGroup(object):
 
         Parameters
         ----------
-        basemap : MapDesign object or Basemap object
-            Object containing the parameters to intialize Basemap or a
-            previously-made Basemap, probably with data already plotted on it
+        basemap : MapDesign or Basemap instance
+            MapDesign instances contain the parameters to initialize a Basemap.
+            If a MapDesign is provided, the Basemap may be initialized on a
+            given axis using the kwarg `ax`.  If ax is None, then new
+            figure, axis, and Basemap instances will be created.
+            A previously-generated Basemap may be provided instead of a
+            MapDesign.
         uptake : string
             ['both'|'above'|'below'|'all points']
         scale : string
@@ -1341,40 +1418,50 @@ class TrajectoryGroup(object):
 
         Keyword Arguments
         -----------------
+        ax : matplotlib axes instance
+            Default None.  The axis on which to draw a new Basemap, if
+            `basemap` is not a Basemap instance.  If None, and `basemap` is a
+            MapDesign instance, then new figure and axis instances
+            will be created.
         figsize : tuple of ints
-            Default (20,20).  Dimensions of figure
-        scatter_size : int
-            Default 25.  The size of scatter points.
-        color_scale : tuple of floats, int
-            Default (None, None, 5).  (min, max, divisions)
-            The minimum, maximum values on the colorbar- if max(min) is None,
-            the max(min) will be the maximum(minimum) value of the data.
-            Divisions- the number of nice ticks on the colorbar.
-            4, 5, 6 recommended.
-        scatter_alpha : float
+            Default (20,20).  The size of a new figure instance, if one must be
+            created.
+        zorder : int
+            Default 19.  The zorder of the Trajectory lines on the map.
+        ptsize : int
+            Default 25.  The size of the scatter points.
+        color_min : int or float
+            Default None.  The minimum value for color mapping.  If None,
+            color_min will be the minimum value of the data.
+        color_max : int or float
+            Default None.  The maximum value for color mapping.  If None,
+            color_max will be the maximum value of the data.
+        alpha : float
             Default 1.0.  The opacity of the scatter points
-        scatter_zorder : int
-            Default 20.  The zorder of the scatter points
-        cbar_label : string
-            Default None.  Label for colorbar
-        cbar_size : tuple of int, float
-            Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
-            colorbar, the fractional size of the colorbar.
-        reverse_cbar : Boolean
-            Default False.  If True, colorbar will be reversed (values will
-            still map to same colors)
-        cbar_position : string
-            Default 'bottom'.  ['bottom'|'right'].  The location of the
-            colorbar relative to the map.
 
         Returns
         -------
-        cavemap
+        fig : matplotlib Figure instance, optional
+            Newly created Figure instance.  Only returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        ax : matplotlib Axes instance, optional
+            Newly created Axes instance.  ONly returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        cavemap : Basemap instance
+            Basemap instance with Trajectory moisture uptake plotted on it.
+        cm : matplotlib PathCollection instance
+            Mappable for use in creating colorbars.  Colorbars may be created
+            using make_cbar() or make_cax_cbar().
 
         """
 
         try:
-            cavemap = basemap.make_basemap(figsize=figsize)
+            if ax is None:
+                fig, ax, cavemap = basemap.make_basemap(figsize)
+            else:
+                cavemap = basemap.make_basemap(figsize, ax=ax)
         except AttributeError:
             cavemap = basemap
 
@@ -1403,88 +1490,90 @@ class TrajectoryGroup(object):
 
         data_col, data_rows, cmap = opts[uptake][scale]
 
-        if color_scale[1] is None:
+        if color_min is None:
             if 'absolute' in scale:
-                color_scale[1]=0.0
-                for tr in self.trajectories:
-                    datamax = np.max(tr.masked_sources[:, data_col])
-                    if datamax > color_scale[1]:
-                        color_scale[1] = datamax
-            else:
-                color_scale[1] = 1.0
-
-        if color_scale[0] is None:
-            if 'absolute' in scale:
-                color_scale[0]=0.0
+                color_min = 10.0
                 for tr in self.trajectories:
                     datamin = np.min(tr.masked_sources[:, data_col])
-                    if datamin < color_scale[0]:
-                        color_scale[0] = datamin
+                    if datamin < color_min:
+                        color_min = datamin
             else:
-                color_scale[0] = 0.0
+                color_min = 0.0
+
+
+        if color_max is None:
+            if 'absolute' in scale:
+                color_max = 0.0
+                for tr in self.trajectories:
+                    datamax = np.max(tr.masked_sources[:, data_col])
+                    if datamax > color_max:
+                        color_max = datamax
+            else:
+                color_max = 1.0
+
 
         for tr in self.trajectories:
             if data_rows is None:
                 lons = tr.masked_sources[:, lon_col]
                 lats = tr.masked_sources[:, lat_col]
                 data = tr.masked_sources[:, data_col]
-                cm = cavemap.scatter(lons, lats, c=data, s=scatter_size,
-                                     cmap=cmap, vmin=color_scale[0],
-                                     vmax=color_scale[1], latlon=True,
-                                     zorder=scatter_zorder, edgecolor='none')
+                cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=cmap,
+                                     vmin=color_min, vmax=color_max,
+                                     latlon=True, zorder=zorder, alpha=alpha,
+                                     edgecolor='none')
             else:
                 if 'e' in data_rows:
                     e_rows = np.nonzero(tr.masked_sources[:, e_col]>-999.0)
                     lons = tr.masked_sources[e_rows, lon_col]
                     lats = tr.masked_sources[e_rows, lat_col]
                     data = tr.masked_sources[e_rows, data_col]
-                    cm = cavemap.scatter(lons, lats, c=data, s=scatter_size,
-                                         cmap=cmap,vmin=color_scale[0],
-                                         vmax=color_scale[1], latlon=True,
-                                         zorder=scatter_zorder,
+                    cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
+                                         cmap=cmap,vmin=color_min,
+                                         vmax=color_max, latlon=True,
+                                         zorder=zorder, alpha=alpha,
                                          edgecolor='none')
                 if 'f' in data_rows:
                     f_rows = np.nonzero(tr.masked_sources[:, f_col]>-999.0)
                     lons = tr.masked_sources[f_rows, lon_col]
                     lats = tr.masked_sources[f_rows, lat_col]
                     data = tr.masked_sources[f_rows, data_col]
-                    cm = cavemap.scatter(lons, lats, c=data, s=scatter_size,
-                                         cmap=cmap,vmin=color_scale[0],
-                                         vmax=color_scale[1], latlon=True,
-                                         zorder=scatter_zorder,
+                    cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
+                                         cmap=cmap,vmin=color_min,
+                                         vmax=color_max, latlon=True,
+                                         zorder=zorder, alpha=alpha,
                                          edgecolor='none')
-
-        cbar = cavemap.colorbar(cm, location=cbar_position, pad='5%',
-                                aspect=cbar_size[0], shrink=cbarsize[1])
-
-        cbar.locator = tk.MaxNLocator(color_scale[2], integer=False)
-        cbar.ax.tick_params(labelsize=16)
-
-        cbar.update_ticks()
-
-        mm.edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label)
-
-        return cavemap
+        try:
+            return fig, ax, cavemap, cm
+        except:
+            return cavemap, cm
 
 
-    def gridmap(self, basemap, figsize=(20,20), ismoisture=False,
-                usecontourf=False, mapcount=False, color_scale=(None, None, 5),
-                colormap='blues', grid_zorder=20, cbar_label=None,
-                cbar_size=(20, 1.0), reverse_cbar=False,
-                cbar_position='bottom'):
+    def gridmap(self, basemap, ax=None, figsize=(20,20), ismoisture=False,
+                usecontourf=False, mapcount=False, color_min=None,
+                color_max=None, colormap='blues', zorder=20):
         """
-        Create a pcolor plot of gridded data.
+        Create a pcolor or filled contourplot of gridded data.
 
         Parameters
         ----------
-        basemap : MapDesign object or Basemap object
-            Object containing the parameters to intialize Basemap or a
-            previously-made Basemap, probably with data already plotted on it
+        basemap : MapDesign or Basemap instance
+            MapDesign instances contain the parameters to initialize a Basemap.
+            If a MapDesign is provided, the Basemap may be initialized on a
+            given axis using the kwarg `ax`.  If ax is None, then new
+            figure, axis, and Basemap instances will be created.
+            A previously-generated Basemap may be provided instead of a
+            MapDesign.
 
         Keyword Arguments
         -----------------
+        ax : matplotlib axes instance
+            Default None.  The axis on which to draw a new Basemap, if
+            `basemap` is not a Basemap instance.  If None, and `basemap` is a
+            MapDesign instance, then new figure and axis instances
+            will be created.
         figsize : tuple of ints
-            Default (20,20).  Dimensions of figure
+            Default (20,20).  The size of a new figure instance, if one must be
+            created.
         ismoisture : Boolean
             Default False.  Access gridded moisture uptake data if True.
             If False, access regular gridded data.
@@ -1494,43 +1583,45 @@ class TrajectoryGroup(object):
         mapcount : Boolean
             Default False.  If true, plot counts in each gridbox.  Else,
             plot gridded variable.
-        color_scale : tuple of floats, int
-            Default (None, None, 5).  (min, max, divisions)
-            The minimum, maximum values on the colorbar- if max(min) is None,
-            the max(min) will be the maximum(minimum) value of the data.
-            Divisions- the number of nice ticks on the colorbar.
-            4, 5, 6 recommended.
+        color_min : int or float
+            Default None.  The minimum value for color mapping.  If None,
+            color_min will be the minimum value of the data.
+        color_max : int or float
+            Default None.  The maximum value for color mapping.  If None,
+            color_max will be the maximum value of the data.
         colormap : string
             Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
             Passed to a dictionary which retrieves the indicated colormap
-        grid_zorder : int
+        zorder : int
             Default 20.  The zorder of the gridded data
-        cbar_label : string
-            Label for colorbar
-        cbar_size : tuple of int, float
-            Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
-            colorbar, the fractional size of the colorbar.
-        reverse_cbar : Boolean
-            Default False.  If True, colorbar will be reversed (values will
-            still map to same colors)
-        cbar_position : string
-            Default 'bottom'.  ['bottom'|'right'].  The location of the
-            colorbar relative to the map.
 
         Returns
         -------
-        cavemap
+        fig : matplotlib Figure instance, optional
+            Newly created Figure instance.  Only returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        ax : matplotlib Axes instance, optional
+            Newly created Axes instance.  ONly returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        cavemap : Basemap instance
+            Basemap instance with Trajectory moisture uptake plotted on it.
+        cm : matplotlib PathCollection instance
+            Mappable for use in creating colorbars.  Colorbars may be created
+            using make_cbar() or make_cax_cbar().
 
         """
 
         try:
-            # Make Basemap from self.map_prefs
-            cavemap = basemap.make_basemap(figsize=figsize)
+            if ax is None:
+                fig, ax, cavemap = basemap.make_basemap(figszie)
+            else:
+                cavemap = basemap.make_basemap(figsize, ax=ax)
         except AttributeError:
             cavemap = basemap
 
-        colormap = mm.get_colormap(colormap)
-
+        # Prepare grids for moisture variable or other variable
         if ismoisture:
             x = self.mxi
             y = self.myi
@@ -1551,32 +1642,26 @@ class TrajectoryGroup(object):
             else:
                 data = self.grid
 
-        if color_scale[0] is None:
-            color_scale[0] = np.min(data)
-        if color_scale[1] is None:
-            color_scale[1] = np.max(data)
+        if color_min is None:
+            color_min = np.min(data)
+        if color_max is None:
+            color_max = np.max(data)
+
+        colormap = mm.get_colormap(colormap)
 
         if usecontourf:
             cm = cavemap.contourf(x,y, data,
-                                  np.linspace(color_scale[0], color_scale[1],
-                                              num=11), cmap=colormap,
-                                  latlon=True, zorder=grid_zorder)
+                                  np.linspace(color_min, color_max, num=11),
+                                  cmap=colormap, latlon=True, zorder=zorder)
         else:
             cm = cavemap.pcolormesh(x, y, data, latlon=True, cmap=colormap,
-                                    vmin=color_scale[0], vmax=color_scale[1],
-                                    zorder=grid_zorder)
+                                    vmin=color_min, vmax=color_max,
+                                    zorder=zorder)
 
-        cbar = cavemap.colorbar(cm, location=cbar_position, pad='5%',
-                                aspect=cbar_size[0], shrink=cbar_size[1])
-
-        cbar.locator = tk.MaxNLocator(color_scale[2], integer=False)
-        cbar.ax.tick_params(labelsize=16)
-
-        cbar.update_ticks()
-
-        mm.edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label)
-
-        return cavemap
+        try:
+            return fig, ax, cavemap, cm
+        except:
+            return cavemap, cm
 
 
 
@@ -1776,10 +1861,11 @@ class ClusterGroup(object):
 
 
 
-    def map_clusters(self, basemap, figsize=(20,20), color_var='mean_mf',
-                     color_scale=(0.0, None), color_transform='linear',
-                     width_var='count', width_transform='linear',
-                     width_adjust=1.0, colormap='blues'):
+    def map_clusters(self, basemap, ax=None, figsize=(20,20),
+                     color_var='mean_mf', color_min=None, color_max=None,
+                     color_rescale='linear', width_var='count',
+                     width_rescale='linear', width_adjust=1.0,
+                     colormap='blues'):
         """
         Plots mean cluster paths with color and width scaled to some variable.
 
@@ -1789,28 +1875,41 @@ class ClusterGroup(object):
 
         Parameters
         ----------
-        basemap : MapDesign object or Basemap object
-            Object containing the parameters to intialize Basemap or a
-            previously-made Basemap, probably with data already plotted on it
+        basemap : MapDesign or Basemap instance
+            MapDesign instances contain the parameters to initialize a Basemap.
+            If a MapDesign is provided, the Basemap may be initialized on a
+            given axis using the kwarg `ax`.  If ax is None, then new
+            figure, axis, and Basemap instances will be created.
+            A previously-generated Basemap may be provided instead of a
+            MapDesign.
 
         Keyword Arguments
         -----------------
+        ax : matplotlib axes instance
+            Default None.  The axis on which to draw a new Basemap, if
+            `basemap` is not a Basemap instance.  If None, and `basemap` is a
+            MapDesign instance, then new figure and axis instances
+            will be created.
         figsize : tuple of ints
-            Default (20,20).  Dimensions of figure
+            Default (20,20).  The size of a new figure instance, if one must be
+            created.
         color_var : string
             Default 'mean_mf'.  ['total_raint0'|'total_mft1'|'mean_q'|
             'mean_w'|'mean_mf'|'mean_mft1'|'mean_raint0'|'total_mf']
-        color_scale : tuple of floats
-            Default (0.0, None).  The (min, max) value of the color variable.
-            Used in normalization of color variable data to 0, 1 scale
-        color_transform : string
+        color_min : int or float
+            Default None.  The minimum value for color mapping.  If None,
+            color_min will be the minimum value of the data.
+        color_max : int or float
+            Default None.  The maximum value for color mapping.  If None,
+            color_max will be the maximum value of the data.
+        color_rescale : string
             Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
             Determines how color data is transformed, if at all
         width_var : string
             Default 'count'.  ['absolute_count'|'relative_count'|
             'total_raint0'|'total_mft1'|'mean_q'|
             'mean_w'|'mean_mf'|'mean_mft1'|'mean_raint0'|'total_mf']
-        width_transform : string
+        width_rescale : string
             Default 'linear'.  ['linear'|'sqrt'|'square'|'ln'|'log']
             Determines how width data is transformed, if at all
         width_adjust : float
@@ -1822,20 +1921,34 @@ class ClusterGroup(object):
 
         Returns
         -------
-        cavemap : plot
-            Map of cluster paths drawn to indicate number of component
-            trajectories and average of some data
+        fig : matplotlib Figure instance, optional
+            Newly created Figure instance.  Only returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        ax : matplotlib Axes instance, optional
+            Newly created Axes instance.  ONly returned if a new figure
+            and axis had to be created, i.e. ax=None and `basemap`
+            is a MapDesign instance.
+        cavemap : Basemap instance
+            Basemap instance with Trajectory moisture uptake plotted on it.
+        colors : list of RGBA tuples
+            The color of each cluster
+        plot_order : list of ints
+            The order of `colors` relative to self.clusters
 
         """
 
         try:
-            cavemap = basemap.make_basemap(figsize=figsize)
+            if ax is None:
+                fig, ax, cavemap = basemap.make_basemap(figsize)
+            else:
+                cavemap = basemap.make_basemap(figsize, ax=ax)
         except AttributeError:
             cavemap = basemap
 
         # Acquire transforms
-        c_transf = get_transform(color_transform)
-        w_transf = get_transform(width_transform)
+        c_transf = get_transform(color_rescale)
+        w_transf = get_transform(width_rescale)
 
         colorvar_list = []
         widthvar_list = []
@@ -1868,26 +1981,34 @@ class ClusterGroup(object):
             colorvar_list[i] = c_transf[0](colorvar_list[i])
             i = i + 1
 
+        if color_min is None:
+            color_min = min(colorvar_list)
         # Get color max
-        if color_scale[1] is None:
-            color_scale[1] = max(colorvar_list)
+        if color_max is None:
+            color_max = max(colorvar_list)
 
         # Set up mapping of scalar data to RGBA values from given colormap
         colormap = mm.get_colormap(colormap)
-        cnorm = clrs.Normalize(vmin=color_scale[0], vmax=color_scale[1])
+        cnorm = clrs.Normalize(vmin=color_min, vmax=color_max)
         scalarmap = cm.ScalarMappable(norm=cnorm, cmap=colormap)
 
         # Obtain index array of linewidths so thick lines plot last
         plot_order = np.argsort(widthvar_list, kind='mergesort')
 
+        colors=[]
+
         for i in plot_order:
             # Map values to RGBA values from given colormap, use resulting color
             color = scalarmap.to_rgba(colorvar_list[i])
+            colors.append(color)
             cavemap.plot(self.clusters[i].longitude, self.clusters[i].latitude,
                          linewidth=widthvar_list[i], color=color, zorder=19,
                          latlon=True)
 
-        return cavemap
+        try:
+            return fig, ax, cavemap, colors, plot_order
+        except:
+            return cavemap, colors, plot_order
 
 
     def trajplot_clusterplot(self, basemap, figsize=(20,20),
@@ -1933,15 +2054,21 @@ class ClusterGroup(object):
 
         Returns
         -------
-        fig : figure instance
-            Figure with two subplots
+        fig : matplotlib Figure instance
+            Figure with two axes
+        ax_t : matplotlib Axes instance
+            The axis containing the plot of trajectory paths
+        ax_c : matplotlib Axes instance
+            The axis containing the plot of cluster paths
         trajmap : Basemap instance
             Left/top subplot: map with trajectory paths plotted on it.
             Trajectory colors correspond to cluster
         clusmap : Basemap instance
             Right/bottom subplot: map with cluster mean paths plotted on it.
             Cluster color corresponds to that of member trajectories.
-            Linewidth is given value or the number of member trajectories.
+            Linewidth is given value or is the number of member trajectories.
+        colors : list of RGBA tuples
+            The color used for each cluster.
 
         """
 
@@ -1984,8 +2111,8 @@ class ClusterGroup(object):
         fig, (ax_t, ax_c) = plt.subplots(row, col, figsize=figsize)
 
         # Make a map on each axis object using self.map_prefs
-        trajmap = basemap.make_basemap(figsize=figsize, ax=ax_t)
-        clusmap = basemap.make_basemap(figsize=figsize, ax=ax_c)
+        ax_t, trajmap = basemap.make_basemap(figsize, ax=ax_t)
+        ax_c, clusmap = basemap.make_basemap(figsize, ax=ax_c)
 
         # Plot
         for cluster, color, lw in zip(self.clusters, colors, cluster_lw):
@@ -1998,10 +2125,10 @@ class ClusterGroup(object):
                              linewidth=traj_lw, latlon=True, zorder=traj_zorder,
                              ax=ax_t)
 
-        return fig, trajmap, clusmap
+        return fig, ax_t, ax_c, trajmap, clusmap, colors
 
 
-def data_prep(trajgroup, variable, transform):
+def scatterprep(trajgroup, variable, transform):
     """
     Gets trajectory attributes in format for plotting
 

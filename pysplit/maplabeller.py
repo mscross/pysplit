@@ -2,7 +2,7 @@ import os
 from mpl_toolkits.basemap import Basemap
 
 
-def map_labeller(cavemap, ax, labels, label_list):
+def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder):
     """
     Writes labels on a map.
 
@@ -15,9 +15,9 @@ def map_labeller(cavemap, ax, labels, label_list):
         Instance of basemap to be labelled
     ax : axes instance
         axis of cavemap
-    labels : string
-        Determines what labels are applied.
-        ['all'|'cave'|'important'|'justcave']
+    labelgroups : string
+        Determines what labelgroups are applied.
+        ['all_1'|'all_2'|'cave'|'important'|'justcave']
     label_list : list of lists of strings or tuples of floats
         List of lists of labels and coordinates
         sea labels and coordinates
@@ -25,6 +25,8 @@ def map_labeller(cavemap, ax, labels, label_list):
         oceans
         countries
         caves
+    labelzorder : int
+        Zorder of map labels.
 
     Returns
     -------
@@ -58,7 +60,7 @@ def map_labeller(cavemap, ax, labels, label_list):
                 'fs': 16,
                 'wt' : 'normal',
                 'fst' : 'italic',
-                'zrd' : 15,
+                'zrd' : labelzorder,
                 'off' : (0,0),
                 'add' : ''}
 
@@ -69,7 +71,7 @@ def map_labeller(cavemap, ax, labels, label_list):
                   'fs' : 20,
                   'wt' : 'bold',
                   'fst' : 'italic',
-                  'zrd' : 15,
+                  'zrd' : labelzorder,
                   'off' : (0,0),
                   'add' : ''}
 
@@ -80,7 +82,7 @@ def map_labeller(cavemap, ax, labels, label_list):
                     'fs' : 20,
                     'wt' : 'bold',
                     'fst' : 'normal',
-                    'zrd' : 15,
+                    'zrd' : labelzorder,
                     'off' : (0,0),
                     'add' : ''}
 
@@ -91,7 +93,7 @@ def map_labeller(cavemap, ax, labels, label_list):
                  'fs' : 15,
                  'wt' : 'normal',
                  'fst' : 'normal',
-                 'zrd' : 15,
+                 'zrd' : labelzorder,
                  'off' : (0.0, 1.0),
                  'add' : r'$\bigstar$'}
 
@@ -102,7 +104,7 @@ def map_labeller(cavemap, ax, labels, label_list):
                  'fs' : 15,
                  'wt' : 'normal',
                  'fst' : 'normal',
-                 'zrd' : 15,
+                 'zrd' : labelzorder,
                  'off' : (0.0, 1.0),
                  'add' : r'$\bullet$'}
 
@@ -116,7 +118,7 @@ def map_labeller(cavemap, ax, labels, label_list):
                         'justcave' : [cave_dict]}
 
     # Set option
-    maplabels = label_masterdict[labels]
+    maplabels = label_masterdict[labelgroups]
 
     # Plot labels
     for j in maplabels:
@@ -144,7 +146,7 @@ def labelfile_reader(labelfile):
     If the file does not exist, the user will be prompted to:
     -Create a new label file at the given path, then continue attempting to
         label the map
-    -Continue generating the map without labels
+    -Continue generating the map without labelgroups
     -Enter a different path
 
     These three options will be presented until the user provides a valid

@@ -1,7 +1,6 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import matplotlib.ticker as tk
 from mpl_toolkits.basemap import shiftgrid
 import gdal
 import ogr
@@ -55,7 +54,6 @@ def getband_latslons(level, variable, datafile):
         if (variable == bandvar) and (level == bandlevel):
             bandnum = i
             break
-
 
     # Get the spatial coverage and start/end of the data
     geotransform = dataset.GetGeoTransform(0)
@@ -120,7 +118,7 @@ def file_lister(filedates, startstring, data_dir):
 
     Returns
     -------
-    filelist : list of files
+    completefilenames : list of files
         List of files that have both startstring and one of the
         dates of interest
 
@@ -174,7 +172,7 @@ def file_dates(years, years_isrange, months, months_isrange):
     Returns
     -------
     dates : list of strings
-        LIst of strings representing dates in the format YYYYMM
+        List of strings representing dates in the format YYYYMM
 
     """
 
@@ -192,11 +190,13 @@ def file_dates(years, years_isrange, months, months_isrange):
 
 
 
-def grib_lister(level, var, startstring, data_dir, filedates=None,
-                filenames=None):
+def get_gribdata(level, var, startstring, data_dir, filedates,
+                 filelist=None):
     """
-    Gets a list of GRIB files, figures out which band to look at, then opens
-        files and reads in data to an array to be averaged.
+    Gets a list of GRIB files, determines which band contains the desired data.
+        For each file, the data is read into an array, and the
+        data array is put into a list.  Also returns latitudes and longitudes
+        that represent the data grid.
 
     Parameters
     ----------
@@ -204,31 +204,35 @@ def grib_lister(level, var, startstring, data_dir, filedates=None,
         Desired surface level of data
     var : string
         Band variable
-    years : list of ints
-        The years of data desired
-    months : list of ints
-        The month or months of data to include
+    startstring : string
+        Initial part of file names.  Only needed if filelist is None.
     data_dir : string
-        Path to data location
+        Full or relative path to the data directory.  Only needed if
+        filelist is None.
+    filedates : list of strings
+        Default None. List of strings representing dates in the format YYYYMM.
+        Generated from file_dates().  Used to gather a list of filenames.
+        Only needed if filelist is None.
+
+    Keyword Arguments
+    -----------------
+    filelist : list of strings
+        A list of filenames.
 
     Returns
     -------
     gribdata : list of (M, N) ndarray of floats
         Arrays of data from all GRIB files in indicated time period
     latitudes : ndarray of floats
-        (M) array of latitudes of gribdata from 89 to -89 (256)
+        (M) array of latitudes of gribdata
     longitudes : ndarray of floats
-        (N) array of longitudes of gribdata from -0.3 to 359.7 (512)
+        (N) array of longitudes of gribdata
 
     """
 
-    # Get a list of files that meet the timeframe and data criteria
-    if filedates is not None:
+    # Create filelist from startstring and filedates if not given
+    if filelist is None:
         filelist = file_lister(filedates, startstring, data_dir)
-    elif filenames is not None:
-        filelist = filenames
-    else:
-        raise ValueError('No data files indicated!')
 
     gribdatalist = []
 
@@ -248,20 +252,21 @@ def grib_lister(level, var, startstring, data_dir, filedates=None,
 
             gribdatalist.append(bandval)
 
-
     return gribdatalist, latitudes, longitudes
 
 
-def hdf_lister(filedates, startstring, data_dir):
+def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
+                filelist=None):
     """
-    Gets a list of HDF files, opens them, reads data into array to be averaged.
+    Gets a list of HDF files and for each file, reads the data in an array.
+        The data arrays are put into a list.  Also returns the latitudes and
+        longitudes that represent the data grid
 
     Parameters
     ----------
-    years : list of ints
-        The years of data to include
-    months : list of ints
-        The months within the years of data to include
+    filedates : list of strings
+        Default None. List of strings representing dates in the format YYYYMM.
+        Generated from file_dates().  Used to gather a list of files.
     data_dir : string
         Path to data location
 
@@ -270,25 +275,27 @@ def hdf_lister(filedates, startstring, data_dir):
     hdfdata : list of (M, N) ndarray of floats
         arrays of data from all trmm (HDF) files given
     longitudes : (M) ndarray of floats
-        array of longitudes of hdfdata from 180 to -180 (1440)
+        array of longitudes of hdfdata
     latitudes : (N) ndarray of floats
-        array of latitudes of hdfdata from -50 to 50 (400)
+        array of latitudes of hdfdata
 
     """
+    if filelist is None:
+        filelist = file_lister(filedates, startstring, data_dir)
 
-    filelist = file_lister(filedates, startstring, data_dir)
     hdfdatalist = []
 
     for files in filelist:
 
         hdf_file = pyhdf.SD.SD(files)
 
-        precip = hdf_file.select('precipitation')
+        variable = hdf_file.select(var)
 
-        precipdata = precip.get()
+        vardata = variable.get()
 
-        hdfdatalist.append(precipdata)
+        hdfdatalist.append(vardata)
 
+    # Set for trmm files
     longitudes = np.arange(-180.0, 180.0, 0.25)
     latitudes = np.arange(-49.875, 50.125, 0.25)
 
@@ -314,23 +321,21 @@ def averager(gridded_data):
     return gridded_data
 
 
-
-def windplot(basemap, uband, vband, latitudes, longitudes, figsize=(20,20),
-             vectors_only=False, vectors='arrows', scale=(20.0, 85.0, 5.0),
-             colormap='jet', contour_zorder=13, vector_zorder=20,
-             cbar_size=(20,1.0), reverse_cbar=False, cbar_position='right'):
+def windcontours(basemap, uband, vband, latitudes, longitudes, ax=None,
+                 figsize=(20,20), wmin=20.0, wmax=85.0, wstep=5.0,
+                 colormap='jet', zorder=13, limits=None):
     """
-    Map winds at a particular pressure level.
-
-    Only interrogates GRIB files. Choice of windbarbs or arrows with scale.
-        Calls grib_lister to average U and V components over the specified
-        period, calls ps.make_basemap to make basemap
+    Contour map of windspeed.
 
     Parameters
     ----------
-    basemap : MapDesign object or Basemap object
-        Object containing the parameters to intialize Basemap or a
-        previously-made Basemap, probably with data already plotted on it
+    basemap : MapDesign or Basemap instance
+        MapDesign instances contain the parameters to initialize a Basemap.
+        If a MapDesign is provided, the Basemap may be initialized on a
+        given axis using the kwarg `ax`.  If ax is None, then new
+        figure, axis, and Basemap instances will be created.
+        A previously-generated Basemap may be provided instead of a
+        MapDesign.
     uband : (M, N) ndarray of floats
         Array of the U component of wind velocity
     vband : (M, N) ndarray of floats
@@ -342,116 +347,213 @@ def windplot(basemap, uband, vband, latitudes, longitudes, figsize=(20,20),
 
     Keyword Arguments
     -----------------
+    ax : matplotlib axes instance
+        Default None.  The axis on which to draw a new Basemap, if
+        `basemap` is not a Basemap instance.  If None, and `basemap` is a
+        MapDesign instance, then new figure and axis instances
+        will be created.
     figsize : tuple of ints
-        Default (20,20).  Dimensions of figure
-    vectors_only : Boolean
-        Default False.  If True, wind contour plotting is skipped
-    vectors : string
-        Default 'arrows'.  Determines whether vectors ('arrows') with a scale or
-        wind barbs ('barbs') are plotted
-    scale : tuple of floats
-        Default (20.0, 85.0, 5.0).  (min, max, step) for contouring
+        Default (20,20).  The size of a new figure instance, if one must be
+        created.
+    wmin : float
+        Default 0.0.  The minimum value for creating contour levels and
+        colormapping.  If None, wmin will be the minimum windspeed.
+    wmax : float
+        Default None.  The maximum value for creating contour levels and
+        colormapping.  If None, wmax will be the maximum windspeed.
+    wstep : int or float
+        The step size between contour levels bounded by wmin, wmax.
     colormap : string
         Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-        Passed to a dictionary which retrieves the indicated colormap
-    contour_zorder : int
-        Default 13.  The zorder of the filled contours.
-    vector_zorder : int
-        Default 20.  The zorder of the vectors.
-    cbar_size : tuple of int, float
-        Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
-        colorbar, the fractional size of the colorbar.
-    reverse_cbar : Boolean
-        Default False.  If True, colorbar will be reversed (values will
-        still map to same colors)
-    cbar_position : string
-        Default 'right'.  ['bottom'|'right'].  The location of the
-        colorbar relative to the map.
+        Colormap for windspeed data
+    zorder : int
+        Default 13.  The zorder of the contours.
+    limits : list of floats or ints
+        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        [bottom latitude, left longitude, top latitude, right longitude]
 
     Returns
     -------
-    windmap : plot
-        Filled contour map of windspeed plus vector plot of wind velocity
-        on a Basemap instance
+    fig : matplotlib Figure instance, optional
+        Newly created Figure instance.  Only returned if a new figure
+        and axis had to be created, i.e. ax=None and `basemap`
+        is a MapDesign instance.
+    ax : matplotlib Axes instance, optional
+        Newly created Axes instance.  ONly returned if a new figure
+        and axis had to be created, i.e. ax=None and `basemap`
+        is a MapDesign instance.
+    windmap : Basemap instance
+        Basemap instance with filled contour plot of windspeed data
+    w : matplotlib PathCollection instance
+        Mappable for use in creating colorbars.  Colorbars may be created
+        using make_cbar() or make_cax_cbar().
 
     """
 
     # Initialize basemap
     try:
-        windmap = basemap.make_basemap(figsize)
+        if ax is None:
+            fig, ax, windmap = basemap.make_basemap(figsize)
+        else:
+            windmap = basemap.make_basemap(figsize, ax=ax)
     except AttributeError:
         windmap = basemap
+
+    # Trim grid to a more localized box
+    if limits is not None:
+        _, _, uband = gridlimit(limits, longitudes, latitudes, uband)
+        longitudes, latitudes, vband = gridlimit(limits, longitudes, latitudes)
 
     # Calculate windspeed
     windspeed = np.sqrt(uband**2 + vband**2)
 
     # Inizialize contour levels
-    levels = np.arange(scale[0], scale[1]+scale[2], scale[2])
+    levels = np.arange(wmin, wmax+wstep, wstep)
 
     # Make grid for contour plot
     lons, lats = np.meshgrid(longitudes, latitudes)
 
-    if not vectors_only:
+    # Plot data as filled contours
+    w = windmap.contourf(lons, lats, windspeed, zorder=contour_zorder,
+                         cmap=mm.get_colormap(colormap),
+                         levels=levels, latlon=True)
 
-        # Plot data as filled contours
-        w = windmap.contourf(lons, lats, windspeed, zorder=contour_zorder,
-                             cmap=mm.get_colormap(colormap),
-                             levels=levels, latlon=True)
-
-        # Set up colorbar
-        cbar = windmap.colorbar(w, location=cbar_position, pad='3%',
-                                aspect=cbar_size[0], shrink=cbar_size[1])
-        cbar.ax.tick_params(labelsize=16)
-
-        mm.edit_cbar(cbar, cbar_position, reverse_cbar, 'Wind Speed (m/s/)')
-
-    # Make grid and plot wind vectors
-    if vectors is not None:
-
-        # Make grid for wind barbs/ vectors
-        # First, rearrange grid so that it start with a positive longitude
-        firstlon = longitudes[0] + 360.0
-        longitudes = longitudes.tolist()[1:]
-        longitudes.append(firstlon)
-        longitudes = np.asarray(longitudes)
-
-        firstucol = np.atleast_2d(uband[:,0])
-        uband = np.concatenate((uband[:,1:], firstucol.T), axis=1)
-
-        firstvcol = np.atleast_2d(vband[:,0])
-        vband = np.concatenate((vband[:,1:], firstvcol.T), axis=1)
-
-        # Shift grid so longitudes are increasing from -180 to 180
-        # if the projection is not cylindrical
-        if not mapdesign_obj.projection[:-3] is 'cyl':
-            uband, newlons = shiftgrid(longitudes[longitudes.size/2], uband,
-                                       longitudes, start=False)
-            vband, newlons = shiftgrid(longitudes[longitudes.size/2], vband,
-                                       longitudes, start=False)
-            longitudes = newlons
-
-        # Transform vectors to lie correctly on projection
-        u, v, lns, lts = windmap.transform_vector(uband[::-1,:], vband[::-1,:],
-                                                  longitudes, latitudes[::-1],
-                                                  12, 16, returnxy=True)
-        # Plot vectors as arrows or barbs
-        if vectors is 'arrows':
-            q = windmap.quiver(lns, lts, u, v, zorder=vector_zorder, scale=1000)
-            qkey = plt.quiverkey(q, 0.25, 0.05, 60, '60 m/s', labelpos='W',
-                                 labelcolor='red', fontproperties={'size':20},
-                                 zorder=vector_zorder, color='red')
-
-        elif vectors is 'barbs':
-            q = windmap.barbs(lns, lts, u, v, zorder=vector_zorder)
-
-    return windmap
+    try:
+        return fig, ax, windmap, w
+    except:
+        return windmap, w
 
 
-def plot_othervar(basemap, vardata, latitudes, longitudes,
-                  filetype='ncar', figsize=(20,20),
-                  scale=(0.0, None, 50), colormap='jet',
-                  zorder=13, cbar_label=None, cbar_size=(20,1.0),
-                  reverse_cbar=False, cbar_position='right'):
+def windbarbs(basemap, uband, vband, latitudes, longitudes, ax=None,
+              figsize=(20,20), vectors='arrows', zorder=20):
+    """
+    Map wind velocity using vectors (arrows or barbs.
+
+    Parameters
+    ----------
+    basemap : MapDesign or Basemap instance
+        MapDesign instances contain the parameters to initialize a Basemap.
+        If a MapDesign is provided, the Basemap may be initialized on a
+        given axis using the kwarg `ax`.  If ax is None, then new
+        figure, axis, and Basemap instances will be created.
+        A previously-generated Basemap may be provided instead of a
+        MapDesign.
+    uband : (M, N) ndarray of floats
+        Array of the U component of wind velocity
+    vband : (M, N) ndarray of floats
+        Array of the V component of wind velocity
+    latitudes : (M) ndarray of floats
+        Array of latitudes of uband, vband
+    longitudes : (N) ndarray of floats
+        Array of longitudes of uband, vband
+
+    Keyword Arguments
+    -----------------
+    ax : matplotlib axes instance
+        Default None.  The axis on which to draw a new Basemap, if
+        `basemap` is not a Basemap instance.  If None, and `basemap` is a
+        MapDesign instance, then new figure and axis instances
+        will be created.
+    figsize : tuple of ints
+        Default (20,20).  The size of a new figure instance, if one must be
+        created.
+    vectors : string
+        Default 'arrows'.  ['arrows'|'barbs']
+        The vector type to indicate wind velocity.  'arrows' comes with a key.
+    zorder : int
+        Default 20.  The zorder of the vectors.
+    limits : list of floats or ints
+        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        [bottom latitude, left longitude, top latitude, right longitude]
+
+    Returns
+    -------
+    fig : matplotlib Figure instance, optional
+        Newly created Figure instance.  Only returned if a new figure
+        and axis had to be created, i.e. ax=None and `basemap`
+        is a MapDesign instance.
+    ax : matplotlib Axes instance, optional
+        Newly created Axes instance.  ONly returned if a new figure
+        and axis had to be created, i.e. ax=None and `basemap`
+        is a MapDesign instance.
+    windmap : Basemap instance
+        Basemap instance with vector plot of windspeed data
+
+
+    """
+
+    # Initialize basemap
+    try:
+        if ax is None:
+            fig, ax, windmap = basemap.make_basemap(figsize)
+        else:
+            windmap = basemap.make_basemap(figsize, ax=ax)
+    except AttributeError:
+        windmap = basemap
+
+    # Trim grid to a more localized box
+    if limits is not None:
+        _, _, uband = gridlimit(limits, longitudes, latitudes, uband)
+        longitudes, latitudes, vband = gridlimit(limits, longitudes, latitudes)
+
+    # Change longitudes to -180 to 180
+    for i in range(0, longitudes.size):
+        if longitudes[i]>180.0:
+            longitudes[i] = longitudes[i] - 360.0
+
+    longitude_sort = np.argsort(longitudes)
+
+    longitudes = longitudes[longitude_sort]
+    uband = uband[:, longitude_sort]
+    vband = vband[:, longitude_sort]
+
+
+    # # Make grid for wind barbs/ vectors
+    # # First, rearrange grid so that it start with a positive longitude
+    # firstlon = longitudes[0] + 360.0
+    # longitudes = longitudes.tolist()[1:]
+    # longitudes.append(firstlon)
+    # longitudes = np.asarray(longitudes)
+
+    # firstucol = np.atleast_2d(uband[:,0])
+    # uband = np.concatenate((uband[:,1:], firstucol.T), axis=1)
+
+    # firstvcol = np.atleast_2d(vband[:,0])
+    # vband = np.concatenate((vband[:,1:], firstvcol.T), axis=1)
+
+    # # Shift grid so longitudes are increasing from -180 to 180
+    # # if the projection is not cylindrical
+    # if not mapdesign_obj.projection[:-3] is 'cyl':
+    #     uband, newlons = shiftgrid(longitudes[longitudes.size/2], uband,
+    #                                longitudes, start=False)
+    #     vband, newlons = shiftgrid(longitudes[longitudes.size/2], vband,
+    #                                longitudes, start=False)
+    #     longitudes = newlons
+
+    # Transform vectors to lie correctly on projection
+    u, v, lns, lts = windmap.transform_vector(uband[::-1,:], vband[::-1,:],
+                                              longitudes, latitudes[::-1],
+                                              12, 16, returnxy=True)
+    # Plot vectors as arrows or barbs
+    if vectors is 'arrows':
+        q = windmap.quiver(lns, lts, u, v, zorder=vector_zorder, scale=1000)
+        qkey = plt.quiverkey(q, 0.25, 0.05, 60, '60 m/s', labelpos='W',
+                             labelcolor='red', fontproperties={'size':20},
+                             zorder=zorder, color='red')
+
+    elif vectors is 'barbs':
+        q = windmap.barbs(lns, lts, u, v, zorder=zorder)
+
+    try:
+        return fig, ax, windmap
+    except:
+        return windmap
+
+
+def plot_othervar(basemap, vardata, latitudes, longitudes, ax=None,
+                  figsize=(20,20), filetype='ncar', color_min=None,
+                  color_max=None, color_levelnum=50, colormap='jet',
+                  zorder=13, limits=None):
     """
     For plotting any variable that is not wind.  Interrogates ncar (grib) or
         trmm (hdf) files on any surface and plots data from specified years or
@@ -459,9 +561,13 @@ def plot_othervar(basemap, vardata, latitudes, longitudes,
 
     Parameters
     ----------
-    basemap : MapDesign object or Basemap object
-        Object containing the parameters to intialize Basemap or a
-        previously-made Basemap, probably with data already plotted on it
+    basemap : MapDesign or Basemap instance
+        MapDesign instances contain the parameters to initialize a Basemap.
+        If a MapDesign is provided, the Basemap may be initialized on a
+        given axis using the kwarg `ax`.  If ax is None, then new
+        figure, axis, and Basemap instances will be created.
+        A previously-generated Basemap may be provided instead of a
+        MapDesign.
     vardata : (M, N) ndarray of floats
         Data array
     latitudes : (M) ndarray of floats
@@ -471,48 +577,72 @@ def plot_othervar(basemap, vardata, latitudes, longitudes,
 
     Keyword Arguments
     -----------------
+    ax : matplotlib axes instance
+        Default None.  The axis on which to draw a new Basemap, if
+        `basemap` is not a Basemap instance.  If None, and `basemap` is a
+        MapDesign instance, then new figure and axis instances
+        will be created.
+    figsize : tuple of ints
+        Default (20,20).  The size of a new figure instance, if one must be
+        created.
     filetype : string
         Default 'ncar'.  ['ncar'|'trmm'].  TRMM data has a different
         orientation than NCAR data and must be transposed before plotting.
-    figsize : tuple of ints
-        Default (20,20).  Dimensions of figure
-    scale : tuple of floats
-        Default (0.0, None, 50).  (minimum, maximum, # of scale divisions)
+    color_min : int or float
+        Default None.  The minimum value for color mapping.  If None,
+        color_min will be the minimum value of the data.
+    color_max : int or float
+        Default None.  The maximum value for color mapping.  If None,
+        color_max will be the maximum value of the data.
+    color_levelnum
     colormap : string
         Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-        Passed to a dictionary which retrieves the indicated colormap
+        Colormap for zdata
     zorder : int
         Default 13.  The zorder of the contours.
-    cbar_label : string
-        Default None.  Label for colorbar
-    cbar_size : tuple of int, float
-        Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
-        colorbar, the fractional size of the colorbar.
-    reverse_cbar : Boolean
-        Default False.  If True, colorbar will be reversed (values will
-        still map to same colors)
-    cbar_position : string
-        Default 'bottom'.  ['bottom'|'right'].  The location of the
-        colorbar relative to the map.
+    limits : list of floats or ints
+        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        [bottom latitude, left longitude, top latitude, right longitude]
 
     Returns
     -------
-    varmap : plot
-        Filled contour plot of user-specified variable on a basemap instance
+    fig : matplotlib Figure instance, optional
+        Newly created Figure instance.  Only returned if a new figure
+        and axis had to be created, i.e. ax=None and `basemap`
+        is a MapDesign instance.
+    ax : matplotlib Axes instance, optional
+        Newly created Axes instance.  ONly returned if a new figure
+        and axis had to be created, i.e. ax=None and `basemap`
+        is a MapDesign instance.
+    varmap : Basemap instance
+        Basemap instance will filled contour plot of vardata
+    v : matplotlib PathCollection instance
+        Mappable for use in creating colorbars.  Colorbars may be created
+        using make_cbar() or make_cax_cbar().
 
     """
 
     # Initalize basemap
     try:
-        varmap = basemap.make_basemap(figsize)
+        if ax is None:
+            fig, ax, varmap = basemap.make_basemap(figsize)
+        else:
+            ax, varmap = basemap.make_basemap(figsize, ax=ax)
     except AttributeError:
         varmap = basemap
 
-    # Set the contour levels
-    if scale[1] is None:
-        scale[1] = varband.max()
+    # Trim grid to a more localized box
+    if limits is not None:
+        longitudes, latitudes, vardata = gridlimit(limits, longitudes,
+                                                   latitudes, vardata)
 
-    levels = np.linspace(scale[0], scale[1], scale[2])
+    if color_min is None:
+        color_min = varband.min()
+
+    if color_max is None:
+        color_max = varband.max()
+
+    levels = np.linspace(color_min, color_max, color_levelnum)
 
     # Make grid
     lons, lats = np.meshgrid(longitudes, latitudes)
@@ -522,19 +652,186 @@ def plot_othervar(basemap, vardata, latitudes, longitudes,
         varband = varband.T
 
     # Make the contour plot
-    v = varmap.contourf(lons, lats, varband,
-                        cmap=ps.get_colormap(colormap),
+    v = varmap.contourf(lons, lats, varband, cmap=get_colormap(colormap),
                         zorder=zorder, levels=levels, latlon=True)
 
-    # Set up the colorbar and ticks
-    cbar = varmap.colorbar(v, location=cbar_position, pad='5%',
-                           aspect=cbar_size[0], shrink=cbar_size[1])
+    try:
+        return fig, ax, varmap, v
+    except:
+        return varmap, v
 
-    cbar.locator = tk.MaxNLocator(ticks, integer=False)
-    cbar.ax.tick_params(labelsize=16)
-    cbar.update_ticks()
 
-    # Edit the colorbar direction and label orientation
-    mm.edit_cbar(cbar, cbar_position, reverse_cbar, cbar_label)
+def zplot(basemap, zdata, latitudes, longitudes, contours, ax=None,
+          figsize=(20,20), is_geopotential=True, zmin=0.0, zmax=None,
+          zstep=100.0, colormap='jet', colors=None, linewidths=2, zorder=14,
+          limits=None):
+    """
+    Map all or specific z (or any) contours.  Converts geopotential to meters
+        if necessary.
 
-    return varmap
+    Parameters
+    ----------
+    basemap : MapDesign or Basemap instance
+        MapDesign instances contain the parameters to initialize a Basemap.
+        If a MapDesign is provided, the Basemap may be initialized on a
+        given axis using the kwarg `ax`.  If ax is None, then new
+        figure, axis, and Basemap instances will be created.
+        A previously-generated Basemap may be provided instead of a
+        MapDesign.
+    zdata : (M, N) ndarray of floats
+        Data array
+    latitudes : (M) ndarray of floats
+        Array of latitudes of zdata
+    longitudes : (N) ndarray of floats
+        Array of longitudes of zdata
+    contours : string or list of ints or floats
+        'all', or a list of particular contours to plot.
+
+    Keyword Arguments
+    -----------------
+    ax : matplotlib axes instance
+        Default None.  The axis on which to draw a new Basemap, if
+        `basemap` is not a Basemap instance.  If None, and `basemap` is a
+        MapDesign instance, then new figure and axis instances
+        will be created.
+    figsize : tuple of ints
+        Default (20,20).  The size of a new figure instance, if one must be
+        created.
+    is_geopotential : Boolean
+        Default True.  If True, data will be divided by gravitational
+        acceleration to get elevation in meters
+    zmin : float
+        Default 0.0.  The minimum value for creating contour levels and maybe
+        colormapping.
+    zmax : float
+        Default None.  The maximum value for creating contour levels and maybe
+        colormapping.  If None, zmax will be the maximum value of zdata.
+    zstep : int or float
+        The step size between contour levels bounded by zmin, zmax.
+    colormap : string
+        Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth'].  The colormap
+        for plotting 'all' contour data.
+    colors : list of strings
+        Default None.  The colors of particular contours to plot.
+        len(colors) == len(contours)
+    linewidths : int or float or list of ints or floats
+        Default 2.  The linewidth of all contours, or a list of linewidths for
+        particularly contours.  Must be in list format if not 'all' contours
+        are chosen.  len(linewidths) == len(contours)
+    zorder : int
+        Default 14.  The zorder of the contour data
+    limits : list of floats or ints
+        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        [bottom latitude, left longitude, top latitude, right longitude]
+    """
+
+    # Intialize zmap
+    try:
+        if ax is None:
+            fig, ax, zmap = basemap.make_basemap(figsize)
+        else:
+            ax, zmap = basemap.make_basemap(figsize, ax=ax)
+    except AttributeError:
+        zmap = basemap
+
+    # Calculate meters from geopotential
+    if is_geopotential:
+        zdata = zdata / 9.80665
+
+    # Trim grid to a more localized box
+    if limits is not None:
+        longitudes, latitudes, zdata = gridlimit(limits, longitudes, latitudes,
+                                                 zdata)
+    if zmax is None:
+        zmax = zdata.max()
+
+    lons, lats = np.meshgrid(longitudes, latitudes)
+
+    levels = np.arange(zmin, zmax, zstep)
+
+    if contours is 'all':
+        colormap = mm.get_colormap(colormap)
+
+        z = zmap.contour(lons, lats, zdata, cmap=colormap, zorder=zorder,
+                         linewidth=linewidths, latlon=True, levels=levels)
+
+        try:
+            return fig, ax, zmap, z
+        except:
+            return zmap, z
+
+    # PLot specific contours
+    else:
+        z = zmap.contour(lons, lats, zdata, colors='r', levels=levels,
+                         zorder=zorder, latlon=True)
+
+        for lvl in range(0, z.levels.size):
+            zl = z.collections[lvl]
+
+            if levels[lvl] in contours:
+                ind = contours.index(levels[lvl])
+                plt.setp(zl, color=colors[ind], linewidth=linewidths[ind])
+            else:
+                plt.setp(zl, color=None, alpha=0)
+
+        try:
+            return fig, ax, zmap
+        except:
+            return zmap
+
+
+def gridlimit(limits, longitudes, latitudes, data):
+    """
+    Get rid of portion of grid beyond the given limits
+
+    Parameters
+    ----------
+    limits : list of floats or ints
+        [bottom latitude, left longitude, top latitude, right longitude]
+    longitudes : (N) ndarray of floats
+        Array of longitudes of data
+    latitudes : (M) ndarray of floats
+        Array of latitudes of data
+    data : (M, N) ndarray of floats
+        Data array
+
+    Returns
+    -------
+    longitudes : (S) ndarray of floats
+        Potentially trimmed array of longitudes of data, now in -180 to 180.
+    latitudes : (R) ndarray of floats
+        Potentially trimmed array of latitudes of data
+    data : (R, S) ndarray of floats
+        Trimmed data array
+
+    """
+
+    if limits[0] is not None:
+        lat_inds = np.nonzero(latitudes>limits[0])[0]
+        latitudes = latitudes[lat_inds]
+        data = data[lat_inds,:]
+
+    if limits[2] is not None:
+        lat_inds = np.nonzero(latitudes<limits[2])[0]
+        latitudes = latitudes[lat_inds]
+        data = data[lat_inds, :]
+
+    if limits[1] > limits[3] and limits[1] > 180:
+        lon_tmp = []
+        for lon in longitudes:
+            if lon> 180:
+                lon = 360 - lon
+            lon_tmp.append(lon)
+        longitudes = np.asarray(lon_tmp)
+
+    if limits[1] is not None:
+        lon_inds = np.nonzero(longitudes>limits[1])[0]
+        longitudes = longitudes[lon_inds]
+        data = data[:, lon_inds]
+
+    if limits[3] is not None:
+        lon_inds = np.nonzero(longitudes<limits[3])[0]
+        longitudes = longitudes[lon_inds]
+        data = data[:, lon_inds]
+
+    return longitudes, latitudes, data

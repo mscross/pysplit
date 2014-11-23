@@ -3,7 +3,8 @@ PySPLIT package containing tools for automatically
 generating trajectories, performing moisture uptake analyses,
 enhancing the HYSPLIT cluster analysis experience,
 and visualizing trajectories, trajectory clusters,
-and meteorological data along trajectories.
+meteorological data along trajectories, and meteorological
+data from hdf and grib files.
 
 """
 
@@ -17,7 +18,7 @@ __all__ = ['Trajectory',
 		   'do_nothing',
 		   'MapDesign',
 		   'get_colormap',
-		   'edit_cbar',
+		   'make_cbar',
 		   'labelfile_generator',
 		   'labelfile_reader',
 		   'map_labeller',
@@ -49,11 +50,13 @@ __all__ = ['Trajectory',
 		   'getsurface_getvar',
 		   'file_lister',
 		   'file_dates',
-		   'grib_lister',
-		   'hdf_lister',
+		   'get_gribdata',
+		   'get_hdfdata',
 		   'averager',
 		   'windplot',
 		   'plot_othervar',
+		   'zplot',
+		   'gridlimit'
 		   'oni_file_reader',
 		   'oni_file_interrogator',
 		   'enso_plotprep',
@@ -66,7 +69,7 @@ __all__ = ['Trajectory',
 from .traj import (Trajectory, TrajectoryGroup, Cluster, ClusterGroup,
 				   data_prep, get_transform, square_it, do_nothing)
 
-from .mapmaker import MapDesign, get_colormap, edit_cbar
+from .mapmaker import MapDesign, get_colormap, make_cbar
 
 from .maplabeller import map_labeller, labelfile_reader, labelfile_generator
 
@@ -86,8 +89,8 @@ from .trajectory_generator import (generate_trajectories,
 								   try_to_remove, meteofile_lister)
 
 from .grib_reader import (getband_latslons, getsurface_getvar, file_lister,
-						  file_dates, grib_lister, hdf_lister, averager,
-						  windplot, plot_othervar)
+						  file_dates, get_gribdata, get_hdfdata, averager,
+						  windplot, plot_othervar, zplot, gridlimit)
 
 from .enso import (oni_file_reader, oni_file_interrogator, enso_plotprep,
 				   enso_winddata, enso_vardata, enso_windanomaly,

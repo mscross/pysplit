@@ -408,7 +408,6 @@ def convert_rh2w(relative_humidity, temperature, pressure):
     ----------
     rh : iterable of floats, or float
         relative humidity on a scale of 0.0 to 100.0 %
-
     temperature : iterable of floats, or float
         Temperature in K or degrees C.  Automatic conversion of units,
         for temperatures reasonable at the earth's surface
