@@ -295,6 +295,27 @@ def convert_mi2km(distance):
     return distance_km
 
 
+def convert_km2mi(distance):
+    """
+    Convert kilometers to miles.
+
+    Parameters
+    ----------
+    distance : float or iterable of floats
+        A value or values in units of kilometers
+
+    Returns
+    -------
+    distance_mi : float
+        The given value or values converted to miles
+
+    """
+
+    distance_mi = distance * 0.62137
+
+    return distance_mi
+
+
 def convert_w2q(mixing_ratio):
     """
     Convert mixing ratio to specific humidity.

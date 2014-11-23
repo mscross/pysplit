@@ -1926,7 +1926,7 @@ class ClusterGroup(object):
             and axis had to be created, i.e. ax=None and `basemap`
             is a MapDesign instance.
         ax : matplotlib Axes instance, optional
-            Newly created Axes instance.  ONly returned if a new figure
+            Newly created Axes instance.  Only returned if a new figure
             and axis had to be created, i.e. ax=None and `basemap`
             is a MapDesign instance.
         cavemap : Basemap instance

@@ -12,7 +12,7 @@ import itertools
 import os
 
 
-def getband_latslons(level, variable, datafile):
+def get_bandnum(level, variable, datafile):
     """
     Reads GRIB (ncar) files, returns number of desired raster band.
 
@@ -29,10 +29,6 @@ def getband_latslons(level, variable, datafile):
     -------
     bandnum : int
         Number of the raster band required
-    latitudes : ndarray of floats
-        The latitudes of the data grid
-    longitudes : ndarray of floats
-        The longitudes of the data grid
 
     """
 
@@ -55,15 +51,11 @@ def getband_latslons(level, variable, datafile):
             bandnum = i
             break
 
-    # Get the spatial coverage and start/end of the data
-    geotransform = dataset.GetGeoTransform(0)
+    if bandnum == 0:
+        raise ValueError('Band not found!  Check surface, band variable using',
+                         ' getsurface_getvar().')
 
-    # Generate longitudes and latitudes
-    longitudes = np.linspace(geotransform[0], 360.0 + geotransform[0],
-                             band.XSize, endpoint=False)
-    latitudes = np.linspace(geotransform[3], -1.0 * geotransform[3], band.YSize)
-
-    return bandnum, latitudes, longitudes
+    return bandnum
 
 
 
@@ -237,20 +229,27 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
     gribdatalist = []
 
     # Get the number of the band that contains the desired data
-    bandnum, latitudes, longitudes = getband_latslons(level, var, filelist[0])
+    bandnum = get_bandnum(level, var, filelist[0])
 
-    # If the appropriate band was found, open each file, get band, read band
+    # Open each file, get band, read band
     # into an array and put array into a list
-    if bandnum > 0:
-        for files in filelist:
+    for files in filelist:
 
-            dataset = gdal.Open(files, GA_ReadOnly)
+        dataset = gdal.Open(files, GA_ReadOnly)
 
-            band = dataset.GetRasterBand(bandnum)
+        band = dataset.GetRasterBand(bandnum)
 
-            bandval = band.ReadAsArray(0,0, band.XSize, band.YSize)
+        bandval = band.ReadAsArray(0,0, band.XSize, band.YSize)
 
-            gribdatalist.append(bandval)
+        gribdatalist.append(bandval)
+
+    # Get the spatial coverage and start/end of the data
+    geotransform = dataset.GetGeoTransform(0)
+
+    # Generate longitudes and latitudes
+    longitudes = np.linspace(geotransform[0], 360.0 + geotransform[0],
+                             band.XSize, endpoint=False)
+    latitudes = np.linspace(geotransform[3], -1.0 * geotransform[3], band.YSize)
 
     return gribdatalist, latitudes, longitudes
 

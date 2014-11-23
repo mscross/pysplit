@@ -6,16 +6,6 @@ import matplotlib.ticker as tk
 from mpl_toolkits.basemap import Basemap
 import maplabeller as ml
 
-"""
-To Do:
-    -draw parallels and meridians twice
-    -latspacing
-    -lonspacing
-    -if 20 is chosen as latlabelspacing, edit arange start -90 to -80
-    -create medium background
-
-"""
-
 
 class MapDesign(object):
     """
@@ -27,7 +17,8 @@ class MapDesign(object):
                  mapcolor='light', shapefiles=[], maplabels=None,
                  area_threshold=10000, resolution='c', zborder=14,
                  lat_labels=['right'], lon_labels=['top'], lat_labelspacing=10,
-                 lon_labelspacing=20, latlon_fs=20):
+                 lon_labelspacing=20, latlon_fs=20, latspacing=10,
+                 lonspacing=20):
         """
         Initialize MapDesign object.
 
@@ -60,8 +51,8 @@ class MapDesign(object):
                 'nplaea' : North polar azimuthal (equal area)
                 'splaea' : South polar azimuthal (equal area)
         mapcolor : string
-            Default 'light' The map grayscheme. ['light'|'dark']
-            'Dark' is not available for 'ortho' projections
+            Default 'light'. The map grayscheme. ['light'|'medium'|'dark']
+            Not available for 'ortho' projections
         shapefiles : list of tuples of strings
             Default is [].  (File, color, linewidth)
             r'C:\programming\shapefiles\New_Shapefile'
@@ -82,13 +73,37 @@ class MapDesign(object):
             map boundaries.  Drops off by about 80 percent between datasets.
         zborder : int
             Default 14. The zorder of country and coastal outlines
+        lat_labels : list of strings
+            Default ['right'].
+            The sides of the map that should have the latitudes labelled.
+        lon_labels : list of strings
+            Default ['top'].
+            The sides of the map that should have the longitudes labelled.
+        lat_labelspacing : int or float
+            Default 10.  Degrees between latitude labels
+        lon_labelspacing : int or float
+            Default 20.  Degrees between longitude labels.
+        latlon_fs : int or float
+            Default 20.  Font size of latitude, longitude labels.
+        latspacing : int or float
+            Default 10.  Degrees between plotted lines of latitude.
+        lonspacing : int or float
+            Default 20.  Degrees between plotted lines of longitude.
 
         """
 
         # Initialize
         self.mapcorners = mapcorners
         self.standard_pm = standard_pm
+
         self.mapcolor = mapcolor
+        self.coloropts = {'light' : {'water' : None,
+                                    'land' : '0.95'},
+                          'medium' : {'water' : '0.625',
+                                      'land' : '0.775'},
+                          'dark' : {'water' : '0.3',
+                                    'land' : '0.75'}}
+
         self.shapefiles = shapefiles
         self.area_threshold = area_threshold
         self.resolution = resolution
@@ -102,9 +117,12 @@ class MapDesign(object):
                                lon_labelspacing=lon_labelspacing,
                                latlon_fs=latlon_fs)
 
+        self.latspacing = latspacing
+        self.lonspacing = lonspacing
+
         # Try to set label attributes
         if maplabels is not None:
-            self.labels = ml.labelfile_reader(maplabels[1])
+            self.labels, self.labelstyle = ml.labelfile_reader(maplabels[1])
             self.labelgroup = maplabels[0]
 
             # Label zorder optional, default 15 if none given.
@@ -113,9 +131,7 @@ class MapDesign(object):
             except:
                 self.label_zorder = 15
         else:
-            self.labels = None
-            self.labelgroup = None
-            self.label_zorder = 15
+            self.clear_labels()
 
 
     def view_prefs(self):
@@ -137,7 +153,23 @@ class MapDesign(object):
                           lat_labelspacing=None, lon_labelspacing=None,
                           latlon_fs=None):
         """
+        Edit latitude, longitude labelling preferences.
+
+        Parameters
+        ----------
+        lat_labels : list of strings
+            The sides of the map that should have the latitudes labelled.
+        lon_labels : list of strings
+            The sides of the map that should have the longitudes labelled.
+        lat_labelspacing : int or float
+            Degrees between latitude labels
+        lon_labelspacing : int or float
+            Degrees between longitude labels.
+        latlon_fs : int or float
+            Font size of latitude, longitude labels.
+
         """
+
         meridian_labels = [0,0,0,0]
         parallel_labels = [0,0,0,0]
 
@@ -150,6 +182,7 @@ class MapDesign(object):
             for la in lat_labels:
                 parallel_labels[ind_dict[la]] = 1
             self.parallel_labels = parallel_labels
+
         if lon_labels is not None:
             for lo in lon_labels:
                 meridian_labels[ind_dict[lo]] = 1
@@ -164,6 +197,18 @@ class MapDesign(object):
         if latlon_fs is not None:
             self.latlon_fs=latlon_fs
 
+
+    def edit_latlonspacing(self, lonspacing=None, latspacing=None):
+        """
+        Change the spacing between the lines of latitude, longitude drawn on
+            the basemap.
+        """
+
+        if lonspacing is not None:
+            self.lonspacing = lonspacing
+
+        if latspacing is not None:
+            self.latspacing = latspacing
 
 
     def edit_resolution(self, resolution=None, area_threshold=None):
@@ -230,16 +275,19 @@ class MapDesign(object):
         self.standard_pm = standard_pm
 
 
-    def swap_mapcolor(self):
+    def set_mapcolor(self, mapcolor):
         """
-        Switch mapcolor from light to dark.
+        Change the mapcolor.
 
         """
 
-        if self.mapcolor is 'light':
-            self.mapcolor = 'dark'
-        else:
+        options = ['light', 'medium', 'dark']
+
+        if mapcolor not in options:
+            print 'Unrecognized mapcolor ', mapcolor
             self.mapcolor = 'light'
+        else:
+            self.mapcolor = mapcolor
 
 
     def edit_shapefiles(self, shp=None, delete_shp=None, overwrite_shps=False):
@@ -339,7 +387,7 @@ class MapDesign(object):
         """
 
         if labelpath is not None:
-            self.labels = ml.labelfile_reader(labelpath)
+            self.labels, self.labelstyle = ml.labelfile_reader(labelpath)
 
         if labelgroup is not None:
             self.labelgroup = labelgroup
@@ -355,6 +403,7 @@ class MapDesign(object):
         """
 
         self.labels = None
+        self.labelstyle = None
         self.labelgroup = None
         self.label_zorder = 15
 
@@ -391,11 +440,11 @@ class MapDesign(object):
 
         Returns
         -------
-        fig : figure instance
+        fig : matplotlib Figure instance
             Returned only if ax=None and figure must be created.
-        ax : axes instance
+        ax : matplotlib Axes instance
             The axis on which the basemap is drawn.
-        cavemap : basemap instance
+        cavemap : Basemap instance
             A map ready for data plotting
 
         """
@@ -410,7 +459,6 @@ class MapDesign(object):
 
         if self.projection is 'cconic':
             # Lambert conformal conic
-            # Set area_threshold to 1000, to eliminate tiny lakes and islands
             cavemap = Basemap(llcrnrlon=self.mapcorners[0],
                               llcrnrlat=self.mapcorners[1],
                               urcrnrlon=self.mapcorners[2],
@@ -483,7 +531,8 @@ class MapDesign(object):
         # Draw labels
         if self.labels is not None and self.labelgroup is not None:
                 cavemap = ml.map_labeller(cavemap, ax, self.labelgroup,
-                                          self.labels, self.label_zorder)
+                                          self.labels, self.label_zorder,
+                                          self.labelstyle)
 
         if len(self.shapefiles) > 0:
             # plot shapefiles
@@ -496,21 +545,44 @@ class MapDesign(object):
         cavemap.drawstates(zorder=14)
         cavemap.drawcoastlines(zorder=self.zborder, linewidth=1.5)
 
-        # Draw and label meridians and parallels
-        cavemap.drawmeridians(np.arange(-180, 180, self.long), labels=meridian_labels,
-                                        fontsize=self.latlon_fs, zorder=11)
-        cavemap.drawparallels(np.arange(-90, 90, 10), labels=parallel_labels,
-                                        fontsize=self.latlon_fs, zorder=11)
+        if lat_labelspacing == 20:
+            lat = -80
+        else:
+            lat = -90
+
+        # Draw and label lines of longitude
+        if self.lon_labelspacing > self.lonspacing:
+
+            cavemap.drawmeridians(np.arange(-180, 180, self.lonspacing),
+                                  labels=[0,0,0,0], zorder=11)
+            cavemap.drawmeridians(np.arange(-180, 180, self.lon_labelspacing),
+                                  labels=meridian_labels, zorder=11,
+                                  fontsize=self.latlon_fs)
+        else:
+            cavemap.drawmeridians(np.arange(-180, 180, self.lon_labelspacing),
+                                  labels=meridian_labels, zorder=11,
+                                  fontsize=self.latlon_fs)
+
+        # Draw and label lines of latitude
+        if self.lat_labelspacing > self.latspacing:
+
+            cavemap.draw_parallels(np.arange(-90, 90, self.latspacing),
+                                   labels=[0,0,0,0], zorder=11)
+            cavemap.draw_parallels(np.arange(lat, 90, self.lat_labelspacing),
+                                   labels=parallel_labels, zorder=11,
+                                   fontsize=self.latlon_fs)
+        else:
+            cavemap.draw_parallels(np.arange(lat, 90, self.lat_labelspacing),
+                                   labels=parallel_labels, zorder=11,
+                                   fontsize=self.latlon_fs)
 
         # Map color defaults to white for ortho projection
         if self.projection != 'ortho':
-            if self.mapcolor == 'light':
-                cavemap.drawmapboundary(zorder=16)
-                cavemap.fillcontinents(color='0.95', zorder=12, alpha=0.85)
-            else:
-                cavemap.drawmapboundary(zorder=16, fill_color='0.3')
-                cavemap.fillcontinents(color='0.5', lake_color='0.3',
-                                       zorder=12, alpha=0.90)
+            colors = self.coloropts[self.mapcolor]
+
+            cavemap.drawmapboundary(zorder=16, fill_color=colors['water'])
+            cavemap.fillcontinents(color=colors['land'], zorder=12, alpha=0.85,
+                                   lake_color=colors['water'])
         else:
             cavemap.fillcontinents(color='0.99', zorder=12, alpha=0.85)
 
