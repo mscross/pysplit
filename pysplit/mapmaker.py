@@ -16,7 +16,7 @@ class MapDesign(object):
     def __init__(self, mapcorners, standard_pm, projection='cyl',
                  mapcolor='light', shapefiles=[], maplabels=None,
                  area_threshold=10000, resolution='c', zborder=14,
-                 lat_labels=['right'], lon_labels=['top'], lat_labelspacing=10,
+                 lat_labels=['left'], lon_labels=['top'], lat_labelspacing=10,
                  lon_labelspacing=20, latlon_fs=20, latspacing=10,
                  lonspacing=20):
         """
@@ -179,13 +179,15 @@ class MapDesign(object):
                     'bottom' : 3}
 
         if lat_labels is not None:
-            for la in lat_labels:
-                parallel_labels[ind_dict[la]] = 1
+            if 'none' not in lat_labels:
+                for la in lat_labels:
+                    parallel_labels[ind_dict[la]] = 1
             self.parallel_labels = parallel_labels
 
         if lon_labels is not None:
-            for lo in lon_labels:
-                meridian_labels[ind_dict[lo]] = 1
+            if 'none' not in lon_labels:
+                for lo in lon_labels:
+                    meridian_labels[ind_dict[lo]] = 1
             self.meridian_labels = meridian_labels
 
         if lat_labelspacing is not None:
@@ -545,36 +547,36 @@ class MapDesign(object):
         cavemap.drawstates(zorder=14)
         cavemap.drawcoastlines(zorder=self.zborder, linewidth=1.5)
 
-        if lat_labelspacing == 20:
+        if self.latstep == 20:
             lat = -80
         else:
             lat = -90
 
         # Draw and label lines of longitude
-        if self.lon_labelspacing > self.lonspacing:
+        if self.lonstep > self.lonspacing:
 
             cavemap.drawmeridians(np.arange(-180, 180, self.lonspacing),
                                   labels=[0,0,0,0], zorder=11)
-            cavemap.drawmeridians(np.arange(-180, 180, self.lon_labelspacing),
+            cavemap.drawmeridians(np.arange(-180, 180, self.lonstep),
                                   labels=meridian_labels, zorder=11,
                                   fontsize=self.latlon_fs)
         else:
-            cavemap.drawmeridians(np.arange(-180, 180, self.lon_labelspacing),
+            cavemap.drawmeridians(np.arange(-180, 180, self.lonstep),
                                   labels=meridian_labels, zorder=11,
                                   fontsize=self.latlon_fs)
 
         # Draw and label lines of latitude
-        if self.lat_labelspacing > self.latspacing:
+        if self.latstep > self.latspacing:
 
-            cavemap.draw_parallels(np.arange(-90, 90, self.latspacing),
-                                   labels=[0,0,0,0], zorder=11)
-            cavemap.draw_parallels(np.arange(lat, 90, self.lat_labelspacing),
-                                   labels=parallel_labels, zorder=11,
-                                   fontsize=self.latlon_fs)
+            cavemap.drawparallels(np.arange(-90, 90, self.latspacing),
+                                  labels=[0,0,0,0], zorder=11)
+            cavemap.drawparallels(np.arange(lat, 90, self.latstep),
+                                  labels=parallel_labels, zorder=11,
+                                  fontsize=self.latlon_fs)
         else:
-            cavemap.draw_parallels(np.arange(lat, 90, self.lat_labelspacing),
-                                   labels=parallel_labels, zorder=11,
-                                   fontsize=self.latlon_fs)
+            cavemap.drawparallels(np.arange(lat, 90, self.latstep),
+                                  labels=parallel_labels, zorder=11,
+                                  fontsize=self.latlon_fs)
 
         # Map color defaults to white for ortho projection
         if self.projection != 'ortho':
@@ -745,14 +747,14 @@ def edit_cbar(cbar, orientation, divisions, reverse_cbar, cbar_label, tick_fs,
     """
 
     # Adjust ticks and tick labels
-    if divisions is None:
+    if divisions is not None:
         cbar.locator = tk.MaxNLocator(divisions, integer=False)
     cbar.ax.tick_params(labelsize=tick_fs)
     cbar.update_ticks()
 
     # Initialize dictionary
-    rotation_dict = {'vertical' : (270, 24),
-                     'horizontal' : (0, 10)}
+    rotation_dict = {'vertical' : (270, 24, 'bottom'),
+                     'horizontal' : (0, 10, 'baseline')}
 
     # Reverse colorbar
     if reverse_cbar:
@@ -763,9 +765,9 @@ def edit_cbar(cbar, orientation, divisions, reverse_cbar, cbar_label, tick_fs,
 
     # Label colorbar
     if cbar_label is not None:
-        rotation, labelpad = rotation_dict[orientation]
+        rotation, labelpad, valign = rotation_dict[orientation]
         cbar.set_label(cbar_label, labelpad=labelpad, fontsize=label_fs,
-                       rotation=rotation)
+                       rotation=rotation, verticalalignment=valign)
 
     # Cbar will have lines through it if mappable's alpha < 1
     cbar.set_alpha(1)

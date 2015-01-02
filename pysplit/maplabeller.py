@@ -47,13 +47,13 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
     cities_coords = label_list[3]
     cities_style = labelstyle[1]
 
-    ocean_labels = label_list[4]
-    ocean_coords = label_list[5]
-    ocean_style = labelstyle[2]
+    country_labels = label_list[4]
+    country_coords = label_list[5]
+    country_style = labelstyle[2]
 
-    country_labels = label_list[6]
-    country_coords = label_list[7]
-    country_style = labelstyle[3]
+    ocean_labels = label_list[6]
+    ocean_coords = label_list[7]
+    ocean_style = labelstyle[3]
 
     cave_labels = label_list[8]
     cave_coords = label_list[9]
@@ -109,9 +109,9 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
                  'coord' : cities_coords,
                  'ha' : 'right',
                  'va' : 'center',
-                 'fs' : city_style['fontsize'],
-                 'wt' : city_style['weight'],
-                 'fst' : city_style['fontstyle'],
+                 'fs' : cities_style['fontsize'],
+                 'wt' : cities_style['weight'],
+                 'fst' : cities_style['fontstyle'],
                  'zrd' : labelzorder,
                  'off' : (0.0, 1.0),
                  'add' : r'$\bullet$'}
@@ -119,8 +119,8 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
     # Initialize dictionary of map label-group options
     label_masterdict = {'all_1' : [country_dict, ocean_dict, sea_dict, cave_dict],
                         'all_2' : [country_dict, ocean_dict, sea_dict, city_dict],
-                        'water+country' : [country_dict, ocean_dict, sea_dict]
-                        'water' : [ocean_dict, sea_dict]
+                        'water+country' : [country_dict, ocean_dict, sea_dict],
+                        'water' : [ocean_dict, sea_dict],
                         'important' : [country_dict, ocean_dict],
                         'city' : [city_dict, country_dict, ocean_dict],
                         'justcity': [city_dict],
@@ -256,8 +256,9 @@ def labelfile_reader(labelfile):
                         labellist.append(place)
                         coordlist.append(coord)
 
-                labels.append(labellist)
-                labels.append(coordlist)
+                if len(labellist) > 0:
+                    labels.append(labellist)
+                    labels.append(coordlist)
 
             break
 

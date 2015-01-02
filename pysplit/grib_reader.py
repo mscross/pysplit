@@ -626,7 +626,7 @@ def plot_othervar(basemap, vardata, latitudes, longitudes, ax=None,
         if ax is None:
             fig, ax, varmap = basemap.make_basemap(figsize)
         else:
-            ax, varmap = basemap.make_basemap(figsize, ax=ax)
+            varmap = basemap.make_basemap(figsize, ax=ax)
     except AttributeError:
         varmap = basemap
 
@@ -729,7 +729,7 @@ def zplot(basemap, zdata, latitudes, longitudes, contours, ax=None,
         if ax is None:
             fig, ax, zmap = basemap.make_basemap(figsize)
         else:
-            ax, zmap = basemap.make_basemap(figsize, ax=ax)
+            zmap = basemap.make_basemap(figsize, ax=ax)
     except AttributeError:
         zmap = basemap
 

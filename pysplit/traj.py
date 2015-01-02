@@ -127,7 +127,7 @@ class Trajectory:
         self.rainstatus = is_rainy
 
 
-    def set_trajcolor(color=None):
+    def set_trajcolor(self, color=None):
         """
         Set the color of the trajectory path as it will appear in
             map_data_line()
@@ -145,7 +145,7 @@ class Trajectory:
             self.trajcolor = color
 
 
-    def set_linewidth(lw=None):
+    def set_linewidth(self, lw=None):
         """
         Set the linewidth of the trajectory path as it will appear in
             map_data_line()
@@ -1270,9 +1270,9 @@ class TrajectoryGroup(object):
                   False : ''}
 
         for traj in self.trajectories:
-            cavemap.plot(traj.longitude, traj.latitude, color=traj.color,
+            cavemap.plot(traj.longitude, traj.latitude, color=traj.trajcolor,
                          linewidth=traj.linewidth, marker=mdict[show_timesteps],
-                         linestyle=lsdict[show_paths], markeredgecolor='none')
+                         linestyle=lsdict[show_paths], markeredgecolor='none', lat)
 
         try:
             return fig, ax, cavemap
