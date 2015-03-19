@@ -2,12 +2,12 @@ import numpy as np
 import math
 import os
 import matplotlib.pyplot as plt
-import matplotlib.ticker as tk
 import matplotlib.cm as cm
 import matplotlib.colors as clrs
 import mapmaker as mm
 import hyfile_handler as hh
 import traj_accessory as ta
+
 
 class Trajectory:
     """
@@ -70,11 +70,11 @@ class Trajectory:
         self.trajcolor = 'black'
         self.linewidth = 2
 
-
     def set_rainstatus(self, rainy_criterion='rainfall', check_steps=1,
                        rh_threshold=0.8):
         """
-        Determines if a trajectory is 'rainy', sets self.rainstatus accordingly.
+        Determines if a trajectory is 'rainy', sets self.rainstatus
+            accordingly.
 
         The determination is made by examining the user-given criteria
             within the user-given window of timesteps.
@@ -118,14 +118,13 @@ class Trajectory:
                         self.set_specifichumidity()
 
                     q0 = self.specific_humidity[0]
-                    qx = self.specific_humidity[check_steps*2]
+                    qx = self.specific_humidity[check_steps * 2]
                     dq = q0 - qx
 
                     if dq < 0:
                         is_rainy = True
 
         self.rainstatus = is_rainy
-
 
     def set_trajcolor(self, color=None):
         """
@@ -144,7 +143,6 @@ class Trajectory:
         else:
             self.trajcolor = color
 
-
     def set_linewidth(self, lw=None):
         """
         Set the linewidth of the trajectory path as it will appear in
@@ -161,7 +159,6 @@ class Trajectory:
         else:
             self.linewidth = lw
 
-
     def set_vector(self):
         """
         Calculate mean bearing of trajectory and bearings between timesteps
@@ -171,7 +168,6 @@ class Trajectory:
         self.meanvector, self.bearings = ta.tracemean_vector(self.latitude,
                                                              self.longitude)
 
-
     def set_relativehumidity(self):
         """
         Acquire relative humidity data for each timestep
@@ -180,7 +176,8 @@ class Trajectory:
         """
 
         if 'RELHUMID' in self.header:
-            self.relative_humidity = self.data[:, self.header.index('RELHUMID')]
+            self.relative_humidity = self.data[:,
+                                               self.header.index('RELHUMID')]
         else:
             if hasattr(self, 'mixing_ratio'):
                 self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
@@ -191,7 +188,6 @@ class Trajectory:
                 self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
                                                          self.temperature,
                                                          self.pressure)
-
 
     def set_mixingratio(self):
         """
@@ -220,7 +216,6 @@ class Trajectory:
                 raise AttributeError('Not enough information to ' +
                                      'calculate mixing ratio!')
 
-
     def set_specifichumidity(self):
         """
         Acquire specific humidity data for each timestep
@@ -229,11 +224,13 @@ class Trajectory:
         """
 
         if 'SPCHUMID' in self.header:
-            self.specific_humidity = self.data[:, self.header.index('SPCHUMID')]
+            self.specific_humidity = self.data[:,
+                                               self.header.index('SPCHUMID')]
         else:
             if hasattr(self, 'mixing_ratio'):
                 self.specific_humidity = ta.convert_w2q(self.mixing_ratio)
-            elif 'H2OMIXRA' in self.header or hasattr(self,'relative_humidity'):
+            elif ('H2OMIXRA' in self.header or
+                  hasattr(self, 'relative_humidity')):
                 self.set_mixingratio()
                 self.specific_humidity = ta.convert_w2q(self.mixing_ratio)
 
@@ -246,7 +243,6 @@ class Trajectory:
                 raise AttributeError('Not enough information to ' +
                                      'calculate specific humidity!')
 
-
     def set_distance(self):
         """
         Calculate the distances between each timestep and the distance between
@@ -257,7 +253,6 @@ class Trajectory:
         self.distance = ta.distance_overearth(self.latitude, self.longitude)
 
         self.total_distance = ta.sum_distance(self.distance)
-
 
     def dq_dw_drh(self):
         """
@@ -281,32 +276,31 @@ class Trajectory:
         drh_list = []
 
         while i < self.sim_length:
-            dq = self.specific_humidity[i]-self.specific_humidity[i+1]
-            dw = self.mixing_ratio[i]-self.mixing_ratio[i+1]
-            drh = self.relative_humidity[i]=self.relative_humidity[i+1]
+            dq = self.specific_humidity[i] - self.specific_humidity[i + 1]
+            dw = self.mixing_ratio[i] - self.mixing_ratio[i + 1]
+            drh = self.relative_humidity[i] = self.relative_humidity[i + 1]
 
             dq_list.append(dq)
             dw_list.append(dw)
             drh_list.append(drh)
-            i +=1
+            i += 1
 
         self.dq = np.asarray(dq_list).astype(np.float64)
         self.dw = np.asarray(dw_list).astype(np.float64)
         self.drh = np.asarray(drh_list).astype(np.float64)
 
-        self.dq = np.pad(self.dq, (0,1), 'constant',
+        self.dq = np.pad(self.dq, (0, 1), 'constant',
                          constant_values=(-999.0, -999.0))
-        self.dw = np.pad(self.dw, (0,1), 'constant',
+        self.dw = np.pad(self.dw, (0, 1), 'constant',
                          constant_values=(-999.0, -999.0))
-        self.drh = np.pad(self.drh, (0,1), 'constant',
-                         constant_values=(-999.0, -999.0))
+        self.drh = np.pad(self.drh, (0, 1), 'constant',
+                          constant_values=(-999.0, -999.0))
 
         self.dq = np.ma.masked_less_equal(self.dq, -999.0)
         self.dw = np.ma.masked_less_equal(self.dw, -999.0)
         self.drh = np.ma.masked_less_equal(self.drh, -999.0)
 
-
-    def calculate_moistureflux(self, qtype= 'specific_humidity'):
+    def calculate_moistureflux(self, qtype='specific_humidity'):
         """
         Calculate the moisture flux between each timestep
             using distance and the chosen humidity parameter
@@ -336,9 +330,8 @@ class Trajectory:
         speed = self.distance / 3600
         mf = speed[1:] * moisture[:-1]
 
-        mf = np.pad(mf, (0,1), 'constant', constant_values=(-999.0, -999.0))
+        mf = np.pad(mf, (0, 1), 'constant', constant_values=(-999.0, -999.0))
         self.moistureflux = np.ma.masked_less_equal(mf, -999.0)
-
 
     def last_moistureuptake(self, q_type='specific_humidity'):
         """
@@ -347,11 +340,10 @@ class Trajectory:
         There are three basic scenarios for finding moisure sources.
             In the first, the trajectory follows the case outlined in
             Gustafsson 2010, where the trajectory experiences a decrease
-            in q in the target region- the source region is easily identifiable.
-            The second is where the parcel shows an increase in q to
-            the target area
+            in q in the target region- the source region is easily
+            identifiable.  The second is where the parcel shows an increase
+            in q to the target area
         """
-
 
     def moistureuptake(self, rainout_threshold, evap_threshold,
                        uptake_window=6, window_overlap=0,
@@ -431,7 +423,6 @@ class Trajectory:
         e_total_index = moisture_header.index('total e')
         f_total_index = moisture_header.index('total f')
 
-
         # Initialize empty array
         moisture_array = np.empty((0, len(moisture_header))).astype(np.float64)
 
@@ -440,7 +431,8 @@ class Trajectory:
         # print earliest
         initial_timept = []
 
-        for item in moisture_header[:moisture_header.index('total_distance')+1]:
+        for item in moisture_header[:moisture_header.index('total_distance')
+                                    + 1]:
             initial_timept.append(getattr(self, item)[-1])
 
         initial_timept.extend([self.pressure[-1], self.mixdepth[-1],
@@ -460,8 +452,8 @@ class Trajectory:
         # Spacing between these are determined by the uptake_window and overlap
         # print earliest - (uptake_window+1)
         # print uptake_window - window_overlap
-        timesteps = range(0, earliest-(uptake_window-1),
-                          uptake_window-window_overlap)[::-1]
+        timesteps = range(0, earliest - (uptake_window - 1),
+                          uptake_window - window_overlap)[::-1]
         print timesteps
 
         # Cycle through each chunk of time
@@ -471,7 +463,8 @@ class Trajectory:
 
             # Get year, month, day, hour, and timestep at the latest
             # point in ts
-            for item in moisture_header[:moisture_header.index('timesteps')+1]:
+            for item in moisture_header[:moisture_header.index('timesteps')
+                                        + 1]:
                 timepoint.append(getattr(self, item)[ts])
 
             # Get the latitude, longitude, and Total Distance
@@ -484,16 +477,16 @@ class Trajectory:
             else:
                 midpoint = (uptake_window + 1) / 2
 
-
             for item in moisture_header[moisture_header.index('latitude'):
-                                        moisture_header.index('total_distance')+1]:
-                timepoint.append(getattr(self, item)[ts+midpoint])
+                                        moisture_header.index('total_distance')
+                                        + 1]:
+                timepoint.append(getattr(self, item)[ts + midpoint])
 
             # Get the average pressure, mixdepth, and altitude over the window
-            pressure = np.mean(self.pressure[ts:ts+uptake_window])
-            mixdepth = (np.mean(self.mixdepth[ts:ts+uptake_window])
+            pressure = np.mean(self.pressure[ts:ts + uptake_window])
+            mixdepth = (np.mean(self.mixdepth[ts:ts + uptake_window])
                         * mixdepth_factor)
-            altitude = np.mean(self.altitude[ts:ts+uptake_window])
+            altitude = np.mean(self.altitude[ts:ts + uptake_window])
 
             # Find q and initial dq from previous q
             q = getattr(self, q_type)[ts]
@@ -513,7 +506,8 @@ class Trajectory:
                 else:
                     below_vert_criteria = False
             elif vertical_criterion is 'both':
-                if (altitude - mixdepth < 0) and (pressure > pressure_threshold):
+                if (altitude - mixdepth < 0) and (pressure >
+                                                  pressure_threshold):
                     below_vert_criteria = True
                 else:
                     below_vert_criteria = False
@@ -528,34 +522,36 @@ class Trajectory:
 
                     if moisture_array[i, e_index] > -999.0:
                         mostrecent_dq = moisture_array[i, dq_index]
-                        updated_frac = mostrecent_dq/q
+                        updated_frac = mostrecent_dq / q
                         moisture_array[i, e_index] = updated_frac
 
                     elif moisture_array[i, f_index] > -999.0:
                         mostrecent_dq = moisture_array[i, dq_index]
-                        updated_frac = mostrecent_dq/q
+                        updated_frac = mostrecent_dq / q
                         moisture_array[i, f_index] = updated_frac
 
                 # Initialize current values of e and f
                 # Find previous values of dq where there is e and f
                 # Get new e_total, f_total
                 if below_vert_criteria:
-                    e =  -999.0
-                    e_inds =  np.nonzero(moisture_array[:, e_index] > -999.0)
-                    e_total =  np.sum(moisture_array[e_inds, dq_index])/q
+                    e       = -999.0
+                    e_inds  = np.nonzero(moisture_array[:, e_index] > -999.0)
+                    e_total = np.sum(moisture_array[e_inds, dq_index]) / q
 
-                    f =  dq/q
-                    f_inds =  np.nonzero(moisture_array[:, f_index] > -999.0)
-                    f_total = (np.sum(moisture_array[f_inds, dq_index])+dq)/q
+                    f       = dq / q
+                    f_inds  = np.nonzero(moisture_array[:, f_index] > -999.0)
+                    f_total = (np.sum(moisture_array[f_inds, dq_index])
+                               + dq) / q
 
                 else:
-                    e =  dq/q
-                    e_inds =  np.nonzero(moisture_array[:, e_index]>-999.0)
-                    e_total = (np.sum(moisture_array[e_inds, dq_index])+dq)/q
+                    e       = dq / q
+                    e_inds  = np.nonzero(moisture_array[:, e_index]>-999.0)
+                    e_total = (np.sum(moisture_array[e_inds, dq_index])
+                               + dq) / q
 
-                    f =  -999.0
-                    f_inds =  np.nonzero(moisture_array[:, f_index]>-999.0)
-                    f_total =  np.sum(moisture_array[f_inds, dq_index])/q
+                    f       = -999.0
+                    f_inds  = np.nonzero(moisture_array[:, f_index] > -999.0)
+                    f_total = np.sum(moisture_array[f_inds, dq_index]) / q
 
                 d_total = 1.0 - (e_total + f_total)
 
@@ -603,7 +599,8 @@ class Trajectory:
             timepoint.extend([dq, e, f, d_total, e_total, f_total])
             timepoint = np.atleast_2d(np.asarray(timepoint).astype(np.float64))
 
-            moisture_array = np.concatenate((timepoint, moisture_array), axis=0)
+            moisture_array = np.concatenate((timepoint, moisture_array),
+                                            axis=0)
 
         # Mask missing/invalid data
         masked_moistarr = np.ma.masked_less_equal(moisture_array, -999)
@@ -611,7 +608,6 @@ class Trajectory:
         self.moisture_sources = moisture_array
         self.masked_sources = masked_moistarr
         self.moisture_header = moisture_header
-
 
     def load_forwardtraj(self, forward_dir):
         """
@@ -638,7 +634,7 @@ class Trajectory:
         fdatlist, _, _ = hh.load_hysplitfile(self.forwardpath)
 
         # Check that there is only one trajectory in the file
-        if len(fdatlist) >1:
+        if len(fdatlist) > 1:
             print 'Multiple-trajectory files not supported!'
             self.forwardpath = None
             self.fdata = None
@@ -646,11 +642,11 @@ class Trajectory:
             self.fdata = fdatlist[0]
             self.flatitude = self.fdata[:, self.header.index('Latitude')]
             self.flongitude = self.fdata[:, self.header.index('Longitude')]
-            self.faltitude = self.fdata[:, self.header.index('Altitude (magl)')]
+            self.faltitude = self.fdata[:,
+                                        self.header.index('Altitude (magl)')]
             self.fdistance = ta.distance_overearth(self.flatitude,
                                                    self.flongitude)
             self.ftotal_dist = ta.sum_distance(self.fdistance)
-
 
     def integration_error(self):
         """
@@ -691,12 +687,12 @@ class Trajectory:
         z_distance = self.altitude[0] - self.faltitude[-1]
 
         # Distance between points divided by total h or v distance
-        self.integ_error_xy = ((site_distance/(f_distance+b_distance))*100)/2
-        self.integ_error_z = ((z_distance/(falt_range+balt_range))*100)/2
-
+        self.integ_error_xy = (((site_distance / (f_distance + b_distance))
+                               * 100) / 2)
+        self.integ_error_z = (((z_distance / (falt_range + balt_range))
+                              * 100) / 2)
 
     # def map_traj(self, mapdesign, ):
-
 
 
 class TrajectoryGroup(object):
@@ -717,9 +713,7 @@ class TrajectoryGroup(object):
         """
         self.trajectories = traj_object_list
         self.trajcount = len(traj_object_list)
-        self.directory,_ = os.path.split(traj_object_list[0].fullpath)
-
-
+        self.directory, _ = os.path.split(traj_object_list[0].fullpath)
 
     def __add__(self, other):
         """
@@ -754,8 +748,6 @@ class TrajectoryGroup(object):
 
         return new_tg
 
-
-
     def hystats(self, variable, sort_bytime='month', iterable=True):
         """
         Gathers t=0* data so you can make your own plots.
@@ -786,7 +778,7 @@ class TrajectoryGroup(object):
             trajectory in a  unique `sort_bytime`.
             Returned if `sort_bytime` is not 'none'.
         unique_times : list of ints
-            The unique `sort_bytime`s.  Returned if `sort_bytime` is not 'none'.
+            The unique `sort_bytime`s.  Returned if `sort_bytime` is not 'none'
         var : 1D ndarray
             The array of the requested variable at t=0* for each trajectory.
 
@@ -856,7 +848,6 @@ class TrajectoryGroup(object):
         else:
             return var
 
-
     def stack_trajcoords(self):
         """
         Gathers the latitudes and longitudes of each member trajectory
@@ -881,12 +872,10 @@ class TrajectoryGroup(object):
             else:
                 trajlons = np.concatenate((trajlons, lons))
 
-
         self.all_trajlats = trajlats
         self.all_trajlons = trajlons
 
-
-    def grid_trajvar(self, variable, cell_value, grid_res= 0.5,
+    def grid_trajvar(self, variable, cell_value, grid_res=0.5,
                      use_wherebin=True, normalize=False):
         """
         Grids
@@ -932,14 +921,14 @@ class TrajectoryGroup(object):
         self.var = np.ma.masked_less_equal(var_array, -999.0)
 
         # Grid the data if you haven't before or you don't want to use wherebin
-        if (not hasattr(self, 'wherebin') or use_wherebin == False
+        if (not hasattr(self, 'wherebin') or not use_wherebin
             or grid_res != self.grid_res):
 
             (self.grid, self.xi, self.yi,
                 self.bins, self.wherebin) = ta.grid_data(self.all_trajlons,
-                                                        self.all_trajlats,
-                                                        self.var, cell_value,
-                                                        grid_res)
+                                                         self.all_trajlats,
+                                                         self.var, cell_value,
+                                                         grid_res)
             self.grid_res = grid_res
         # Grid the data using wherebin
         elif use_wherebin:
@@ -954,7 +943,7 @@ class TrajectoryGroup(object):
                                'range' : ta.maxmin_diff}
 
             # Initialize grid
-            newgrid = np.zeros(self.grid.shape, dtype= self.grid.dtype)
+            newgrid = np.zeros(self.grid.shape, dtype=self.grid.dtype)
 
             # Put values into grid
             for r in range(newgrid.shape[0]):
@@ -968,7 +957,7 @@ class TrajectoryGroup(object):
                     newgrid[r, c] = binval
 
             # Mask invalid values
-            newgrid = np.ma.masked_less_equal(newgrid,-999.0)
+            newgrid = np.ma.masked_less_equal(newgrid, -999.0)
 
             # Set attribute
             self.grid = newgrid
@@ -977,8 +966,7 @@ class TrajectoryGroup(object):
             gridmax = np.max(self.grid)
             gridmin = np.min(self.grid)
 
-            self.grid = (self.grid-gridmin)/(gridmax-gridmin)
-
+            self.grid = (self.grid - gridmin) / (gridmax - gridmin)
 
     def grid_moisturevar(self, uptake_type, scale, cell_value,
                          grid_res=0.5, normalize=False):
@@ -1014,7 +1002,6 @@ class TrajectoryGroup(object):
         e_col = self.trajectories[0].moisture_header.index('e')
         d_col = self.trajectories[0].moisture_header.index('unknown fraction')
 
-
         # Uptake, scale,: data_col, data_rows, cmap
         opts = {'all points': {'fractional'  : [d_col, None],
                                'absolute dqi': [dqi_col, None],
@@ -1048,13 +1035,13 @@ class TrajectoryGroup(object):
             mdata = moisture_data[:, data_col]
         else:
             if 'e' in data_rows:
-                e_rows = np.nonzero(moisture_data[:, e_col]>-999.0)
+                e_rows = np.nonzero(moisture_data[:, e_col] > -999.0)
                 mlons = moisture_data[e_rows, lon_col]
                 mlats = moisture_data[e_rows, lat_col]
                 mdata = moisture_data[e_rows, data_col]
 
             if 'f' in data_rows:
-                f_rows = np.nonzero(moisture_data[:, f_col]>-999.0)
+                f_rows = np.nonzero(moisture_data[:, f_col] > -999.0)
                 lons = moisture_data[f_rows, lon_col]
                 lats = moisture_data[f_rows, lat_col]
                 data = moisture_data[f_rows, data_col]
@@ -1078,8 +1065,7 @@ class TrajectoryGroup(object):
             gridmax = np.max(self.mgrid)
             gridmin = np.min(self.mgrid)
 
-            self.mgrid = (self.mgrid-gridmin)/(gridmax-gridmin)
-
+            self.mgrid = (self.mgrid - gridmin) / (gridmax - gridmin)
 
     def unique_dates(self):
         """
@@ -1094,7 +1080,6 @@ class TrajectoryGroup(object):
         datestrs = list(set(datestrs))
 
         self.datestrings = datestrs
-
 
     def set_raincount(self, reset_traj_rainstatus=False,
                       rainy_criterion='rainfall', check_steps=1,
@@ -1141,10 +1126,9 @@ class TrajectoryGroup(object):
 
         for traj in self.trajectories:
             if traj.rainstatus:
-                raincount +=1
+                raincount += 1
 
         self.raincount = raincount
-
 
     def make_infile(self):
         """
@@ -1160,7 +1144,7 @@ class TrajectoryGroup(object):
 
         for traj in self.trajectories:
             output = str(traj.cfullpath)
-            output = output.replace ('\\', '/')
+            output = output.replace('\\', '/')
             infile.writelines(output + '\n')
             infile.flush()
 
@@ -1203,8 +1187,7 @@ class TrajectoryGroup(object):
 
         return clustergroup
 
-
-    def map_data_line(self, basemap, ax=None, figsize=(20,20), zorder=19,
+    def map_data_line(self, basemap, ax=None, figsize=(20, 20), zorder=19,
                       show_timesteps=False, show_paths=True):
         """
         Make a plot of the trajectories in the TrajectoryGroup.
@@ -1226,9 +1209,10 @@ class TrajectoryGroup(object):
         Keyword Arguments
         -----------------
         ax : matplotlib axes instance
-            Default None.  The axis on which to draw a new Basemap, if `basemap`
-            is not a Basemap instance.  If None, and `basemap` is a MapDesign
-            instance, then new figure and axis instances will be created.
+            Default None.  The axis on which to draw a new Basemap, if
+            `basemap` is not a Basemap instance.  If None, and `basemap` is a
+            MapDesign instance, then new figure and axis instances
+            will be created.
         figsize : tuple of ints
             Default (20,20).  The size of a new figure instance, if one must be
             created.
@@ -1271,16 +1255,16 @@ class TrajectoryGroup(object):
 
         for traj in self.trajectories:
             cavemap.plot(traj.longitude, traj.latitude, color=traj.trajcolor,
-                         linewidth=traj.linewidth, marker=mdict[show_timesteps],
-                         linestyle=lsdict[show_paths], markeredgecolor='none', lat)
+                         linewidth=traj.linewidth,
+                         marker=mdict[show_timesteps], latlon=True,
+                         linestyle=lsdict[show_paths], markeredgecolor='none')
 
         try:
             return fig, ax, cavemap
         except:
             return cavemap
 
-
-    def map_data_scatter(self, basemap, variable, ax=None, figsize=(20,20),
+    def map_data_scatter(self, basemap, variable, ax=None, figsize=(20, 20),
                          zorder=19, ptsize=25, color_min=None, color_max=None,
                          colormap='blues', alpha=1.0, rescale='linear',
                          sizevar=None, size_rescale='linear'):
@@ -1371,7 +1355,7 @@ class TrajectoryGroup(object):
         if color_min is None:
             color_min = data.min()
 
-        if color_max == None:
+        if color_max is None:
             color_max = data.max()
 
         # Gather size variable into one array, prepare data
@@ -1391,8 +1375,7 @@ class TrajectoryGroup(object):
         except:
             return cavemap, cm
 
-
-    def map_moisture(self, basemap, uptake, scale, ax=None, figsize=(20,20),
+    def map_moisture(self, basemap, uptake, scale, ax=None, figsize=(20, 20),
                      zorder=20, ptsize=25, color_min=None, color_max=None,
                      alpha=1.0):
         """
@@ -1474,7 +1457,6 @@ class TrajectoryGroup(object):
         e_col = self.trajectories[0].moisture_header.index('e')
         d_col = self.trajectories[0].moisture_header.index('unknown fraction')
 
-
         # Uptake, scale,: data_col, data_rows, cmap
         opts = {'all points': {'fractional'  : [d_col, None, plt.cm.Blues_r],
                                'absolute dqi': [dqi_col, None, plt.cm.Blues],
@@ -1500,7 +1482,6 @@ class TrajectoryGroup(object):
             else:
                 color_min = 0.0
 
-
         if color_max is None:
             if 'absolute' in scale:
                 color_max = 0.0
@@ -1510,7 +1491,6 @@ class TrajectoryGroup(object):
                         color_max = datamax
             else:
                 color_max = 1.0
-
 
         for tr in self.trajectories:
             if data_rows is None:
@@ -1523,22 +1503,22 @@ class TrajectoryGroup(object):
                                      edgecolor='none')
             else:
                 if 'e' in data_rows:
-                    e_rows = np.nonzero(tr.masked_sources[:, e_col]>-999.0)
+                    e_rows = np.nonzero(tr.masked_sources[:, e_col] > -999.0)
                     lons = tr.masked_sources[e_rows, lon_col]
                     lats = tr.masked_sources[e_rows, lat_col]
                     data = tr.masked_sources[e_rows, data_col]
                     cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
-                                         cmap=cmap,vmin=color_min,
+                                         cmap=cmap, vmin=color_min,
                                          vmax=color_max, latlon=True,
                                          zorder=zorder, alpha=alpha,
                                          edgecolor='none')
                 if 'f' in data_rows:
-                    f_rows = np.nonzero(tr.masked_sources[:, f_col]>-999.0)
+                    f_rows = np.nonzero(tr.masked_sources[:, f_col] > -999.0)
                     lons = tr.masked_sources[f_rows, lon_col]
                     lats = tr.masked_sources[f_rows, lat_col]
                     data = tr.masked_sources[f_rows, data_col]
                     cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
-                                         cmap=cmap,vmin=color_min,
+                                         cmap=cmap, vmin=color_min,
                                          vmax=color_max, latlon=True,
                                          zorder=zorder, alpha=alpha,
                                          edgecolor='none')
@@ -1547,8 +1527,7 @@ class TrajectoryGroup(object):
         except:
             return cavemap, cm
 
-
-    def gridmap(self, basemap, ax=None, figsize=(20,20), ismoisture=False,
+    def gridmap(self, basemap, ax=None, figsize=(20, 20), ismoisture=False,
                 usecontourf=False, mapcount=False, color_min=None,
                 color_max=None, colormap='blues', zorder=20):
         """
@@ -1615,7 +1594,7 @@ class TrajectoryGroup(object):
 
         try:
             if ax is None:
-                fig, ax, cavemap = basemap.make_basemap(figszie)
+                fig, ax, cavemap = basemap.make_basemap(figsize)
             else:
                 cavemap = basemap.make_basemap(figsize, ax=ax)
         except AttributeError:
@@ -1650,7 +1629,7 @@ class TrajectoryGroup(object):
         colormap = mm.get_colormap(colormap)
 
         if usecontourf:
-            cm = cavemap.contourf(x,y, data,
+            cm = cavemap.contourf(x, y, data,
                                   np.linspace(color_min, color_max, num=11),
                                   cmap=colormap, latlon=True, zorder=zorder)
         else:
@@ -1662,7 +1641,6 @@ class TrajectoryGroup(object):
             return fig, ax, cavemap, cm
         except:
             return cavemap, cm
-
 
 
 class Cluster(TrajectoryGroup):
@@ -1691,8 +1669,6 @@ class Cluster(TrajectoryGroup):
         self.start_longitude = traj_object_list[0].longitude[0]
         self.clusternumber = cluster_number
 
-
-
     def __add__(self, other):
         """
         Prints notice before calling TrajectoryGroup.__add__()
@@ -1705,7 +1681,6 @@ class Cluster(TrajectoryGroup):
 
         return new_tg
 
-
     def set_coordinates(self, endpoints_file):
         """
         Initialize the coordinates of the Cluster mean trajectory path.
@@ -1717,8 +1692,6 @@ class Cluster(TrajectoryGroup):
             trajectory path
 
         """
-        # filename = 'C'+str(self.clusternumber) +'_'+str(total_clusters)+'mean.tdump'
-        # endpoints_file = os.path.join(endpoints_dir, filename)
 
         data, header, _ = hh.load_hysplitfile(endpoints_file)
 
@@ -1729,7 +1702,6 @@ class Cluster(TrajectoryGroup):
         for lon in self.longitude:
             if lon > 180.0:
                 lon = lon - 360.0
-
 
     def set_vector(self):
         """
@@ -1745,7 +1717,6 @@ class Cluster(TrajectoryGroup):
         self.meanvector, self.bearings = ta.tracemean_vector(self.latitude,
                                                              self.longitude)
 
-
     def set_distance(self):
         """
         Calculate the distance between timesteps fo the Cluster path and the
@@ -1759,7 +1730,6 @@ class Cluster(TrajectoryGroup):
                              'perform set_coordinates() first')
         self.distance = ta.distance_overearth(self.latitude, self.longitude)
         self.total_distance = ta.sum_distance(self.distance)
-
 
     def set_meanvar(self):
         """
@@ -1814,7 +1784,6 @@ class Cluster(TrajectoryGroup):
         self.total_mf = np.sum(mf_list)
 
 
-
 class ClusterGroup(object):
     """
     Class for processing and plotting Clusters
@@ -1837,8 +1806,6 @@ class ClusterGroup(object):
             totaltraj.append(cluster.trajcount)
         self.totaltrajcount = sum(totaltraj)
 
-
-
     def set_coordinates(self, endpoints_dir):
         """
         Sets the mean coordinates in constituent clusters
@@ -1850,7 +1817,6 @@ class ClusterGroup(object):
 
         """
 
-
         for clus in self.clusters:
 
             endpoints_fname = ('C' + str(clus.clusternumber) + '_' +
@@ -1859,9 +1825,7 @@ class ClusterGroup(object):
 
             clus.set_coordinates(endpoints_file)
 
-
-
-    def map_clusters(self, basemap, ax=None, figsize=(20,20),
+    def map_clusters(self, basemap, ax=None, figsize=(20, 20),
                      color_var='mean_mf', color_min=None, color_max=None,
                      color_rescale='linear', width_var='count',
                      width_rescale='linear', width_adjust=1.0,
@@ -1966,7 +1930,7 @@ class ClusterGroup(object):
             if 'relative' in width_var:
                 tmp = []
                 for w in widthvar_list:
-                    tmp.append((w/self.totaltrajcount)*100)
+                    tmp.append((w / self.totaltrajcount) * 100)
                 widthvar_list = tmp
         else:
             for cluster in self.clusters:
@@ -1977,7 +1941,7 @@ class ClusterGroup(object):
         # Transform and adjust widths, transform colors
         i = 0
         while i < self.totalclusters:
-            widthvar_list[i] = (w_transf[0](widthvar_list[i]))*width_adjust
+            widthvar_list[i] = (w_transf[0](widthvar_list[i])) * width_adjust
             colorvar_list[i] = c_transf[0](colorvar_list[i])
             i = i + 1
 
@@ -1995,10 +1959,10 @@ class ClusterGroup(object):
         # Obtain index array of linewidths so thick lines plot last
         plot_order = np.argsort(widthvar_list, kind='mergesort')
 
-        colors=[]
+        colors = []
 
         for i in plot_order:
-            # Map values to RGBA values from given colormap, use resulting color
+            # Map values to RGBA values from given cmap, use resulting color
             color = scalarmap.to_rgba(colorvar_list[i])
             colors.append(color)
             cavemap.plot(self.clusters[i].longitude, self.clusters[i].latitude,
@@ -2010,8 +1974,7 @@ class ClusterGroup(object):
         except:
             return cavemap, colors, plot_order
 
-
-    def trajplot_clusterplot(self, basemap, figsize=(20,20),
+    def trajplot_clusterplot(self, basemap, figsize=(20, 20),
                              colors=None, orientation='horizontal',
                              cluster_lw='relative', clus_zorder=19,
                              traj_lw=3, traj_zorder=19):
@@ -2084,7 +2047,7 @@ class ClusterGroup(object):
         if colors is None:
             colors = np.random.rand(self.totalclusters, 3)
             colors = np.vsplit(colors, self.totalclusters)
-            color_tmp=[]
+            color_tmp = []
             for c in colors:
                 color_tmp.append(c[0])
             colors = color_tmp
@@ -2094,8 +2057,8 @@ class ClusterGroup(object):
             print 'relative'
             cluster_lw = []
             for cluster in self.clusters:
-                cluster_lw.append((cluster.trajcount/
-                                   float(self.totaltrajcount))*100.0)
+                cluster_lw.append((cluster.trajcount /
+                                   float(self.totaltrajcount)) * 100.0)
 
         elif cluster_lw is 'absolute':
             print 'absolute'
@@ -2122,8 +2085,8 @@ class ClusterGroup(object):
 
             for traj in cluster.trajectories:
                 trajmap.plot(traj.longitude, traj.latitude, color=color,
-                             linewidth=traj_lw, latlon=True, zorder=traj_zorder,
-                             ax=ax_t)
+                             linewidth=traj_lw, latlon=True,
+                             zorder=traj_zorder, ax=ax_t)
 
         return fig, ax_t, ax_c, trajmap, clusmap, colors
 
@@ -2179,7 +2142,7 @@ def scatterprep(trajgroup, variable, transform):
             latarray = np.concatenate((latarray, lat))
             lonarray = np.concatenate((lonarray, lon))
 
-    data = np.ma.masked_less_equal(datarray,-999.0)
+    data = np.ma.masked_less_equal(datarray, -999.0)
     lons = lonarray
     lats = latarray
 
@@ -2221,7 +2184,7 @@ def get_transform(transform):
 def square_it(x):
     """
     """
-    x = x**2
+    x = x ** 2
     return x
 
 

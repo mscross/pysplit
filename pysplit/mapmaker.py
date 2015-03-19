@@ -1,6 +1,4 @@
 import numpy as np
-import math
-import os
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
 from mpl_toolkits.basemap import Basemap
@@ -60,7 +58,8 @@ class MapDesign(object):
             Default None.
             (Label group, label file full/relative path, optional: zorder).
             Determines what label groups are applied, if any:
-            Label group choices:  ['all_1'|'all_2'|important'|'justcave'|'cave']
+            Label group choices:  ['all_1'|'all_2'|important'|
+                'justcave'|'cave']
             If path to label file does not exist, the user will be presented
             with several options, including one to make and edit a label file.
             Label zorder defaults to 15.
@@ -98,7 +97,7 @@ class MapDesign(object):
 
         self.mapcolor = mapcolor
         self.coloropts = {'light' : {'water' : None,
-                                    'land' : '0.95'},
+                                     'land' : '0.95'},
                           'medium' : {'water' : '0.625',
                                       'land' : '0.775'},
                           'dark' : {'water' : '0.3',
@@ -133,7 +132,6 @@ class MapDesign(object):
         else:
             self.clear_labels()
 
-
     def view_prefs(self):
         """
         Create a table of the current map design elements (i.e. attributes)
@@ -147,7 +145,6 @@ class MapDesign(object):
             print '\t', num,'. ', pref, ' : ', getattr(self, pref)
 
         print '\n'
-
 
     def edit_latlonlabels(self, lat_labels=None, lon_labels=None,
                           lat_labelspacing=None, lon_labelspacing=None,
@@ -199,7 +196,6 @@ class MapDesign(object):
         if latlon_fs is not None:
             self.latlon_fs=latlon_fs
 
-
     def edit_latlonspacing(self, lonspacing=None, latspacing=None):
         """
         Change the spacing between the lines of latitude, longitude drawn on
@@ -211,7 +207,6 @@ class MapDesign(object):
 
         if latspacing is not None:
             self.latspacing = latspacing
-
 
     def edit_resolution(self, resolution=None, area_threshold=None):
         """
@@ -241,7 +236,6 @@ class MapDesign(object):
             else:
                 self.area_threshold = area_threshold
 
-
     def edit_mapcorners(self, mapcorners):
         """
         Update the mapcorners.
@@ -254,7 +248,6 @@ class MapDesign(object):
         """
 
         self.mapcorners = mapcorners
-
 
     def edit_standard_pm(self, standard_pm):
         """
@@ -276,7 +269,6 @@ class MapDesign(object):
 
         self.standard_pm = standard_pm
 
-
     def set_mapcolor(self, mapcolor):
         """
         Change the mapcolor.
@@ -290,7 +282,6 @@ class MapDesign(object):
             self.mapcolor = 'light'
         else:
             self.mapcolor = mapcolor
-
 
     def edit_shapefiles(self, shp=None, delete_shp=None, overwrite_shps=False):
         """
@@ -329,7 +320,6 @@ class MapDesign(object):
         else:
             if overwrite_shps:
                 self.shapefiles = []
-
 
     def edit_projection(self, projection):
         """
@@ -371,7 +361,6 @@ class MapDesign(object):
             for proj in available_proj:
                 print '\t', proj, '\t', available_proj[proj]
 
-
     def edit_labels(self, labelpath=None, labelgroup=None, label_zorder=None):
         """
         Change which labels are applied to the map.  Attributes will change
@@ -397,7 +386,6 @@ class MapDesign(object):
         if label_zorder is not None:
             self.label_zorder = label_zorder
 
-
     def clear_labels(self):
         """
         Reset label path and group information to None, label zorder to 15.
@@ -408,7 +396,6 @@ class MapDesign(object):
         self.labelstyle = None
         self.labelgroup = None
         self.label_zorder = 15
-
 
     def edit_border_zorder(self, zborder):
         """
@@ -422,7 +409,6 @@ class MapDesign(object):
         """
 
         self.zborder = zborder
-
 
     def make_basemap(self, figsize, ax=None):
         """
@@ -451,7 +437,7 @@ class MapDesign(object):
 
         """
 
-        if ax == None:
+        if ax is None:
             # Create figure instance
             fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -663,9 +649,12 @@ def make_cbar(data, datamap, orientation='horizontal', cbar_size=(20, 1.0),
     edit_cbar(cbar, orientation, divisions, reverse_cbar, cbar_label, tick_fs,
               label_fs)
 
+    return cbar
+
 
 def make_cax_cbar(fig, rect, data, orientation='horizontal', divisions=5,
-                  reverse_cbar=False, cbar_label=None, tick_fs=16, label_fs=18):
+                  reverse_cbar=False, cbar_label=None, tick_fs=16,
+                  label_fs=18):
     """
     Make a colorbar on a new axis.
 
@@ -713,7 +702,7 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal', divisions=5,
     edit_cbar(cbar, orientation, divisions, reverse_cbar, cbar_label, tick_fs,
               label_fs)
 
-    return cax
+    return cax, cbar
 
 
 def edit_cbar(cbar, orientation, divisions, reverse_cbar, cbar_label, tick_fs,
