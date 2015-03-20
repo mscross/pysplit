@@ -1,5 +1,4 @@
 import os
-import fnmatch
 from subprocess import call
 import itertools
 
@@ -129,7 +128,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
             isleap = False
             if year % 4 == 0:
                 if year % 100 == 0:
-                    if year %400 == 0:
+                    if year % 400 == 0:
                         isleap = True
                 else:
                     isleap = True
@@ -138,7 +137,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
             for mon in months:
 
                 season = season_month_days[mon][0]
-                monthname = season_month_days[mon][1]
+                monname = season_month_days[mon][1]
                 mon_len = season_month_days[mon][2]
 
                 if isleap and mon == 2:
@@ -153,51 +152,56 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                 # Find total number of meteorology files
                 meteofile_count = len(meteofiles)
 
-                for day, hour, alt in itertools.product(days, hours, altitudes):
+                for day, hour, alt in itertools.product(days, hours,
+                                                        altitudes):
 
                     # Remove any existing CONTROL or temp files
                     try_to_remove(os.path.join(hysplit_working, filename))
                     try_to_remove(os.path.join(hysplit_working, basename))
 
                     # Create new control file
-                    control = open(os.path.join(hysplit_working, filename), 'w')
+                    control = open(os.path.join(hysplit_working, filename),
+                                   'w')
 
                     # Populate trajectory start information
-                    control_stuff = [yr + " {0:02} {1:02} {2:02}\n".format(mon, day, hour),
-                                     "1\n",
-                                     "{0!s} {1!s} {2!s}".format(coordinates[0], coordinates[1], alt),
-                                     '.0\n',
-                                     "{0!s}\n".format(run),
-                                     "0\n",
-                                     "10000.0\n",
-                                     "{0!s}\n".format(meteofile_count)]
+                    ctrltxt = [yr + " {0:02} {1:02} {2:02}\n".format(mon, day,
+                                                                     hour),
+                               "1\n",
+                               "{0!s} {1!s} {2!s}".format(coordinates[0],
+                                                          coordinates[1], alt),
+                               '.0\n',
+                               "{0!s}\n".format(run),
+                               "0\n",
+                               "10000.0\n",
+                               "{0!s}\n".format(meteofile_count)]
 
                     for meteofile in meteofiles:
                         directory, fname = os.path.split(meteofile)
                         directory = str(directory).replace('\\', '/')
-                        control_stuff.append("{0}/\n".format(directory))
-                        control_stuff.append("{0}\n".format(fname))
+                        ctrltxt.append("{0}/\n".format(directory))
+                        ctrltxt.append("{0}\n".format(fname))
 
-                    control_stuff.append("./\n")
-                    control_stuff.append("{0}\n".format(basename))
+                    ctrltxt.append("./\n")
+                    ctrltxt.append("{0}\n".format(basename))
 
                     # Write and flush to disk
-                    control.writelines(control_stuff)
+                    control.writelines(ctrltxt)
                     control.flush()
 
                     # Call HYSPLIT to generate trajectory
                     call("C:\\hysplit4\\exec\\hyts_std")
 
                     # Create descriptive back trajectory filename
-                    new_name = basename + monthname + '{:04}'.format(alt) + season
-                    new_name = new_name + yr + "{0:02}{1:02}{2:02}".format(mon, day, hour)
+                    new_name = (basename + monname + '{:04}'.format(alt) +
+                                season + yr +
+                                "{0:02}{1:02}{2:02}".format(mon, day, hour))
 
                     # Generate a forward trajectory, if specified
                     if isbackward and get_forward:
                         forwards_and_backwards(hysplit_working, basename,
                                                filename, output_dir, new_name,
                                                meteofiles)
-                    # Check that a file of same name isn't in destination already
+                    # Check that file of same name isn't in destination already
                     try_to_remove(os.path.join(output_dir, new_name))
 
                     # Move the trajectory file to output directory
@@ -207,12 +211,10 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                     if get_clippedtraj:
                         clip_traj(output_dir, new_name)
 
-
     finally:
         os.chdir(orig_dir)
 
     return None
-
 
 
 def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
@@ -315,7 +317,6 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     if not os.path.isdir(output_fdir):
         os.mkdir(output_fdir)
 
-
     # Remove (if present) any existing CONTROL or temp files
     try_to_remove(os.path.join(hysplit_working, control_fname))
     try_to_remove(os.path.join(hysplit_working, forward_fname))
@@ -325,25 +326,25 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     control = open(os.path.join(hysplit_working, control_fname), 'w')
 
     # Populate what we want in the file
-    control_stuff = ["{0:02} {1:02} {2:02} {3:02}\n".format(year,mon,day,hour),
-                     "1\n",
-                     "{0!s} {1!s} {2!s}\n".format(lat, lon, alt),
-                     "{0!s}\n".format(run),
-                     "0\n",
-                     "10000.0\n",
-                     "{0!s}\n".format(meteofile_count)]
+    ctrltxt = ["{0:02} {1:02} {2:02} {3:02}\n".format(year, mon, day, hour),
+               "1\n",
+               "{0!s} {1!s} {2!s}\n".format(lat, lon, alt),
+               "{0!s}\n".format(run),
+               "0\n",
+               "10000.0\n",
+               "{0!s}\n".format(meteofile_count)]
 
     for meteorology_file in meteofiles:
         directory, fname = os.path.split(meteorology_file)
         directory = str(directory).replace('\\', '/')
-        control_stuff.append("{0}/\n".format(directory))
-        control_stuff.append("{0}\n".format(fname))
+        ctrltxt.append("{0}/\n".format(directory))
+        ctrltxt.append("{0}\n".format(fname))
 
-    control_stuff.append("./\n")
-    control_stuff.append("{0}\n".format(forward_fname))
+    ctrltxt.append("./\n")
+    ctrltxt.append("{0}\n".format(forward_fname))
 
     # Write and flush to disk
-    control.writelines(control_stuff)
+    control.writelines(ctrltxt)
     control.flush()
 
     # Call HYSPLIT to generate the next trajectory
@@ -383,7 +384,6 @@ def clip_traj(output_dir, new_name):
     part1 = []
     part2 = []
     clipped_fname = new_name + 'CLIPPED'
-
 
     # Get file header information
     while True:
@@ -449,7 +449,6 @@ def try_to_remove(string):
         pass
 
 
-
 def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
     """
     Takes a month and information about leap year status to create a list of
@@ -461,7 +460,7 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         first part of meteorology file path name
         ex. 'C:/hysplit4/working/gdas1.'
     meteo_type : string
-        ['gdas1'|'era-interim'].  The type of ARL-formatted data files provided.
+        ['gdas1'|'era-interim'].  Type of ARL-formatted data files provided.
     mon : int
         int representing the month
     isleap : Boolean
@@ -501,7 +500,7 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         # If it is December, weeks are from January of next year
         if (mon == 12):
             for week in weeks[:2]:
-                fname = f + months[0] + str(year+1)[-2:] + week
+                fname = f + months[0] + str(year + 1)[-2:] + week
                 leadweek.append(fpath + fname)
 
         # Otherwise, from the next month
@@ -514,31 +513,31 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         # If it is February and not a leap year, there are only four week files
         if (mon == 2) & (isleap is False):
             for week in weeks[0:4]:
-                fname = f + months[mon-1] + str(year)[-2:] + week
+                fname = f + months[mon - 1] + str(year)[-2:] + week
                 midweeks.append(fpath + fname)
 
         # Otherwise, there are five week files
         else:
             for week in weeks:
-                fname = f + months[mon-1] + str(year)[-2:] + week
+                fname = f + months[mon - 1] + str(year)[-2:] + week
                 midweeks.append(fpath + fname)
 
         # Assemble filename(s) for last week(s) of previous month
         # If it is March and it is not a leap year, grab only the 4th week file
         if (mon == 3) & (isleap is False):
-            fname = f + months[mon-2] + str(year)[-2:] + weeks[3]
+            fname = f + months[mon - 2] + str(year)[-2:] + weeks[3]
             endweeks.append(fpath + fname)
 
         # If it is January, need the 4-5th week files from previous year's Dec
         elif mon == 1:
             for week in weeks[3:]:
-                fname = f + months[11] + str(year-1)[-2:] + week
+                fname = f + months[11] + str(year - 1)[-2:] + week
                 endweeks.append(fpath + fname)
 
         # Otherwise, get the 4-5th week files from previous month
         else:
             for week in weeks[3:]:
-                fname = f + months[mon-2] + str(year)[-2:] + week
+                fname = f + months[mon - 2] + str(year)[-2:] + week
                 endweeks.append(fpath + fname)
 
         meteofiles.extend(leadweek)
@@ -548,7 +547,6 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         for meteofile in meteofiles:
             if not os.path.exists(meteofile):
                 raise OSError('Meteorology file does not exist!')
-
 
     elif meteo_type is 'era-interim':
 
@@ -567,14 +565,16 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         # Get files from months before and after
         # Special cases January and December
         if mon == 1:
-            before = fpath + f + str(year-1) + '_12_3'
+            before = fpath + f + str(year - 1) + '_12_3'
         else:
-            before = fpath + f + str(year) + '_' + '{:02}'.format(mon-1) + '_3'
+            before = (fpath + f + str(year) + '_' +
+                      '{:02}'.format(mon - 1) + '_3')
 
         if mon == 12:
-            after = fpath + f + str(year+1) + '_01_1'
+            after = fpath + f + str(year + 1) + '_01_1'
         else:
-            after = fpath + f + str(year) + '_' + '{:02}'.format(mon+1) + '_1'
+            after = (fpath + f + str(year) + '_' +
+                     '{:02}'.format(mon + 1) + '_1')
 
         # Put into list
         meteofiles.append(before)
@@ -587,6 +587,5 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
         for meteofile in meteofiles:
             if not os.path.exists(meteofile):
                 raise OSError('Meteorology file does not exist!')
-
 
     return meteofiles

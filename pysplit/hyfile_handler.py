@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import os
 import fnmatch
 
@@ -47,14 +46,13 @@ def hysplit_filelister(signature):
     finally:
         os.chdir(orig_dir)
 
-
     return matching_files
-
 
 
 def load_hysplitfile(filename):
     """
-    Load data from each trajectory (a single hysplit file) into a NumPy ndarray.
+    Load data from each trajectory (a single hysplit file) into a
+        NumPy ndarray.
 
     Parameters
     ----------
@@ -112,7 +110,7 @@ def load_hysplitfile(filename):
 
     while True:
         line = hyfile.readline()
-        if line =='':
+        if line == '':
             break
 
         time_step = line.split()
@@ -139,7 +137,6 @@ def load_hysplitfile(filename):
     return hydata, header, filelist
 
 
-
 def trajsplit(hydata):
     """
     Splits an array of hysplit data into list of unique trajectory arrays
@@ -163,11 +160,11 @@ def trajsplit(hydata):
     """
 
     # Find number of unique trajectories within `hydata`
-    unique_traj = np.unique(hydata[:,0])
+    unique_traj = np.unique(hydata[:, 0])
     if unique_traj.size > 1:
 
         # Sort the array row-wise by the first column
-        traj_id = hydata[:,0]
+        traj_id = hydata[:, 0]
         sorted_indices = np.argsort(traj_id, kind='mergesort')
         sorted_hydata = hydata[sorted_indices, :]
 
@@ -179,7 +176,6 @@ def trajsplit(hydata):
     else:
 
         return [hydata]
-
 
 
 def load_clusterfile(clusterfilename):
@@ -242,7 +238,7 @@ def load_clusterfile(clusterfilename):
         # Stack lines into an array
         filearray = np.vstack(clusterfiledata)
 
-        clusternums = filearray[:,0].astype(int)
+        clusternums = filearray[:, 0].astype(int)
 
         # Find unique cluster numbers and their total number
         uniqueclusters = np.unique(clusternums)
@@ -251,7 +247,7 @@ def load_clusterfile(clusterfilename):
         # Get the indices of the first occurrence of each unique cluster number
         first_occurrence = []
         for u in uniqueclusters:
-             first_occurrence.append(np.nonzero(clusternums == u)[0][0])
+            first_occurrence.append(np.nonzero(clusternums == u)[0][0])
 
         # Split into separate arrays at the first occurrences
         # First occurrence of first cluster is not considered,
@@ -262,7 +258,7 @@ def load_clusterfile(clusterfilename):
         # constituent trajectories
         traj_inds = []
         for cluster in clusterarray_list:
-            inds = [int(i)-1 for i in cluster[:,1]]
+            inds = [int(i) - 1 for i in cluster[:, 1]]
             traj_inds.append(inds)
 
     finally:

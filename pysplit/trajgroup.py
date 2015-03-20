@@ -498,7 +498,7 @@ class TrajectoryGroup(object):
 
         return clustergroup
 
-    def map_data_line(self, basemap, ax=None, figsize=(20, 20), zorder=19,
+    def map_data_line(self, cavemap, zorder=19,
                       show_timesteps=False, show_paths=True):
         """
         Make a plot of the trajectories in the TrajectoryGroup.
@@ -508,55 +508,24 @@ class TrajectoryGroup(object):
             trajectory.set_lw() to adjust.
 
         Parameters
-        ----------
-        basemap : MapDesign or Basemap instance
-            MapDesign instances contain the parameters to initialize a Basemap.
-            If a MapDesign is provided, the Basemap may be initialized on a
-            given axis using the kwarg `ax`.  If ax is None, then new figure,
-            axis, and Basemap instances will be created.
-            A previously-generated Basemap may be provided instead of a
-            MapDesign.
+        cavemap : Basemap instance
+            Initialize a basemap first using MapDesign.make_basemap()
 
         Keyword Arguments
         -----------------
-        ax : matplotlib axes instance
-            Default None.  The axis on which to draw a new Basemap, if
-            `basemap` is not a Basemap instance.  If None, and `basemap` is a
-            MapDesign instance, then new figure and axis instances
-            will be created.
-        figsize : tuple of ints
-            Default (20,20).  The size of a new figure instance, if one must be
-            created.
         zorder : int
             Default 19.  The zorder of the Trajectory lines on the map.
         show_timesteps : Boolean
             Default False.  If True, marker points will be plotted.
         show_paths : Boolean
             Default True.  If False, linestyle will be none.
-Returns
 
+        Returns
         -------
-        fig : matplotlib Figure instance, optional
-            Newly created Figure instance.  Only returned if a new figure and
-            axis had to be created, i.e. ax=None and `basemap` is a
-            MapDesign instance.
-        ax : matplotlib Axes instance, optional
-            Newly created Axes instance.  ONly returned if a new figure and
-            axis had to be created, i.e. ax=None and `basemap` is a MapDesign
-            instance.
         cavemap : Basemap instance
             Basemap instance with Trajectory paths plotted on it.
 
         """
-
-        # Initialize basemap on given or new figure, axis
-        try:
-            if ax is None:
-                fig, ax, cavemap = basemap.make_basemap(figsize)
-            else:
-                cavemap = basemap.make_basemap(figsize, ax=ax)
-        except AttributeError:
-            cavemap = basemap
 
         # Style dictionaries
         mdict = {True : 'o',
@@ -570,14 +539,11 @@ Returns
                          marker=mdict[show_timesteps], latlon=True,
                          linestyle=lsdict[show_paths], markeredgecolor='none')
 
-        try:
-            return fig, ax, cavemap
-        except:
-            return cavemap
+        return cavemap
 
-    def map_data_scatter(self, basemap, variable, ax=None, figsize=(20, 20),
+    def map_data_scatter(self, cavemap, variable, ax=None, figsize=(20, 20),
                          zorder=19, ptsize=25, color_min=None, color_max=None,
-                         colormap='blues', alpha=1.0, rescale=None,
+                         colormap='blues', rescale=None,
                          sizevar=None, size_rescale=None):
         """
         Make a scatter plot of the trajectories in the TrajectoryGroup.
@@ -589,26 +555,13 @@ Returns
 
         Parameters
         ----------
-        basemap : MapDesign or Basemap instance
-            MapDesign instances contain the parameters to initialize a Basemap.
-            If a MapDesign is provided, the Basemap may be initialized on a
-            given axis using the kwarg `ax`.  If ax is None, then new
-            figure, axis, and Basemap instances will be created.
-            A previously-generated Basemap may be provided instead of a
-            MapDesign.
+        cavemap : Basemap instance
+            Initialize a basemap first using MapDesign.make_basemap()
         variable : string
             Trajectory attribute name.  The variable plotted as a color change.
 
         Keyword Arguments
         -----------------
-        ax : matplotlib axes instance
-            Default None.  The axis on which to draw a new Basemap, if
-            `basemap` is not a Basemap instance.  If None, and `basemap` is a
-            MapDesign instance, then new figure and axis instances
-            will be created.
-        figsize : tuple of ints
-            Default (20,20).  The size of a new figure instance, if one must be
-            created.
         zorder : int
             Default 19.  The zorder of the Trajectory lines on the map.
         ptsize : int
@@ -622,8 +575,6 @@ Returns
         colormap : string
             Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
             The matplotlib colormap the data values are mapped to.
-        alpha : float
-            Default 1.0.  The opacity of the scatter points
         rescale : string
             Default None.  ['sqrt'|'ln'|'log']
             Determines how data of variable is rescaled, if at all
@@ -635,14 +586,6 @@ Returns
 
         Returns
         -------
-        fig : matplotlib Figure instance, optional
-            Newly created Figure instance.  Only returned if a new figure
-            and axis had to be created, i.e. ax=None and `basemap`
-            is a MapDesign instance.
-        ax : matplotlib Axes instance, optional
-            Newly created Axes instance.  ONly returned if a new figure
-            and axis had to be created, i.e. ax=None and `basemap`
-            is a MapDesign instance.
         cavemap : Basemap instance
             Basemap instance with Trajectory data plotted on it.
         cm : matplotlib PathCollection instance
@@ -650,15 +593,6 @@ Returns
             using make_cbar() or make_cax_cbar().
 
         """
-
-        # Initialize basemap on given or new figure, axis
-        try:
-            if ax is None:
-                fig, ax, cavemap = basemap.make_basemap(figsize)
-            else:
-                cavemap = basemap.make_basemap(figsize, ax=ax)
-        except AttributeError:
-            cavemap = basemap
 
         # Gather color variable into one array, prepare data
         data, lons, lats = cg.scatterprep(self, variable, rescale)
@@ -677,16 +611,12 @@ Returns
 
         cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=colormap,
                              vmin=color_min, vmax=color_max, latlon=True,
-                             zorder=zorder, edgecolor='none', alpha=alpha)
+                             zorder=zorder, edgecolor='none')
 
-        try:
-            return fig, ax, cavemap, cm
-        except:
-            return cavemap, cm
+        return cavemap, cm
 
-    def map_moisture(self, basemap, uptake, scale, ax=None, figsize=(20, 20),
-                     zorder=20, ptsize=25, color_min=None, color_max=None,
-                     alpha=1.0):
+    def map_moisture(self, cavemap, uptake, scale, ax=None, figsize=(20, 20),
+                     zorder=20, ptsize=25, color_min=None, color_max=None):
         """
         Plot moisture uptakes as a scatter plot.
 
@@ -696,13 +626,8 @@ Returns
 
         Parameters
         ----------
-        basemap : MapDesign or Basemap instance
-            MapDesign instances contain the parameters to initialize a Basemap.
-            If a MapDesign is provided, the Basemap may be initialized on a
-            given axis using the kwarg `ax`.  If ax is None, then new
-            figure, axis, and Basemap instances will be created.
-            A previously-generated Basemap may be provided instead of a
-            MapDesign.
+        cavemap : Basemap instance
+            Initialize a basemap first using MapDesign.make_basemap()
         uptake : string
             ['both'|'above'|'below'|'all points']
         scale : string
@@ -710,14 +635,6 @@ Returns
 
         Keyword Arguments
         -----------------
-        ax : matplotlib axes instance
-            Default None.  The axis on which to draw a new Basemap, if
-            `basemap` is not a Basemap instance.  If None, and `basemap` is a
-            MapDesign instance, then new figure and axis instances
-            will be created.
-        figsize : tuple of ints
-            Default (20,20).  The size of a new figure instance, if one must be
-            created.
         zorder : int
             Default 19.  The zorder of the Trajectory lines on the map.
         ptsize : int
@@ -728,19 +645,9 @@ Returns
         color_max : int or float
             Default None.  The maximum value for color mapping.  If None,
             color_max will be the maximum value of the data.
-        alpha : float
-            Default 1.0.  The opacity of the scatter points
 
         Returns
         -------
-        fig : matplotlib Figure instance, optional
-            Newly created Figure instance.  Only returned if a new figure
-            and axis had to be created, i.e. ax=None and `basemap`
-            is a MapDesign instance.
-        ax : matplotlib Axes instance, optional
-            Newly created Axes instance.  ONly returned if a new figure
-            and axis had to be created, i.e. ax=None and `basemap`
-            is a MapDesign instance.
         cavemap : Basemap instance
             Basemap instance with Trajectory moisture uptake plotted on it.
         cm : matplotlib PathCollection instance
@@ -748,14 +655,6 @@ Returns
             using make_cbar() or make_cax_cbar().
 
         """
-
-        try:
-            if ax is None:
-                fig, ax, cavemap = basemap.make_basemap(figsize)
-            else:
-                cavemap = basemap.make_basemap(figsize, ax=ax)
-        except AttributeError:
-            cavemap = basemap
 
         # Get moisture parameters
         lon_col = self.trajectories[0].moisture_header.index('longitude')
@@ -808,7 +707,7 @@ Returns
                 data = tr.masked_sources[:, data_col]
                 cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=cmap,
                                      vmin=color_min, vmax=color_max,
-                                     latlon=True, zorder=zorder, alpha=alpha,
+                                     latlon=True, zorder=zorder,
                                      edgecolor='none')
             else:
                 if 'e' in data_rows:
@@ -819,7 +718,7 @@ Returns
                     cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
                                          cmap=cmap, vmin=color_min,
                                          vmax=color_max, latlon=True,
-                                         zorder=zorder, alpha=alpha,
+                                         zorder=zorder,
                                          edgecolor='none')
                 if 'f' in data_rows:
                     f_rows = np.nonzero(tr.masked_sources[:, f_col] > -999.0)
@@ -829,14 +728,12 @@ Returns
                     cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
                                          cmap=cmap, vmin=color_min,
                                          vmax=color_max, latlon=True,
-                                         zorder=zorder, alpha=alpha,
+                                         zorder=zorder,
                                          edgecolor='none')
-        try:
-            return fig, ax, cavemap, cm
-        except:
-            return cavemap, cm
 
-    def gridmap(self, basemap, ax=None, figsize=(20, 20), ismoisture=False,
+        return cavemap, cm
+
+    def gridmap(self, cavemap, ismoisture=False,
                 usecontourf=False, mapcount=False, color_min=None,
                 color_max=None, colormap='blues', zorder=20):
         """
@@ -844,24 +741,11 @@ Returns
 
         Parameters
         ----------
-        basemap : MapDesign or Basemap instance
-            MapDesign instances contain the parameters to initialize a Basemap.
-            If a MapDesign is provided, the Basemap may be initialized on a
-            given axis using the kwarg `ax`.  If ax is None, then new
-            figure, axis, and Basemap instances will be created.
-            A previously-generated Basemap may be provided instead of a
-            MapDesign.
+        cavemap : Basemap instance
+            Initialize a basemap first using MapDesign.make_basemap()
 
         Keyword Arguments
         -----------------
-        ax : matplotlib axes instance
-            Default None.  The axis on which to draw a new Basemap, if
-            `basemap` is not a Basemap instance.  If None, and `basemap` is a
-            MapDesign instance, then new figure and axis instances
-            will be created.
-        figsize : tuple of ints
-            Default (20,20).  The size of a new figure instance, if one must be
-            created.
         ismoisture : Boolean
             Default False.  Access gridded moisture uptake data if True.
             If False, access regular gridded data.
@@ -885,14 +769,6 @@ Returns
 
         Returns
         -------
-        fig : matplotlib Figure instance, optional
-            Newly created Figure instance.  Only returned if a new figure
-            and axis had to be created, i.e. ax=None and `basemap`
-            is a MapDesign instance.
-        ax : matplotlib Axes instance, optional
-            Newly created Axes instance.  ONly returned if a new figure
-            and axis had to be created, i.e. ax=None and `basemap`
-            is a MapDesign instance.
         cavemap : Basemap instance
             Basemap instance with Trajectory moisture uptake plotted on it.
         cm : matplotlib PathCollection instance
@@ -900,14 +776,6 @@ Returns
             using make_cbar() or make_cax_cbar().
 
         """
-
-        try:
-            if ax is None:
-                fig, ax, cavemap = basemap.make_basemap(figsize)
-            else:
-                cavemap = basemap.make_basemap(figsize, ax=ax)
-        except AttributeError:
-            cavemap = basemap
 
         # Prepare grids for moisture variable or other variable
         if ismoisture:
@@ -944,10 +812,7 @@ Returns
                                     vmin=color_min, vmax=color_max,
                                     zorder=zorder)
 
-        try:
-            return fig, ax, cavemap, cm
-        except:
-            return cavemap, cm
+        return cavemap, cm
 
 
 class Cluster(TrajectoryGroup):

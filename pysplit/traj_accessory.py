@@ -74,7 +74,7 @@ def great_circle_bearing(t0, tx):
     latx = math.radians(tx[0])
     lonx = math.radians(tx[1])
 
-    a =  math.cos(latx) * math.sin(lonx - lon0)
+    a = math.cos(latx) * math.sin(lonx - lon0)
     b = (math.cos(lat0) * math.sin(latx) -
          math.sin(lat0) * math.cos(latx) * math.cos(lonx - lon0))
 
@@ -127,7 +127,7 @@ def circular_means(bearings):
 
     # Convert back to polar coordinates
     # Point will be on unit disk; don't care about r
-    circ_mean = math.degrees(math.atan2(y_mean,x_mean))
+    circ_mean = math.degrees(math.atan2(y_mean, x_mean))
 
     return circ_mean
 
@@ -169,12 +169,12 @@ def distance_overearth(latitude, longitude):
     lon1 = lon_rad[1:]
 
     distance = (np.arccos(np.sin(lat1) * np.sin(lat0) +
-                           np.cos(lat1) * np.cos(lat0) *
-                           np.cos(lon0 - lon1)) * 6371) * 1000
+                          np.cos(lat1) * np.cos(lat0) *
+                          np.cos(lon0 - lon1)) * 6371) * 1000
 
     # Pad array so first element of distance is 0
-    distance = np.pad(distance, (1,0), 'constant',
-                      constant_values=(0.0,0.0))
+    distance = np.pad(distance, (1, 0), 'constant',
+                      constant_values=(0.0, 0.0))
 
     return distance
 
@@ -202,7 +202,7 @@ def sum_distance(distance):
 
     # At each point, add up the distance between each prior step
     for i in range(0, distance.size):
-        dist = sum(distance[:i+1])
+        dist = sum(distance[: i + 1])
         tot_dist.append(dist)
 
     total_distance = np.asarray(tot_dist).astype(np.float64)
@@ -247,7 +247,7 @@ def find_destination(t0, bearing, distance, unit='m'):
 
     # Initialize earth radius in appropriate units
     if unit in meters:
-        earth_r = 6371*1000
+        earth_r = 6371 * 1000
     elif unit in kilometers:
         earth_r = 6371
     else:
@@ -260,14 +260,14 @@ def find_destination(t0, bearing, distance, unit='m'):
     lon0 = t0[1]
 
     # Calculate new lat, lon
-    latx = math.asin(math.sin(lat0)*math.cos(distance/earth_r) +
-                     math.cos(lat0)*math.sin(distance/earth_r) *
+    latx = math.asin(math.sin(lat0) * math.cos(distance / earth_r) +
+                     math.cos(lat0) * math.sin(distance / earth_r) *
                      math.cos(bearing))
 
-    lonx = lon0 + math.atan2(math.sin(bearing) * math.sin(distance/earth_r) *
+    lonx = lon0 + math.atan2(math.sin(bearing) * math.sin(distance / earth_r) *
                              math.cos(lat0),
-                             math.cos(distance/earth_r) -
-                             math.sin(lat0)*math.sin(latx))
+                             math.cos(distance / earth_r) -
+                             math.sin(lat0) * math.sin(latx))
 
     tx = (latx, lonx)
 
@@ -335,7 +335,7 @@ def convert_w2q(mixing_ratio):
 
     # Convert from g/kg to kg/kg to g/kg
     mr_kg = mixing_ratio / 1000
-    q_kg = mr_kg/(mr_kg + 1)
+    q_kg = mr_kg / (mr_kg + 1)
     q = q_kg * 1000
 
     return q
@@ -359,7 +359,7 @@ def convert_q2w(specific_humidity):
 
     # Convert from g/kg to kg/kg to g/kg
     sph_kg = specific_humidity / 1000
-    w_kg = sph_kg/(1 - sph_kg)
+    w_kg = sph_kg / (1 - sph_kg)
     w = w_kg * 1000
 
     return w
@@ -386,7 +386,7 @@ def convert_w2rh(mixing_ratio, temperature, pressure):
 
     """
 
-    if type(mixing_ratio) is np.ndarray or type(mixing_ratio) is list:
+    try:
         relhumid_ls = []
 
         for w, t, p in zip(mixing_ratio, temperature, pressure):
@@ -397,15 +397,16 @@ def convert_w2rh(mixing_ratio, temperature, pressure):
                 t_celsius = t
 
             # Calculate saturation vapor pressure, saturation mixing ratio
-            satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius)/(237.7 + t_celsius)))
-            sat_w = 621.97 * (satvapor/(p - satvapor))
+            satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius) /
+                                        (237.7 + t_celsius)))
+            sat_w = 621.97 * (satvapor / (p - satvapor))
 
-            rh = (w/sat_w) * 100.0
+            rh = (w / sat_w) * 100.0
             relhumid_ls.append(rh)
 
         rh = np.asarray(relhumid_ls).astype(np.float64)
 
-    else:
+    except:
         # Detect if temperature is in K or degrees C, convert to degrees C
         if temperature > 100.0:
             t_celsius = temperature - 273.15
@@ -413,10 +414,10 @@ def convert_w2rh(mixing_ratio, temperature, pressure):
             t_celsius = temperature
 
         # Calculate saturation vapor pressure, saturation mixing ratio
-        satvapor = 6.11* (10.0 ** ((7.5 * t_celsius)/(237.7 + t_celsius)))
-        sat_w = 621.97 * (satvapor/(pressure - satvapor))
+        satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius) / (237.7 + t_celsius)))
+        sat_w = 621.97 * (satvapor / (pressure - satvapor))
 
-        rh = (mixing_ratio/sat_w)* 100.0
+        rh = (mixing_ratio / sat_w) * 100.0
 
     return rh
 
@@ -445,7 +446,7 @@ def convert_rh2w(relative_humidity, temperature, pressure):
 
     """
 
-    if type(relative_humidity) is np.ndarray or type(mixing_ratio) is list:
+    try:
         w_ls = []
 
         for rh, t, p in zip(relative_humidity, temperature, pressure):
@@ -456,15 +457,16 @@ def convert_rh2w(relative_humidity, temperature, pressure):
                 t_celsius = t
 
             # Calculate saturation vapor pressure, saturation mixing ratio
-            satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius)/(237.7 + t_celsius)))
-            sat_mixratio = 621.97 * (satvapor/(p - satvapor))
+            satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius) /
+                                        (237.7 + t_celsius)))
+            sat_mixratio = 621.97 * (satvapor / (p - satvapor))
 
-            w = (rh/100.0) * sat_mixtratio
+            w = (rh / 100.0) * sat_mixratio
             w_ls.append(w)
 
         w = np.asarray(w_ls).astype(np.float64)
 
-    else:
+    except:
         # Detect if temperature is in K or degrees C, convert to degrees C
         if temperature > 100.0:
             t_celsius = temperature - 273.15
@@ -472,10 +474,10 @@ def convert_rh2w(relative_humidity, temperature, pressure):
             t_celsius = temperature
 
         # Calculate saturation vapor pressure, saturation mixing ratio
-        satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius)/(237.7 + t_celsius)))
-        sat_mixratio = 621.97 * (satvapor/(pressure - satvapor))
+        satvapor = 6.11 * (10.0 ** ((7.5 * t_celsius) / (237.7 + t_celsius)))
+        sat_mixratio = 621.97 * (satvapor / (pressure - satvapor))
 
-        w = (relative_humidity/100.0) * sat_mixtratio
+        w = (relative_humidity / 100.0) * sat_mixratio
 
     return w
 
@@ -508,10 +510,10 @@ def geographic_midpt(t0, tx):
     """
 
     # Convert from degrees to radians
-    lat0 = t0[0] * (math.pi / 180)
-    lon0 = t0[1] * (math.pi / 180)
-    lat1 = tx[0] * (math.pi / 180)
-    lon1 = tx[1] * (math.pi / 180)
+    lat1 = t0[0] * (math.pi / 180)
+    lon1 = t0[1] * (math.pi / 180)
+    lat2 = tx[0] * (math.pi / 180)
+    lon2 = tx[1] * (math.pi / 180)
 
     # Convert lat/lon to Cartesian coordinates
     x1 = math.cos(lat1) * math.cos(lon1)
@@ -529,7 +531,7 @@ def geographic_midpt(t0, tx):
 
     # Find average longitude and latitude in radians
     lon = math.atan2(y, x)
-    hyp = math.sqrt(x*x + y*y)
+    hyp = math.sqrt(x * x + y * y)
     lat = math.atan2(z, hyp)
 
     # Convert to degrees
@@ -583,7 +585,7 @@ def grid_data(x, y, data, cell_value, binsize):
 
     """
 
-    #Initialize dictionary
+    # Initialize dictionary
     cell_value_dict = {'cumulative' : np.sum,
                        'mean' : np.mean,
                        'median' : np.median,
@@ -600,8 +602,8 @@ def grid_data(x, y, data, cell_value, binsize):
     ymax = y.max()
 
     # Make coordinate arrays
-    xi = np.arange(xmin, xmax+binsize, binsize)
-    yi = np.arange(ymin, ymax+binsize, binsize)
+    xi = np.arange(xmin, xmax + binsize, binsize)
+    yi = np.arange(ymin, ymax + binsize, binsize)
 
     xi, yi = np.meshgrid(xi, yi)
 
@@ -630,10 +632,10 @@ def grid_data(x, y, data, cell_value, binsize):
 
             # Get boolean array of where condition is met in both x, y
             # ibin.size == x.size == y.size
-            ibin = np.logical_and(posx < binsize/2.0, posy < binsize/2.0)
+            ibin = np.logical_and(posx < binsize / 2.0, posy < binsize / 2.0)
 
             # Get array of indices of data points that are in the current pos
-            ind = np.where(ibin == True)[0]
+            ind = np.where(ibin)[0]
 
             # Fill bin (True values in ibin will put data value into bin)
             bin = data[ibin]

@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import grib_reader as gr
 
 
@@ -31,7 +30,6 @@ def oni_file_reader(working_dir):
 
     """
 
-    #Initialize
     year_list = []
     oni_array = np.empty((0, 12))
 
@@ -48,13 +46,13 @@ def oni_file_reader(working_dir):
         oniline = oni_file.readline()
 
         # Break if at end of file
-        if oniline =='':
+        if oniline == '':
             break
 
         data = oniline.split()
 
         # Break if an incomplete year is encountered
-        if len(data)< 13:
+        if len(data) < 13:
             break
 
         # Put year into list
@@ -69,7 +67,6 @@ def oni_file_reader(working_dir):
     year_list = [int(i) for i in year_list]
 
     return year_list, oni_array, trimonth_list
-
 
 
 def oni_file_interrogator(monthstring, phase, strength, oni_array,
@@ -118,7 +115,6 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
                              'high': (-3.5, -1.0),
                              'low': (-1.4, -0.5)},
                  'none' : (-0.4, 0.4)}
-
 
     # Get the column number of the data corresponding to the 3 month period
     trimonth_index = trimonth_list.index(monthstring)
@@ -183,11 +179,13 @@ def enso_plotprep(working_dir, monthstring, phase, strength,
     -------
     monthlist : list of lists of 1 int each
         gr.grib_lister() and gr.hdf_lister() require months in a list format.
-        Nested listing permits each month to be passed separately, which is necessary
-        when the three month period of interest is one that spans the turn of the year.
+        Nested listing permits each month to be passed separately, which is
+        necessary when the three month period of interest is one that spans
+        the turn of the year.
     years_list : list of lists of ints
-        Each sub-list contains the years where the phase/strength/data limit conditions
-        were met for one of the months in the three month period of interest
+        Each sub-list contains the years where the phase/strength/data limit
+        conditions were met for one of the months in the three month period of
+        interest
 
     """
 
@@ -235,15 +233,17 @@ def enso_plotprep(working_dir, monthstring, phase, strength,
     years_ofinterest = years_ofinterest.tolist()
 
     if threemonths:
-        # Two of the three month periods include a month from the previous or next year
+        # Two of three month periods include a month from previous or next year
         # Construct a list of the lists of years
         if monthstring is 'DJF':
             years_ofinterest_adj = [i - 1 for i in years_ofinterest]
-            years_list = [years_ofinterest_adj, years_ofinterest, years_ofinterest]
+            years_list = [years_ofinterest_adj, years_ofinterest,
+                          years_ofinterest]
 
         elif monthstring is 'NDJ':
             years_ofinterest_adj = [i + 1 for i in years_ofinterest]
-            years_list = [years_ofinterest, years_ofinterest, years_ofinterest_adj]
+            years_list = [years_ofinterest, years_ofinterest,
+                          years_ofinterest_adj]
 
         else:
             years_list = [years_ofinterest, years_ofinterest, years_ofinterest]
@@ -303,19 +303,17 @@ def enso_winddata(monthstring, phase, strength, level,
     for mon, yr, in zip(monthlist, years_list):
 
         uband, lats, lons = gr.grib_lister(level, 'U', yr, mon, pl,
-                                             wind, data_dir, True)
+                                           wind, data_dir, True)
         vband, lats, lons = gr.grib_lister(level, 'V', yr, mon, pl,
-                                             wind, data_dir, True)
+                                           wind, data_dir, True)
 
         ubandlist.extend(uband)
         vbandlist.extend(vband)
-
 
     ubanddata = np.mean(np.dstack(ubandlist), axis=2)
     vbanddata = np.mean(np.dstack(vbandlist), axis=2)
 
     return ubanddata, vbanddata, lats, lons
-
 
 
 def enso_vardata(monthstring, phase, strength, var, level, filetype,
@@ -367,7 +365,7 @@ def enso_vardata(monthstring, phase, strength, var, level, filetype,
     for mon, yr in zip(monthlist, years_list):
 
         if filetype is 'ncar':
-            varband, lats, lons = gr.grib_lister(level, var, yr,mon, pl,
+            varband, lats, lons = gr.grib_lister(level, var, yr, mon, pl,
                                                  False, data_dir, measured)
 
         else:
@@ -376,7 +374,6 @@ def enso_vardata(monthstring, phase, strength, var, level, filetype,
         varlist.extend(varband)
 
     varbanddata = np.mean(np.dstack(varband), axis=2)
-
 
     return varbanddata, lats, lons
 
@@ -487,13 +484,13 @@ def enso_varanomaly(monthstring, phase1, strength1, var, level, filetype,
     var1, lats, lons = enso_vardata(monthstring, phase1, strength1, var, level,
                                     filetype, enso_dir, data_dir,
                                     pl=pl, measured=measured,
-                                    data_lowerlimit=data_lowerlimt,
+                                    data_lowerlimit=data_lowerlimit,
                                     data_upperlimit=data_upperlimit)
 
     var2, lats, lons = enso_vardata(monthstring, phase2, strength2, var, level,
                                     filetype, enso_dir, data_dir,
                                     pl=pl, measured=measured,
-                                    data_lowerlimit=data_lowerlimt,
+                                    data_lowerlimit=data_lowerlimit,
                                     data_upperlimit=data_upperlimit)
 
     var_anomaly = var1 - var2

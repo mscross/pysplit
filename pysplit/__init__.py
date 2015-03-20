@@ -60,7 +60,7 @@ __all__ = ['Trajectory',
            'windbarbs',
            'plot_othervar',
            'zplot',
-           'gridlimit'
+           'gridlimit',
            'oni_file_reader',
            'oni_file_interrogator',
            'enso_plotprep',
@@ -85,6 +85,7 @@ from .hyfile_handler import (hysplit_filelister, load_hysplitfile, trajsplit,
 
 from .traj_accessory import (tracemean_vector, great_circle_bearing,
                              circular_means, distance_overearth, sum_distance,
+                             find_destination,
                              convert_km2mi, convert_mi2km, convert_w2q,
                              convert_q2w, convert_w2rh, convert_rh2w,
                              geographic_midpt, grid_data, maxmin_diff)

@@ -409,30 +409,25 @@ class MapDesign(object):
 
         self.zborder = zborder
 
-    def make_basemap(self, figsize, ax=None):
+    def make_basemap(self, ax=None, figsize=(15, 15)):
         """
         Takes the MapDesign attributes plus a figure size and creates a map
             on which data can be plotted.
-
-        Parameters
-        ----------
-        figsize : tuple of ints
-            The size of the figure
 
         Keyword Arguments
         -----------------
         ax : axes instance
             Default None, figure and axis will be created.  Otherwise,
             basemap will be created on given axis.
+        figsize : tuple of ints
+            Default (15, 15). The size of the figure in inches.  Only
+            used if ax is None.
 
         Returns
         -------
-        fig : matplotlib Figure instance
-            Returned only if ax=None and figure must be created.
-        ax : matplotlib Axes instance
-            The axis on which the basemap is drawn.
         cavemap : Basemap instance
-            A map ready for data plotting
+            A map ready for data plotting.  Can access axis and figure
+            via cavemap.ax and cavemap.ax.get_figure(), respectively.
 
         """
 
@@ -573,7 +568,4 @@ class MapDesign(object):
         else:
             cavemap.fillcontinents(color='0.99', zorder=12, alpha=0.85)
 
-        try:
-            return fig, ax, cavemap
-        except:
-            return cavemap
+        return cavemap

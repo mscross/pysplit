@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import hyfile_handler as hh
 from .traj import Trajectory, TrajectoryGroup
@@ -32,7 +31,6 @@ def hysplit_file_processor(signature):
     traj_list = []
     filename_list = []
     trajectories = []
-    datestrings = []
 
     try:
         head, _ = os.path.split(signature)
@@ -41,7 +39,7 @@ def hysplit_file_processor(signature):
 
         # Sort list of hysplit files by the datestring at the end
         # Will also sort in ascending altitude within each same datestring
-        hyfiles.sort(key = lambda x: x[-8:])
+        hyfiles.sort(key=lambda x: x[-8:])
 
         # Load in the hysplit file data
         # Get lists of the datestrings and filenames of the hysplit files

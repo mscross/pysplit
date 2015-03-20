@@ -1,8 +1,8 @@
 import os
-from mpl_toolkits.basemap import Basemap
 
 
-def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
+def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder,
+                 labelstyle):
     """
     Writes labels on a map.
 
@@ -59,7 +59,6 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
     cave_coords = label_list[9]
     cave_style = labelstyle[4]
 
-
     # Initialize formatting dictionaries
     sea_dict = {'place' : sea_labels,
                 'coord' : sea_coords,
@@ -69,7 +68,7 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
                 'wt' : sea_style['weight'],
                 'fst' : sea_style['fontstyle'],
                 'zrd' : labelzorder,
-                'off' : (0,0),
+                'off' : (0, 0),
                 'add' : ''}
 
     ocean_dict = {'place' : ocean_labels,
@@ -80,7 +79,7 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
                   'wt' : ocean_style['weight'],
                   'fst' : ocean_style['fontstyle'],
                   'zrd' : labelzorder,
-                  'off' : (0,0),
+                  'off' : (0, 0),
                   'add' : ''}
 
     country_dict = {'place' : country_labels,
@@ -91,7 +90,7 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
                     'wt' : country_style['weight'],
                     'fst' : country_style['fontstyle'],
                     'zrd' : labelzorder,
-                    'off' : (0,0),
+                    'off' : (0, 0),
                     'add' : ''}
 
     cave_dict = {'place' : cave_labels,
@@ -117,8 +116,10 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
                  'add' : r'$\bullet$'}
 
     # Initialize dictionary of map label-group options
-    label_masterdict = {'all_1' : [country_dict, ocean_dict, sea_dict, cave_dict],
-                        'all_2' : [country_dict, ocean_dict, sea_dict, city_dict],
+    label_masterdict = {'all_1' : [country_dict, ocean_dict, sea_dict,
+                                   cave_dict],
+                        'all_2' : [country_dict, ocean_dict, sea_dict,
+                                   city_dict],
                         'water+country' : [country_dict, ocean_dict, sea_dict],
                         'water' : [ocean_dict, sea_dict],
                         'important' : [country_dict, ocean_dict],
@@ -141,9 +142,9 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder, labelstyle):
                            j['coord'][i][0] + j['off'][0])
 
             ax.text(x, y, j['place'][i] + j['add'],
-                    horizontalalignment = j['ha'], verticalalignment = j['va'],
-                    fontsize = j['fs'], weight = j['wt'], fontstyle = j['fst'],
-                    zorder = j['zrd'])
+                    horizontalalignment=j['ha'], verticalalignment=j['va'],
+                    fontsize=j['fs'], weight=j['wt'], fontstyle=j['fst'],
+                    zorder=j['zrd'])
             i = i + 1
 
     return cavemap
@@ -179,22 +180,22 @@ def labelfile_reader(labelfile):
 
     """
 
-    labels=[]
-    labelstyle=[]
+    labels = []
+    labelstyle = []
     labeltypes = ['SEAS', 'CITIES', 'COUNTRIES', 'CAVES', 'OCEANS']
 
     # Look for file
     while True:
         if not os.path.exists(labelfile):
             print ('Label file does not exist.\n' +
-                   'Press 1 to create a new label file\n'+
-                   'Press 2 to make a map without labels\n'+
+                   'Press 1 to create a new label file\n' +
+                   'Press 2 to make a map without labels\n' +
                    'Press 3 to enter a new label file path\n')
             useroption = raw_input()
             print type(useroption)
             if useroption == '1':
                 labelfile_generator(labelfile)
-                print 'Label file template generated at: '+ labelfile
+                print 'Label file template generated at: ' + labelfile
                 print 'Do not leave blank lines between labels/label headers'
                 print 'Do not delete any headers or font information'
                 raw_input('Press enter when label file editing is done. ')
@@ -212,10 +213,10 @@ def labelfile_reader(labelfile):
 
             # Cycle through types of labels, breaking at end of file
             while True:
-                if line =='':
+                if line == '':
                     break
-                labellist=[]
-                coordlist=[]
+                labellist = []
+                coordlist = []
 
                 # Run through labels within type
                 while True:
@@ -230,13 +231,13 @@ def labelfile_reader(labelfile):
                             break
 
                         # Break into substrings, one parameter per string
-                        line = line.split('  ',2)
+                        line = line.split('  ', 2)
 
                         # Split again over the '=', arrange into dictionary
                         for i in range(0, len(line)):
                             line[i] = line[i].strip().split('=')
 
-                        styledict = {k:v for k,v in line}
+                        styledict = {k: v for k, v in line}
                         labelstyle.append(styledict)
 
                         break
