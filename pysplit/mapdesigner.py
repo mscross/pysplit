@@ -140,8 +140,8 @@ class MapDesign(object):
 
         pref_list = self.__dict__.keys()
 
-        for pref, num in zip(pref_list, range(1, len(pref_list)+1)):
-            print '\t', num,'. ', pref, ' : ', getattr(self, pref)
+        for pref, num in zip(pref_list, range(1, len(pref_list) + 1)):
+            print '\t', num, '. ', pref, ' : ', getattr(self, pref)
 
         print '\n'
 
@@ -166,8 +166,8 @@ class MapDesign(object):
 
         """
 
-        meridian_labels = [0,0,0,0]
-        parallel_labels = [0,0,0,0]
+        meridian_labels = [0, 0, 0, 0]
+        parallel_labels = [0, 0, 0, 0]
 
         ind_dict = {'left' : 0,
                     'right' : 1,
@@ -193,7 +193,7 @@ class MapDesign(object):
             self.lonstep = lon_labelspacing
 
         if latlon_fs is not None:
-            self.latlon_fs=latlon_fs
+            self.latlon_fs = latlon_fs
 
     def edit_latlonspacing(self, lonspacing=None, latspacing=None):
         """
@@ -493,8 +493,8 @@ class MapDesign(object):
                               resolution=self.resolution,
                               ax=ax)
 
-            meridian_labels = [0,0,0,0]
-            parallel_labels = [0,0,0,0]
+            meridian_labels = [0, 0, 0, 0]
+            parallel_labels = [0, 0, 0, 0]
 
         elif self.projection[1:] == 'plaea' or self.projection[1:] == 'pstere':
             # Polar steroegraphic (conformal) or polar azimuthal(equal-area)
@@ -541,7 +541,7 @@ class MapDesign(object):
         if self.lonstep > self.lonspacing:
 
             cavemap.drawmeridians(np.arange(-180, 180, self.lonspacing),
-                                  labels=[0,0,0,0], zorder=11)
+                                  labels=[0, 0, 0, 0], zorder=11)
             cavemap.drawmeridians(np.arange(-180, 180, self.lonstep),
                                   labels=meridian_labels, zorder=11,
                                   fontsize=self.latlon_fs)
@@ -554,7 +554,7 @@ class MapDesign(object):
         if self.latstep > self.latspacing:
 
             cavemap.drawparallels(np.arange(-90, 90, self.latspacing),
-                                  labels=[0,0,0,0], zorder=11)
+                                  labels=[0, 0, 0, 0], zorder=11)
             cavemap.drawparallels(np.arange(lat, 90, self.latstep),
                                   labels=parallel_labels, zorder=11,
                                   fontsize=self.latlon_fs)

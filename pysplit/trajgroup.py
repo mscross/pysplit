@@ -1,10 +1,9 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import mapmaker as mm
 import hyfile_handler as hh
 import traj_accessory as ta
-from clusgroup import ClusterGroup
+import clusgroup as cg
 
 
 class TrajectoryGroup(object):
@@ -495,7 +494,7 @@ class TrajectoryGroup(object):
 
             i = i + 1
 
-        clustergroup = ClusterGroup(all_clusters)
+        clustergroup = cg.ClusterGroup(all_clusters)
 
         return clustergroup
 
@@ -662,7 +661,7 @@ Returns
             cavemap = basemap
 
         # Gather color variable into one array, prepare data
-        data, lons, lats = scatterprep(self, variable, rescale)
+        data, lons, lats = cg.scatterprep(self, variable, rescale)
 
         if color_min is None:
             color_min = data.min()
@@ -672,11 +671,9 @@ Returns
 
         # Gather size variable into one array, prepare data
         if sizevar is not None:
-            data2 = scatterprep(self, sizevar, size_rescale)
+            data2 = cg.scatterprep(self, sizevar, size_rescale)
             data2 = data2 * ptsize
             ptsize = data2
-
-        colormap = mm.get_colormap(colormap)
 
         cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=colormap,
                              vmin=color_min, vmax=color_max, latlon=True,
@@ -933,14 +930,12 @@ Returns
             else:
                 data = self.grid
 
-        if color_min is None:
-            color_min = np.min(data)
-        if color_max is None:
-            color_max = np.max(data)
-
-        colormap = mm.get_colormap(colormap)
-
         if usecontourf:
+            if color_min is None:
+                color_min = np.min(data)
+            if color_max is None:
+                color_max = np.max(data)
+
             cm = cavemap.contourf(x, y, data,
                                   np.linspace(color_min, color_max, num=11),
                                   cmap=colormap, latlon=True, zorder=zorder)
@@ -985,6 +980,10 @@ class Cluster(TrajectoryGroup):
         """
         Prints notice before calling TrajectoryGroup.__add__()
 
+        Parameters
+        ----------
+        other : TrajectoryGroup
+
         """
 
         print "Basic TrajectoryGroup created, cluster methods unavailable"
@@ -999,7 +998,7 @@ class Cluster(TrajectoryGroup):
 
         Parameters
         ----------
-        endpoints_dir : string
+        endpoints_file : string
             Full or relative path to the HYSPLIT file containing the
             trajectory path
 
