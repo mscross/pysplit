@@ -1,5 +1,92 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
+import matplotlib.colors as clr
+import numpy as np
+
+
+def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
+                 edgecolor='none', size=25, sizedata=None, cnormalize=None,
+                 snormalize=None, vmin=None, vmax=None, steps=11, **kwargs):
+    """
+    Scatter plotting trajectory, trajectory group/cluster data.
+
+    Parameters
+    ----------
+    data : 1D ndarray of floats, ints
+    lons : 1D ndarray of floats, ints
+    lats : 1D ndarray of floats, ints
+    cavemap : basemap instance
+
+    Keyword Arguments
+    -----------------
+    zorder : int
+    colormap : colormap
+    edgecolor : string, tuple
+    size : int
+    sizedata : 1D ndarray of floats
+    cnormalize : string
+        Default None.  [None|'boundary'|'log'|'ln'|'sqrt']
+    snormalize : string
+        Default None.  [None|'log'|'ln'|'sqrt']
+    vmin : int or float
+    vmax : int or float
+    steps : int
+        Only used in BoundaryNorm
+
+    Other Parameters
+    ----------------
+    kwargs : passed to ax.scatter
+
+    """
+    cnormalize = str.lower(cnormalize)
+    norm = None
+    msg = ('Use `cbar.ax.set_yticklabels()` ' +
+           'or cbar.ax.set_xticklabels()` to change tick labels')
+
+    transform_dict = {'sqrt' : np.sqrt,
+                      'log'  : np.log10,
+                      'ln'   : np.ln}
+
+    if cnormalize is 'boundary':
+        if vmin is None:
+            vmin = data.min()
+        if vmax is None:
+            vmax = data.max()
+        bounds = np.linspace(vmin, vmax, steps)
+        norm = clr.BoundaryNorm(bounds, colormap.N)
+    elif cnormalize is 'log':
+        norm = clr.LogNorm()
+    elif cnormalize is 'ln':
+        data = np.log(data)
+        print msg, '\nnatural log normalization'
+    elif cnormalize is 'sqrt':
+        data = np.sqrt(data)
+        print msg, '\nsqrt normalization'
+
+    if sizedata is not None:
+        if snormalize is not None:
+            sizedata = transform_dict[snormalize](sizedata)
+        size = sizedata * size
+
+    cm = cavemap.scatter(lons, lats, c=data, s=size, cmap=colormap,
+                         vmin=vmin, vmax=vmax, zorder=zorder,
+                         edgecolor=edgecolor, norm=norm, latlon=True, **kwargs)
+
+    return cavemap, cm
+
+
+def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
+              markeredgecolor='none', zorder=19, **kwargs):
+
+    """
+
+    """
+
+    cavemap.plot(lons, lats, color, linewidth=lw, linestyle=linestyle,
+                 marker=marker, latlon=True, zorder=zorder,
+                 markeredgecolor=markeredgecolor, **kwargs)
+
+    return cavemap
 
 
 def make_cbar(data, ax, orientation='horizontal', cbar_size=(20, 1.0),
@@ -163,3 +250,14 @@ def edit_cbar(cbar, divisions=5, cbar_label=None, tick_fs=16, label_fs=18,
     # Cbar will have lines through it if mappable's alpha < 1
     cbar.set_alpha(1)
     cbar.draw_all()
+
+
+def random_colors(number_ofcolors):
+    """
+    """
+
+    color_tmp = np.random.rand(number_ofcolors, 3)
+    color_tmp = np.vsplit(color_tmp, number_ofcolors)
+    colors = []
+    for c in color_tmp:
+        colors.append(c[0])

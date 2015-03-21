@@ -1,9 +1,12 @@
 import os
+import numpy as np
 import hyfile_handler as hh
-from .traj import Trajectory, TrajectoryGroup
+from traj import Trajectory
+from trajgroup import TrajectoryGroup
+from clusgroup import Cluster, ClusterGroup
 
 
-def hysplit_file_processor(signature):
+def make_trajectorygroup(signature):
     """
     Initialize trajectory objects from HYSPLIT back trajectory data files.
 
@@ -65,3 +68,55 @@ def hysplit_file_processor(signature):
         os.chdir(orig_dir)
 
     return trajectories, filename_list
+
+
+def spawn_clusters(traj_group, cfile, endpoint_dir):
+    """
+    Acquires the distribution of trajectories from `cfile` and
+        creates new cluster objects and a cluster group object based
+        on that information
+
+    Parameters
+    ----------
+    cfile : string
+        The filename of the CLUSLIST_# file that indicates
+        trajectory distribution among clusters
+
+    Returns
+    -------
+    clustergroup : ClusterGroup object
+        The group of clusters derived from original TrajectoryGroup.
+        A ClusterGroup consists of a list of Cluster objects, which are
+        specialized TrajectoryGroup objects.
+
+    """
+
+    traj_inds, totalclusters = hh.load_clusterfile(cfile)
+
+    all_clusters = []
+
+    for i in range(0, totalclusters):
+        # Get cluster number and pick out member trajectories
+        cluster_num = i + 1
+        trajlist = [traj_group.trajectories[j] for j in traj_inds[i]]
+
+        # Get the cluster path
+        endpt_fname = ('C' + str(cluster_num) + '_' +
+                       str(totalclusters) + 'mean.tdump')
+        endpt_file = os.path.join(endpoint_dir, endpt_fname)
+        data, header, _ = hh.load_hysplitfile(endpt_file)
+
+        latitude = data[0][:, header.index('Latitude')]
+        longitude = data[0][:, header.index('Longitude')]
+
+        # Make sure longitudes are -180 to 180
+        longitude = np.where(longitude > 180.0, longitude - 360.0, longitude)
+
+        # Make cluster
+        clusterobj = Cluster(trajlist, cluster_num, latitude, longitude)
+
+        all_clusters.append(clusterobj)
+
+    clustergroup = ClusterGroup(all_clusters)
+
+    return clustergroup

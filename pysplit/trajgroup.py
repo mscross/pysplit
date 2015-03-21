@@ -1,9 +1,9 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import hyfile_handler as hh
 import traj_accessory as ta
-import clusgroup as cg
+from traj import Trajectory
+import mapmaker as mm
 
 
 class TrajectoryGroup(object):
@@ -159,32 +159,23 @@ class TrajectoryGroup(object):
         else:
             return var
 
-    def stack_trajcoords(self):
+    def stack_trajdata(self, var):
         """
-        Gathers the latitudes and longitudes of each member trajectory
-            into two 1D ndarrays
-
         """
 
-        trajlats = None
-        trajlons = None
+        var_array = None
 
         for traj in self.trajectories:
-            lats = traj.latitude
-            lons = traj.longitude
-
-            if trajlats is None:
-                trajlats = lats
+            dat = getattr(traj, var)
+            if var_array is None:
+                var_array = dat
             else:
-                trajlats = np.concatenate((trajlats, lats))
+                var_array = np.concatenate((var_array, dat))
 
-            if trajlons is None:
-                trajlons = lons
-            else:
-                trajlons = np.concatenate((trajlons, lons))
+        if var is not 'latitude' and var is not 'longitude':
+            var_array = np.ma.masked_less_equal(var_array, -999.0)
 
-        self.all_trajlats = trajlats
-        self.all_trajlons = trajlons
+        return var_array
 
     def grid_trajvar(self, variable, cell_value, grid_res=0.5,
                      use_wherebin=True, normalize=False):
@@ -212,24 +203,16 @@ class TrajectoryGroup(object):
 
         """
 
-        var_array = None
-
         # Get stack of coordinates
         if not hasattr(self, 'all_trajlats'):
-            self.stack_trajcoords()
+            self.all_trajlats = self.stack_trajdata('latitude')
+            self.all_trajlons = self.stack_trajdata('longitude')
 
         # Get variable stack
-        for traj in self.trajectories:
-            if hasattr(traj, variable):
-                var = getattr(traj, variable)
-                if var_array is None:
-                    var_array = var
-                else:
-                    var_array = np.concatenate((var_array, var))
-            else:
-                raise AttributeError('Please set attribute and try again')
-
-        self.var = np.ma.masked_less_equal(var_array, -999.0)
+        if hasattr(self.trajectories[0], variable):
+            self.var = self.stack_trajdata(variable)
+        else:
+            raise AttributeError('Please set ' + variable + ' and try again')
 
         # Grid the data if you haven't before or you don't want to use wherebin
         if (not hasattr(self, 'wherebin') or not use_wherebin
@@ -459,47 +442,7 @@ class TrajectoryGroup(object):
             infile.writelines(output + '\n')
             infile.flush()
 
-    def spawn_clusters(self, cfile):
-        """
-        Acquires the distribution of trajectories from `cfile` and
-            creates new cluster objects and a cluster group object based
-            on that information
-
-        Parameters
-        ----------
-        cfile : string
-            The filename of the CLUSLIST_# file that indicates
-            trajectory distribution among clusters
-
-        Returns
-        -------
-        clustergroup : ClusterGroup object
-            The group of clusters derived from original TrajectoryGroup.
-            A ClusterGroup consists of a list of Cluster objects, which are
-            specialized TrajectoryGroup objects.
-
-        """
-
-        traj_inds, totalclusters = hh.load_clusterfile(cfile)
-
-        all_clusters = []
-        i = 0
-
-        while i < totalclusters:
-            cluster_number = i + 1
-            trajlist = [self.trajectories[j] for j in traj_inds[i]]
-            clusterobj = Cluster(trajlist, cluster_number)
-
-            all_clusters.append(clusterobj)
-
-            i = i + 1
-
-        clustergroup = cg.ClusterGroup(all_clusters)
-
-        return clustergroup
-
-    def map_data_line(self, cavemap, zorder=19,
-                      show_timesteps=False, show_paths=True):
+    def map_data_line(self, cavemap, **kwargs):
         """
         Make a plot of the trajectories in the TrajectoryGroup.
 
@@ -508,17 +451,14 @@ class TrajectoryGroup(object):
             trajectory.set_lw() to adjust.
 
         Parameters
+        ----------
         cavemap : Basemap instance
             Initialize a basemap first using MapDesign.make_basemap()
 
-        Keyword Arguments
-        -----------------
-        zorder : int
-            Default 19.  The zorder of the Trajectory lines on the map.
-        show_timesteps : Boolean
-            Default False.  If True, marker points will be plotted.
-        show_paths : Boolean
-            Default True.  If False, linestyle will be none.
+        Other Parameters
+        ----------------
+        kwargs
+
 
         Returns
         -------
@@ -527,24 +467,12 @@ class TrajectoryGroup(object):
 
         """
 
-        # Style dictionaries
-        mdict = {True : 'o',
-                 False : None}
-        lsdict = {True : '-',
-                  False : ''}
-
         for traj in self.trajectories:
-            cavemap.plot(traj.longitude, traj.latitude, color=traj.trajcolor,
-                         linewidth=traj.linewidth,
-                         marker=mdict[show_timesteps], latlon=True,
-                         linestyle=lsdict[show_paths], markeredgecolor='none')
+            self.map_traj_path(cavemap, **kwargs)
 
         return cavemap
 
-    def map_data_scatter(self, cavemap, variable, ax=None, figsize=(20, 20),
-                         zorder=19, ptsize=25, color_min=None, color_max=None,
-                         colormap='blues', rescale=None,
-                         sizevar=None, size_rescale=None):
+    def map_data_scatter(self, cavemap, variable, sizevar=None, **kwargs):
         """
         Make a scatter plot of the trajectories in the TrajectoryGroup.
 
@@ -562,27 +490,8 @@ class TrajectoryGroup(object):
 
         Keyword Arguments
         -----------------
-        zorder : int
-            Default 19.  The zorder of the Trajectory lines on the map.
-        ptsize : int
-            Default 25.  The size of the scatter points.
-        color_min : int or float
-            Default None.  The minimum value for color mapping.  If None,
-            color_min will be the minimum value of the data.
-        color_max : int or float
-            Default None.  The maximum value for color mapping.  If None,
-            color_max will be the maximum value of the data.
-        colormap : string
-            Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-            The matplotlib colormap the data values are mapped to.
-        rescale : string
-            Default None.  ['sqrt'|'ln'|'log']
-            Determines how data of variable is rescaled, if at all
         sizevar : string
             Default None.  The variable to plot as a change in marker size.
-        size_rescale : string
-            Default None.  ['sqrt'|'ln'|'log']
-            Determines how data of sizevar is rescaled, if at all
 
         Returns
         -------
@@ -594,28 +503,21 @@ class TrajectoryGroup(object):
 
         """
 
-        # Gather color variable into one array, prepare data
-        data, lons, lats = cg.scatterprep(self, variable, rescale)
+        data = self.stack_trajdata(variable)
+        lons = self.stack_trajdata('longitude')
+        lats = self.stack_trajdata('latitude')
 
-        if color_min is None:
-            color_min = data.min()
-
-        if color_max is None:
-            color_max = data.max()
-
-        # Gather size variable into one array, prepare data
         if sizevar is not None:
-            data2 = cg.scatterprep(self, sizevar, size_rescale)
-            data2 = data2 * ptsize
-            ptsize = data2
+            sizedata = self.stack_trajdata(sizevar)
+        else:
+            sizedata = None
 
-        cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=colormap,
-                             vmin=color_min, vmax=color_max, latlon=True,
-                             zorder=zorder, edgecolor='none')
+        cavemap, cm = mm.traj_scatter(data, lons, lats, cavemap,
+                                      sizedata=sizedata, **kwargs)
 
         return cavemap, cm
 
-    def map_moisture(self, cavemap, uptake, scale, ax=None, figsize=(20, 20),
+    def map_moisture(self, cavemap, uptake, scale,
                      zorder=20, ptsize=25, color_min=None, color_max=None):
         """
         Plot moisture uptakes as a scatter plot.
@@ -813,148 +715,3 @@ class TrajectoryGroup(object):
                                     zorder=zorder)
 
         return cavemap, cm
-
-
-class Cluster(TrajectoryGroup):
-    """
-    A special subclass of TrajectoryGroup for trajectories that have been
-        clustered together using HYSPLIT's clustering process.
-        Contains TrajectoryGroup attributes and functions, but also has
-        Trajectory-like attributes and functions associated with it, since
-        a Cluster may be represented as a mean trajectory
-    """
-
-    def __init__(self, traj_object_list, cluster_number):
-        """
-        Initialize Cluster object.
-
-        Parameters
-        ----------
-        traj_object_list : list of trajectory objects
-            Trajectories that belong in the cluster.
-        cluster_number : int
-            The Cluster identification number.  Distinguishes Cluster
-            from other Clusters in its ClusterGroup
-
-        """
-        TrajectoryGroup.__init__(self, traj_object_list)
-        self.start_longitude = traj_object_list[0].longitude[0]
-        self.clusternumber = cluster_number
-
-    def __add__(self, other):
-        """
-        Prints notice before calling TrajectoryGroup.__add__()
-
-        Parameters
-        ----------
-        other : TrajectoryGroup
-
-        """
-
-        print "Basic TrajectoryGroup created, cluster methods unavailable"
-
-        new_tg = TrajectoryGroup.__add__(self, other)
-
-        return new_tg
-
-    def set_coordinates(self, endpoints_file):
-        """
-        Initialize the coordinates of the Cluster mean trajectory path.
-
-        Parameters
-        ----------
-        endpoints_file : string
-            Full or relative path to the HYSPLIT file containing the
-            trajectory path
-
-        """
-
-        data, header, _ = hh.load_hysplitfile(endpoints_file)
-
-        self.latitude = data[0][:, header.index('Latitude')]
-        self.longitude = data[0][:, header.index('Longitude')]
-
-        # Longitudes should be -180 to 180
-        for lon in self.longitude:
-            if lon > 180.0:
-                lon = lon - 360.0
-
-    def set_vector(self):
-        """
-        Calculate mean bearing of Cluster path and bearings between timesteps
-
-        """
-
-        # Coordinates must be loaded first
-        if not hasattr(self, 'latitude'):
-            raise ValueError('self.latitude and self.longitude missing \n' +
-                             'perform set_coordinates() first')
-
-        self.meanvector, self.bearings = ta.tracemean_vector(self.latitude,
-                                                             self.longitude)
-
-    def set_distance(self):
-        """
-        Calculate the distance between timesteps fo the Cluster path and the
-            cumulative distance at each time step
-
-        """
-
-        # Coordinates must be loaded first
-        if not hasattr(self, 'latitude'):
-            raise ValueError('self.latitude and self.longitude missing \n' +
-                             'perform set_coordinates() first')
-        self.distance = ta.distance_overearth(self.latitude, self.longitude)
-        self.total_distance = ta.sum_distance(self.distance)
-
-    def set_meanvar(self):
-        """
-        Calculate means and sums of several moisture-related variables.
-
-        Means include the mean of every value along every trajectory in the
-            Cluster and the mean of every trajectory's latest value.  Sums are
-            the sum of every trajectory's latest value.
-
-        Attributes set:
-            mean_mf
-            mean_w
-            mean_q
-            mean_raint0
-            total_raint0
-            mean_mft1
-            total_mft1
-
-        """
-
-        mf_list = []
-        q_list = []
-        w_list = []
-        raint0_list = []
-        mft1_list = []
-
-        for traj in self.trajectories:
-            # Get trajectory attributes, if necessary setting them first
-            if not hasattr(traj, 'specific_humidity'):
-                traj.set_specifichumidity()
-
-            if not hasattr(traj, 'mixing_ratio'):
-                traj.set_mixingratio()
-
-            if not hasattr(traj, 'moistureflux'):
-                traj.calculate_moistureflux()
-
-            mf_list.extend(traj.moistureflux[:-1].tolist())
-            w_list.extend(traj.mixing_ratio.tolist())
-            q_list.extend(traj.specific_humidity.tolist())
-            raint0_list.append(traj.rainfall[0])
-            mft1_list.append(traj.moistureflux[0])
-
-        self.mean_mf = np.mean(mf_list)
-        self.mean_w = np.mean(w_list)
-        self.mean_q = np.mean(q_list)
-
-        self.mean_raint0 = np.mean(raint0_list)
-        self.total_raint0 = np.sum(raint0_list)
-        self.mean_mft1 = np.mean(mft1_list)
-        self.total_mft1 = np.sum(mft1_list)
-        self.total_mf = np.sum(mf_list)

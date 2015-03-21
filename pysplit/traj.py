@@ -2,6 +2,7 @@ import numpy as np
 import os
 import hyfile_handler as hh
 import traj_accessory as ta
+import mapmaker as mm
 
 
 class Trajectory:
@@ -684,4 +685,47 @@ class Trajectory:
         self.integ_error_z = (((z_distance / (falt_range + balt_range))
                               * 100) / 2)
 
-    # def map_traj(self, mapdesign, ):
+    def map_traj_scatter(self, cavemap, variable, sizevar=None, **kwargs):
+        """
+        Scatter plot of trajectory data
+
+        Parameters
+        ----------
+        cavemap
+        variable
+
+        Keyword Arguments
+        -----------------
+        sizevar
+
+        Other Parameters
+        ----------------
+        kwargs : passed to traj_scatter() and then ax.scatter()
+
+        """
+
+        data = getattr(self, variable)
+
+        if sizevar is not None:
+            sizedata = getattr(self, variable)
+        else:
+            sizedata = None
+
+        cavemap, cm = mm.traj_scatter(data, self.longitude, self.latitude,
+                                      cavemap, sizedata=sizedata, **kwargs)
+
+        return cavemap, cm
+
+    def map_traj_path(self, cavemap, color=None, lw=None,
+                      **kwargs):
+        """
+        """
+        if color is None:
+            color = self.trajcolor
+        if lw is None:
+            lw = self.linewidth
+
+        cavemap = mm.traj_path(cavemap, self.longitude, self.latitude,
+                               color, lw, **kwargs)
+
+        return cavemap
