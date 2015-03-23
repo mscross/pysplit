@@ -8,36 +8,56 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
                  edgecolor='none', size=25, sizedata=None, cnormalize=None,
                  snormalize=None, vmin=None, vmax=None, steps=11, **kwargs):
     """
-    Scatter plotting trajectory, trajectory group/cluster data.
+    Scatter-plot of trajectory, trajectory group/cluster data.
 
     Parameters
     ----------
     data : 1D ndarray of floats, ints
+        The data to plot as color change.
     lons : 1D ndarray of floats, ints
+        `data` longitudes
     lats : 1D ndarray of floats, ints
-    cavemap : basemap instance
+        `data` latitudes
+    cavemap : Basemap instance
+        Initialize a basemap first using MapDesign.make_basemap()
 
     Keyword Arguments
     -----------------
     zorder : int
+        Default 19.  Data zorder.
     colormap : colormap
+        Default `plt.cm.Blues`.  Any matplotlib colormap.
     edgecolor : string, tuple
+        Default `none`.  Any matplotlib-accepted color
     size : int
+        Default 25.  Point size of data unless `sizedata` specified.  Then,
+        will be multiplied with `sizedata`.
     sizedata : 1D ndarray of floats
+        Default None.  The data to plot as a change in marker size.
     cnormalize : string
         Default None.  [None|'boundary'|'log'|'ln'|'sqrt']
+        Normalization of color scale.  If 'boundary', will create a discrete
+        color map with `steps` number of colors.  For other norms, colorbar
+        ticklabels will be updated with 'log' but not 'ln', 'sqrt', because
+        no corresponding matplotlib colors Normalize classes are available.
     snormalize : string
-        Default None.  [None|'log'|'ln'|'sqrt']
+        Default None.  [None|'log'|'ln'|'sqrt'].  Similar to cnormalize,
+        except 'boundary' not available and does not use Normalize.
     vmin : int or float
+        Default None.
     vmax : int or float
     steps : int
         Only used in BoundaryNorm
 
     Other Parameters
     ----------------
-    kwargs : passed to ax.scatter
+    kwargs : passed to ax.scatter()
+
+    Returns
+    -------
 
     """
+
     cnormalize = str.lower(cnormalize)
     norm = None
     msg = ('Use `cbar.ax.set_yticklabels()` ' +
@@ -79,6 +99,19 @@ def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
               markeredgecolor='none', zorder=19, **kwargs):
 
     """
+    Line plot of trajectory or cluster path
+
+    Parameters
+    ----------
+
+    Keyword Arguments
+    -----------------
+
+    Other Parameters
+    ----------------
+
+    Returns
+    -------
 
     """
 

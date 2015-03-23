@@ -691,16 +691,27 @@ class Trajectory:
 
         Parameters
         ----------
-        cavemap
-        variable
+        cavemap : Basemap instance
+            Initialize a basemap first using MapDesign.make_basemap()
+        variable : string
+            The variable to plot as a color change
 
         Keyword Arguments
         -----------------
-        sizevar
+        sizevar : string
+            Default None.  The variable to plot as a marker size change
 
         Other Parameters
         ----------------
         kwargs : passed to traj_scatter() and then ax.scatter()
+
+        Returns
+        -------
+        cavemap : Basemap instance
+            Basemap instance with trajectory data plotted on it
+        cm : matplotlib PathCollection instance
+            Mappable for use in creating colorbars.  Colorbars may be created
+            in PySPLIT using make_cbar() or make_cax_cbar()
 
         """
 
@@ -716,10 +727,34 @@ class Trajectory:
 
         return cavemap, cm
 
-    def map_traj_path(self, cavemap, color=None, lw=None,
-                      **kwargs):
+    def map_traj_path(self, cavemap, color=None, lw=None, **kwargs):
         """
+        Line plot of trajectory path.
+
+        Parameters
+        ----------
+        cavemap : Basemap instance
+            Initialize a basemap first using MapDesign.make_basemap()
+
+        Keyword Arguments
+        -----------------
+        color : string, tuple
+            Default None.  If None, then traj.color will be used.  Any
+            matplotlib-approved color accepted
+        lw : int
+            Default None.  If None, then traj.linewidth will be used.
+
+        Other Parameters
+        ----------------
+        kwargs passed to traj_scatter() and then ax.plot()
+
+        Returns
+        -------
+        cavemap : Basemap instance
+            Basemap instance with trajectory path plotted on it
+
         """
+
         if color is None:
             color = self.trajcolor
         if lw is None:
