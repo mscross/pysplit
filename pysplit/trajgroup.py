@@ -514,8 +514,8 @@ class TrajectoryGroup(object):
 
         return cm
 
-    def map_moisture(self, cavemap, uptake, scale, color_min=None,
-                     color_max=None, **kwargs):
+    def map_moisture(self, cavemap, uptake, scale, vmin=None, vmax=None,
+                     **kwargs):
         """
         Plot moisture uptakes as a scatter plot.
 
@@ -534,12 +534,12 @@ class TrajectoryGroup(object):
 
         Keyword Arguments
         -----------------
-        color_min : int or float
+        vmin : int or float
             Default None.  The minimum value for color mapping.  If None,
-            color_min will be the minimum value of the data.
-        color_max : int or float
+            vmin will be the minimum value of the data.
+        vmax : int or float
             Default None.  The maximum value for color mapping.  If None,
-            color_max will be the maximum value of the data.
+            vmax will be the maximum value of the data.
 
         Other Parameters
         ----------------
@@ -578,8 +578,8 @@ class TrajectoryGroup(object):
         data_col, data_rows, cmap = opts[uptake][scale]
 
         if scale is 'fractional':
-            color_min = 0.0
-            color_max = 1.0
+            vmin = 0.0
+            vmax = 1.0
 
         longitudes = None
         latitudes = None
@@ -613,14 +613,14 @@ class TrajectoryGroup(object):
                 latitudes = np.concatenate((latitudes, lats))
                 alldata = np.concatenate((alldata, data))
 
-        cm = cavemap.scatter(alldata, longitudes, latitudes, cavemap,
-                             vmin=color_min, vmax=color_max, **kwargs)
+        cm = mm.traj_scatter(alldata, longitudes, latitudes, cavemap,
+                             vmin=vmin, vmax=vmax, **kwargs)
 
         return cm
 
-    def gridmap(self, cavemap, ismoisture=False,
-                usecontourf=False, mapcount=False, color_min=None,
-                color_max=None, colormap='blues', zorder=20):
+    def gridmap(self, cavemap, ismoisture=False, mapcount=False,
+                usecontourf=False, vmin=None, vmax=None,
+                colormap=plt.cm.Blues, zorder=20, **kwargs):
         """
         Create a pcolor or filled contourplot of gridded data.
 
@@ -634,65 +634,53 @@ class TrajectoryGroup(object):
         ismoisture : Boolean
             Default False.  Access gridded moisture uptake data if True.
             If False, access regular gridded data.
-        usecontourf : Boolean
-            Default False.  Use contourf (True) or pcolormesh (False) to
-            plot gridded data.
         mapcount : Boolean
             Default False.  If true, plot counts in each gridbox.  Else,
             plot gridded variable.
-        color_min : int or float
+        usecontourf : Boolean
+            Default False.  Use contourf (True) or pcolormesh (False) to
+            plot gridded data.
+        vmin : int or float
             Default None.  The minimum value for color mapping.  If None,
-            color_min will be the minimum value of the data.
-        color_max : int or float
+            vmin will be the minimum value of the data.
+        vmax : int or float
             Default None.  The maximum value for color mapping.  If None,
-            color_max will be the maximum value of the data.
-        colormap : string
-            Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-            Passed to a dictionary which retrieves the indicated colormap
+            vmax will be the maximum value of the data.
+        colormap : matplotlib colormap
+            Default plt.cm.Blues.  The gridded data colormap
         zorder : int
             Default 20.  The zorder of the gridded data
+
+        Other Parameters
+        ----------------
+        kwargs : passed to Basemap.pcolormesh(), ax.pcolormesh(), or
+            passed to traj_scatter, Basemap.contourf(), ax.contourf()
 
         Returns
         -------
         cm : matplotlib PathCollection instance
-            Mappable for use in creating colorbars.  Colorbars may be created
+            Mappable for use in creating colorbars.  Colorbars can be created
             using make_cbar() or make_cax_cbar().
 
         """
 
-        # Prepare grids for moisture variable or other variable
-        if ismoisture:
-            x = self.mxi
-            y = self.myi
+        # Ismoisture, mapcount
 
-            if mapcount:
-                data = self.mbins
-                data = np.ma.masked_equal(data, 0)
-            else:
-                data = self.mgrid
+        xydata_dict = {True  : {True  : [self.mxi, self.myi,
+                                         np.ma.masked_equal(self.mbins, 0)],
+                                False : [self.mxi, self.myi, self.mgrid]},
+                       False : {True  : [self.xi, self.yi,
+                                         np.ma.masked_equal(self.bins, 0)],
+                                False : [self.xi, self.yi, self.grid]}}
 
-        else:
-            x = self.xi
-            y = self.yi
-
-            if mapcount:
-                data = self.bins
-                data = np.ma.masked_equal(data, 0)
-            else:
-                data = self.grid
+        x, y, data = xydata_dict[ismoisture, mapcount]
 
         if usecontourf:
-            if color_min is None:
-                color_min = np.min(data)
-            if color_max is None:
-                color_max = np.max(data)
-
-            cm = cavemap.contourf(x, y, data,
-                                  np.linspace(color_min, color_max, num=11),
-                                  cmap=colormap, latlon=True, zorder=zorder)
+            cm = mm.meteo_contouring(cavemap, data, x, y, vmin=vmin, vmax=vmax,
+                                     cmap=colormap, zorder=zorder, **kwargs)
         else:
             cm = cavemap.pcolormesh(x, y, data, latlon=True, cmap=colormap,
-                                    vmin=color_min, vmax=color_max,
-                                    zorder=zorder)
+                                    vmin=vmin, vmax=vmax, zorder=zorder,
+                                    **kwargs)
 
         return cm
