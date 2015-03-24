@@ -12,19 +12,17 @@ __all__ = ['Trajectory',
            'TrajectoryGroup',
            'Cluster',
            'ClusterGroup',
-           'scatterprep',
-           'get_transform',
-           'square_it',
-           'do_nothing',
            'MapDesign',
-           'get_colormap',
+           'traj_scatter',
+           'traj_path',
            'make_cbar',
            'make_cax_cbar',
            'edit_cbar',
            'map_labeller',
            'labelfile_reader',
            'labelfile_generator',
-           'hysplit_file_processor',
+           'make_trajectorygroup',
+           'spawn_clusters',
            'hysplit_filelister',
            'load_hysplitfile',
            'trajsplit',
@@ -70,25 +68,30 @@ __all__ = ['Trajectory',
            'enso_varanomaly']
 
 
-from .traj import (Trajectory, TrajectoryGroup, Cluster, ClusterGroup,
-                   scatterprep, get_transform, square_it, do_nothing)
+from .traj import Trajectory
 
-from .mapmaker import (MapDesign, get_colormap, make_cbar, make_cax_cbar,
+from .trajgroup import TrajectoryGroup
+
+from .clusgroup import Cluster, ClusterGroup
+
+from .mapdesigner import MapDesign
+
+from .mapmaker import (traj_scatter, traj_path, make_cbar, make_cax_cbar,
                        edit_cbar)
 
 from .maplabeller import map_labeller, labelfile_reader, labelfile_generator
 
-from .hy_processor import hysplit_file_processor
+from .hy_processor import make_trajectorygroup, spawn_clusters
 
 from .hyfile_handler import (hysplit_filelister, load_hysplitfile, trajsplit,
                              load_clusterfile)
 
 from .traj_accessory import (tracemean_vector, great_circle_bearing,
                              circular_means, distance_overearth, sum_distance,
-                             find_destination,
-                             convert_km2mi, convert_mi2km, convert_w2q,
-                             convert_q2w, convert_w2rh, convert_rh2w,
-                             geographic_midpt, grid_data, maxmin_diff)
+                             find_destination, convert_mi2km, convert_q2w,
+                             convert_km2mi, convert_w2q, convert_w2rh,
+                             convert_rh2w, geographic_midpt, grid_data,
+                             maxmin_diff)
 
 from .trajectory_generator import (generate_trajectories,
                                    forwards_and_backwards, clip_traj,
