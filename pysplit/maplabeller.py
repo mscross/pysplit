@@ -134,9 +134,7 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder,
     # Plot labels
     for j in maplabels:
 
-        i = 0
-
-        while i < len(j['place']):
+        for i in range(0, len(j['place'])):
 
             x, y = cavemap(j['coord'][i][1] + j['off'][1],
                            j['coord'][i][0] + j['off'][0])
@@ -145,7 +143,6 @@ def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder,
                     horizontalalignment=j['ha'], verticalalignment=j['va'],
                     fontsize=j['fs'], weight=j['wt'], fontstyle=j['fst'],
                     zorder=j['zrd'])
-            i = i + 1
 
     return cavemap
 
