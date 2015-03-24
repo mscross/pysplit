@@ -161,6 +161,13 @@ class TrajectoryGroup(object):
 
     def stack_trajdata(self, var):
         """
+        Put data from all trajectories into one array.
+
+        Parameters
+        ----------
+        var : string
+            The attribute to collect from all trajectories
+
         """
 
         var_array = None
@@ -507,8 +514,8 @@ class TrajectoryGroup(object):
 
         return cm
 
-    def map_moisture(self, cavemap, uptake, scale,
-                     zorder=20, ptsize=25, color_min=None, color_max=None):
+    def map_moisture(self, cavemap, uptake, scale, color_min=None,
+                     color_max=None, **kwargs):
         """
         Plot moisture uptakes as a scatter plot.
 
@@ -527,10 +534,6 @@ class TrajectoryGroup(object):
 
         Keyword Arguments
         -----------------
-        zorder : int
-            Default 19.  The zorder of the Trajectory lines on the map.
-        ptsize : int
-            Default 25.  The size of the scatter points.
         color_min : int or float
             Default None.  The minimum value for color mapping.  If None,
             color_min will be the minimum value of the data.
@@ -538,10 +541,14 @@ class TrajectoryGroup(object):
             Default None.  The maximum value for color mapping.  If None,
             color_max will be the maximum value of the data.
 
+        Other Parameters
+        ----------------
+        kwargs : passed to traj_scatter(), then Basemap.scatter(), ax.scatter()
+
         Returns
         -------
         cm : matplotlib PathCollection instance
-            Mappable for use in creating colorbars.  Colorbars may be created
+            Mappable for use in creating colorbars.  Colorbars can be created
             using make_cbar() or make_cax_cbar().
 
         """
@@ -570,56 +577,44 @@ class TrajectoryGroup(object):
 
         data_col, data_rows, cmap = opts[uptake][scale]
 
-        if color_min is None:
-            if 'absolute' in scale:
-                color_min = 10.0
-                for tr in self.trajectories:
-                    datamin = np.min(tr.masked_sources[:, data_col])
-                    if datamin < color_min:
-                        color_min = datamin
-            else:
-                color_min = 0.0
+        if scale is 'fractional':
+            color_min = 0.0
+            color_max = 1.0
 
-        if color_max is None:
-            if 'absolute' in scale:
-                color_max = 0.0
-                for tr in self.trajectories:
-                    datamax = np.max(tr.masked_sources[:, data_col])
-                    if datamax > color_max:
-                        color_max = datamax
-            else:
-                color_max = 1.0
+        longitudes = None
+        latitudes = None
+        alldata = None
 
         for tr in self.trajectories:
-            if data_rows is None:
-                lons = tr.masked_sources[:, lon_col]
-                lats = tr.masked_sources[:, lat_col]
-                data = tr.masked_sources[:, data_col]
-                cm = cavemap.scatter(lons, lats, c=data, s=ptsize, cmap=cmap,
-                                     vmin=color_min, vmax=color_max,
-                                     latlon=True, zorder=zorder,
-                                     edgecolor='none')
+            lons = tr.masked_sources[:, lon_col]
+            lats = tr.masked_sources[:, lat_col]
+            data = tr.masked_sources[:, data_col]
+
+            if data_rows is not None:
+                e_rows = np.nonzero(tr.masked_sources[:, e_col] > -999.0)[0]
+                f_rows = np.nonzero(tr.masked_sources[:, f_col] > -999.0)[0]
+                ef_rows = np.concatenate((e_rows, f_rows))
+
+                row_dict = {'e' : e_rows,
+                            'f' : f_rows,
+                            'ef': ef_rows}
+
+                rows = row_dict[data_rows]
+                lons = lons[rows]
+                lats = lats[rows]
+                data = data[rows]
+
+            if longitudes is None:
+                longitudes = lons
+                latitudes = lats
+                alldata = data
             else:
-                if 'e' in data_rows:
-                    e_rows = np.nonzero(tr.masked_sources[:, e_col] > -999.0)
-                    lons = tr.masked_sources[e_rows, lon_col]
-                    lats = tr.masked_sources[e_rows, lat_col]
-                    data = tr.masked_sources[e_rows, data_col]
-                    cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
-                                         cmap=cmap, vmin=color_min,
-                                         vmax=color_max, latlon=True,
-                                         zorder=zorder,
-                                         edgecolor='none')
-                if 'f' in data_rows:
-                    f_rows = np.nonzero(tr.masked_sources[:, f_col] > -999.0)
-                    lons = tr.masked_sources[f_rows, lon_col]
-                    lats = tr.masked_sources[f_rows, lat_col]
-                    data = tr.masked_sources[f_rows, data_col]
-                    cm = cavemap.scatter(lons, lats, c=data, s=ptsize,
-                                         cmap=cmap, vmin=color_min,
-                                         vmax=color_max, latlon=True,
-                                         zorder=zorder,
-                                         edgecolor='none')
+                longitudes = np.concatenate((longitudes, lons))
+                latitudes = np.concatenate((latitudes, lats))
+                alldata = np.concatenate((alldata, data))
+
+        cm = cavemap.scatter(alldata, longitudes, latitudes, cavemap,
+                             vmin=color_min, vmax=color_max, **kwargs)
 
         return cm
 
