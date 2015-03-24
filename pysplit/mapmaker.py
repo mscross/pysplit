@@ -196,7 +196,7 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
     if levels is None:
         levels = np.linspace(vmin, vmax, steps)
 
-    if longitudes.ndim == 1:
+    if longitudes.ndim == 1 and data.ndim == 2:
         longitudes, latitudes = np.meshgrid(longitudes, latitudes)
 
     if contourf:

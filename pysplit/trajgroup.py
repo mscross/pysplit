@@ -59,6 +59,20 @@ class TrajectoryGroup(object):
 
         return new_tg
 
+    def __getitem__(self, index):
+        """
+        Index or slice the Trajectory list to get a new Trajectory Group
+        """
+
+        newthing = self.trajectories[index]
+
+        try:
+            new_tg = TrajectoryGroup(newthing)
+        except:
+            new_tg = TrajectoryGroup([newthing])
+
+        return new_tg
+
     def hystats(self, variable, sort_bytime='month', iterable=True):
         """
         Gathers t=0* data so you can make your own plots.
