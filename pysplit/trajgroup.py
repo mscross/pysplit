@@ -459,18 +459,10 @@ class TrajectoryGroup(object):
         ----------------
         kwargs
 
-
-        Returns
-        -------
-        cavemap : Basemap instance
-            Basemap instance with Trajectory paths plotted on it.
-
         """
 
         for traj in self.trajectories:
             self.map_traj_path(cavemap, **kwargs)
-
-        return cavemap
 
     def map_data_scatter(self, cavemap, variable, sizevar=None, **kwargs):
         """
@@ -495,8 +487,6 @@ class TrajectoryGroup(object):
 
         Returns
         -------
-        cavemap : Basemap instance
-            Basemap instance with Trajectory data plotted on it.
         cm : matplotlib PathCollection instance
             Mappable for use in creating colorbars.  Colorbars may be created
             using make_cbar() or make_cax_cbar().
@@ -512,10 +502,10 @@ class TrajectoryGroup(object):
         else:
             sizedata = None
 
-        cavemap, cm = mm.traj_scatter(data, lons, lats, cavemap,
-                                      sizedata=sizedata, **kwargs)
+        cm = mm.traj_scatter(data, lons, lats, cavemap, sizedata=sizedata,
+                             **kwargs)
 
-        return cavemap, cm
+        return cm
 
     def map_moisture(self, cavemap, uptake, scale,
                      zorder=20, ptsize=25, color_min=None, color_max=None):
@@ -550,8 +540,6 @@ class TrajectoryGroup(object):
 
         Returns
         -------
-        cavemap : Basemap instance
-            Basemap instance with Trajectory moisture uptake plotted on it.
         cm : matplotlib PathCollection instance
             Mappable for use in creating colorbars.  Colorbars may be created
             using make_cbar() or make_cax_cbar().
@@ -633,7 +621,7 @@ class TrajectoryGroup(object):
                                          zorder=zorder,
                                          edgecolor='none')
 
-        return cavemap, cm
+        return cm
 
     def gridmap(self, cavemap, ismoisture=False,
                 usecontourf=False, mapcount=False, color_min=None,
@@ -671,8 +659,6 @@ class TrajectoryGroup(object):
 
         Returns
         -------
-        cavemap : Basemap instance
-            Basemap instance with Trajectory moisture uptake plotted on it.
         cm : matplotlib PathCollection instance
             Mappable for use in creating colorbars.  Colorbars may be created
             using make_cbar() or make_cax_cbar().
@@ -714,4 +700,4 @@ class TrajectoryGroup(object):
                                     vmin=color_min, vmax=color_max,
                                     zorder=zorder)
 
-        return cavemap, cm
+        return cm

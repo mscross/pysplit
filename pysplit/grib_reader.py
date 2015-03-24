@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import gdal
 from gdalconst import *
 import fnmatch
@@ -314,9 +313,8 @@ def averager(gridded_data):
     return gridded_data
 
 
-def windcontours(windmap, uband, vband, latitudes, longitudes,
-                 wmin=20.0, wmax=85.0, wstep=5.0,
-                 colormap='jet', zorder=13, limits=None):
+def windcontours(windmap, uband, vband, latitudes, longitudes, contourf=True,
+                 limits=None, **kwargs):
     """
     Contour map of windspeed.
 
@@ -335,27 +333,17 @@ def windcontours(windmap, uband, vband, latitudes, longitudes,
 
     Keyword Arguments
     -----------------
-    wmin : float
-        Default 0.0.  The minimum value for creating contour levels and
-        colormapping.  If None, wmin will be the minimum windspeed.
-    wmax : float
-        Default None.  The maximum value for creating contour levels and
-        colormapping.  If None, wmax will be the maximum windspeed.
-    wstep : int or float
-        The step size between contour levels bounded by wmin, wmax.
-    colormap : string
-        Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-        Colormap for windspeed data
-    zorder : int
-        Default 13.  The zorder of the contours.
     limits : list of floats or ints
         Default None.  Used to trim zdata grid, longitudes, latitudes.
         [bottom latitude, left longitude, top latitude, right longitude]
 
+    Other Parameters
+    ----------------
+    kwargs : passed to mm.meteo_contouring(), then Basemap.contour() or
+        Basemap.contourf(), then the axis methods
+
     Returns
     -------
-    windmap : Basemap instance
-        Basemap instance with filled contour plot of windspeed data
     w : matplotlib PathCollection instance
         Mappable for use in creating colorbars.  Colorbars may be created
         using make_cbar() or make_cax_cbar().
@@ -370,92 +358,16 @@ def windcontours(windmap, uband, vband, latitudes, longitudes,
     # Calculate windspeed
     windspeed = np.sqrt(uband ** 2 + vband ** 2)
 
-    # Inizialize contour levels
-    levels = np.arange(wmin, wmax + wstep, wstep)
-
-    # Make grid for contour plot
-    lons, lats = np.meshgrid(longitudes, latitudes)
-
     # Plot data as filled contours
-    w = windmap.contourf(lons, lats, windspeed, zorder=contour_zorder,
-                         cmap=colormap, levels=levels, latlon=True)
+    w = mm.meteo_contouring(windmap, windspeed, longitudes, latitudes,
+                            contourf=contourf, **kwargs)
 
-    return windmap, w
-
-
-def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
-              zorder=20):
-    """
-    Map wind velocity using vectors (arrows or barbs.
-
-    Parameters
-    ----------
-    windmap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
-    uband : (M, N) ndarray of floats
-        Array of the U component of wind velocity
-    vband : (M, N) ndarray of floats
-        Array of the V component of wind velocity
-    latitudes : (M) ndarray of floats
-        Array of latitudes of uband, vband
-    longitudes : (N) ndarray of floats
-        Array of longitudes of uband, vband
-
-    Keyword Arguments
-    -----------------
-    vectors : string
-        Default 'arrows'.  ['arrows'|'barbs']
-        The vector type to indicate wind velocity.  'arrows' comes with a key.
-    zorder : int
-        Default 20.  The zorder of the vectors.
-    limits : list of floats or ints
-        Default None.  Used to trim zdata grid, longitudes, latitudes.
-        [bottom latitude, left longitude, top latitude, right longitude]
-
-    Returns
-    -------
-    windmap : Basemap instance
-        Basemap instance with vector plot of windspeed data
-
-    """
-
-    # Trim grid to a more localized box
-    if limits is not None:
-        _, _, uband = gridlimit(limits, longitudes, latitudes, uband)
-        longitudes, latitudes, vband = gridlimit(limits, longitudes, latitudes)
-
-    # Change longitudes to -180 to 180
-    for i in range(0, longitudes.size):
-        if longitudes[i] > 180.0:
-            longitudes[i] = longitudes[i] - 360.0
-
-    longitude_sort = np.argsort(longitudes)
-
-    longitudes = longitudes[longitude_sort]
-    uband = uband[:, longitude_sort]
-    vband = vband[:, longitude_sort]
-
-    # Transform vectors to lie correctly on projection
-    u, v, lns, lts = windmap.transform_vector(uband[::-1, :], vband[::-1, :],
-                                              longitudes, latitudes[::-1],
-                                              12, 16, returnxy=True)
-    # Plot vectors as arrows or barbs
-    if vectors is 'arrows':
-        q = windmap.quiver(lns, lts, u, v, zorder=vector_zorder, scale=1000)
-        plt.quiverkey(q, 0.25, 0.05, 60, '60 m/s', labelpos='W',
-                      labelcolor='red', fontproperties={'size': 20},
-                      zorder=zorder, color='red')
-
-    elif vectors is 'barbs':
-        q = windmap.barbs(lns, lts, u, v, zorder=zorder)
-
-    return windmap, q
+    return w
 
 
-def plot_othervar(varmap, vardata, latitudes, longitudes,
-                  filetype='ncar', color_min=None,
-                  color_max=None, color_levelnum=50, colormap='jet',
-                  zorder=13, limits=None):
+def plot_othervar(varmap, vardata, latitudes, longitudes, contourf=True,
+                  is_geopotential=False, filetype='ncar', limits=None,
+                  **kwargs):
     """
     For plotting any variable that is not wind.  Interrogates ncar (grib) or
         trmm (hdf) files on any surface and plots data from specified years or
@@ -477,148 +389,116 @@ def plot_othervar(varmap, vardata, latitudes, longitudes,
     filetype : string
         Default 'ncar'.  ['ncar'|'trmm'].  TRMM data has a different
         orientation than NCAR data and must be transposed before plotting.
-    color_min : int or float
-        Default None.  The minimum value for color mapping.  If None,
-        color_min will be the minimum value of the data.
-    color_max : int or float
-        Default None.  The maximum value for color mapping.  If None,
-        color_max will be the maximum value of the data.
-    color_levelnum
-    colormap : string
-        Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-        Colormap for zdata
-    zorder : int
-        Default 13.  The zorder of the contours.
     limits : list of floats or ints
         Default None.  Used to trim zdata grid, longitudes, latitudes.
         [bottom latitude, left longitude, top latitude, right longitude]
 
+    Other Parameters
+    ----------------
+    kwargs : passed to mm.meteo_contouring(), then Basemap.contour() or
+        Basemap.contourf(), then the axis methods
+
     Returns
     -------
-    varmap : Basemap instance
-        Basemap instance will filled contour plot of vardata
     v : matplotlib PathCollection instance
         Mappable for use in creating colorbars.  Colorbars may be created
         using make_cbar() or make_cax_cbar().
 
     """
 
+    # TRMM files are oriented weirdly
+    if filetype is 'trmm':
+        vardata = vardata.T
+
     # Trim grid to a more localized box
     if limits is not None:
         longitudes, latitudes, vardata = gridlimit(limits, longitudes,
                                                    latitudes, vardata)
 
-    if color_min is None:
-        color_min = varband.min()
-
-    if color_max is None:
-        color_max = varband.max()
-
-    levels = np.linspace(color_min, color_max, color_levelnum)
-
-    # Make grid
-    lons, lats = np.meshgrid(longitudes, latitudes)
-
-    # TRMM files are oriented weirdly
-    if filetype is 'trmm':
-        varband = varband.T
+    # Calculate meters from geopotential
+    if is_geopotential:
+        vardata = vardata / 9.80665
 
     # Make the contour plot
-    v = varmap.contourf(lons, lats, varband, cmap=colormap,
-                        zorder=zorder, levels=levels, latlon=True)
+    v = mm.meteo_contouring(varmap, vardata, longitudes, latitudes,
+                            contourf=contourf)
 
-    return varmap, v
+    return v
 
 
-def zplot(zmap, zdata, latitudes, longitudes, contours,
-          is_geopotential=True, zmin=0.0, zmax=None,
-          zstep=100.0, colormap='jet', colors=None, linewidths=2, zorder=14,
-          limits=None):
+def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
+              limits=None, zorder=20, scale=1000, **kwargs):
     """
-    Map all or specific z (or any) contours.  Converts geopotential to meters
-        if necessary.
+    Map wind velocity using vectors (arrows or barbs).
+
+    plt.quiverkey(q, 0.25, 0.05, 60, '60 m/s', labelpos='W',
+              labelcolor='red', fontproperties={'size': 20},
+              zorder=zorder, color='red')
 
     Parameters
     ----------
-    zmap : Basemap instance
+    windmap : Basemap instance
         Initialize a basemap first using MapDesign.make_basemap()
-    zdata : (M, N) ndarray of floats
-        Data array
+    uband : (M, N) ndarray of floats
+        Array of the U component of wind velocity
+    vband : (M, N) ndarray of floats
+        Array of the V component of wind velocity
     latitudes : (M) ndarray of floats
-        Array of latitudes of zdata
+        Array of latitudes of uband, vband
     longitudes : (N) ndarray of floats
-        Array of longitudes of zdata
-    contours : string or list of ints or floats
-        'all', or a list of particular contours to plot.
+        Array of longitudes of uband, vband
 
     Keyword Arguments
     -----------------
-    is_geopotential : Boolean
-        Default True.  If True, data will be divided by gravitational
-        acceleration to get elevation in meters
-    zmin : float
-        Default 0.0.  The minimum value for creating contour levels and maybe
-        colormapping.
-    zmax : float
-        Default None.  The maximum value for creating contour levels and maybe
-        colormapping.  If None, zmax will be the maximum value of zdata.
-    zstep : int or float
-        The step size between contour levels bounded by zmin, zmax.
-    colormap : string
-        Default 'jet'.  ['jet'|'blues'|'anomaly'|'heat'|'earth'].  The colormap
-        for plotting 'all' contour data.
-    colors : list of strings
-        Default None.  The colors of particular contours to plot.
-        len(colors) == len(contours)
-    linewidths : int or float or list of ints or floats
-        Default 2.  The linewidth of all contours, or a list of linewidths for
-        particularly contours.  Must be in list format if not 'all' contours
-        are chosen.  len(linewidths) == len(contours)
-    zorder : int
-        Default 14.  The zorder of the contour data
+    vectors : string
+        Default 'arrows'.  ['arrows'|'barbs']
+        The vector type to indicate wind velocity.  'arrows' comes with a key.
     limits : list of floats or ints
         Default None.  Used to trim zdata grid, longitudes, latitudes.
         [bottom latitude, left longitude, top latitude, right longitude]
+    zorder : int
+        Default 20.  The zorder of the vectors `windmap`
+    scale : int
+        Default 1000. Used to adjust arrow size.
+
+    Other Parameters
+    ----------------
+    kwargs : passed to Basemap.quiver() or Basemap.barbs(), then the axis
+        methods
+
+    Returns
+    -------
+    q : collection
+        Collection of barbs or arrows
 
     """
 
-    # Calculate meters from geopotential
-    if is_geopotential:
-        zdata = zdata / 9.80665
-
     # Trim grid to a more localized box
     if limits is not None:
-        longitudes, latitudes, zdata = gridlimit(limits, longitudes, latitudes,
-                                                 zdata)
-    if zmax is None:
-        zmax = zdata.max()
+        _, _, uband = gridlimit(limits, longitudes, latitudes, uband)
+        longitudes, latitudes, vband = gridlimit(limits, longitudes, latitudes)
 
-    lons, lats = np.meshgrid(longitudes, latitudes)
+    # Change longitudes to -180 to 180
+    longitudes = np.where(longitudes > 180.0, longitudes - 360.0, longitudes)
 
-    levels = np.arange(zmin, zmax, zstep)
+    longitude_sort = np.argsort(longitudes)
 
-    if contours is 'all':
+    longitudes = longitudes[longitude_sort]
+    uband = uband[:, longitude_sort]
+    vband = vband[:, longitude_sort]
 
-        z = zmap.contour(lons, lats, zdata, cmap=colormap, zorder=zorder,
-                         linewidth=linewidths, latlon=True, levels=levels)
+    # Transform vectors to lie correctly on projection
+    u, v, lns, lts = windmap.transform_vector(uband[::-1, :], vband[::-1, :],
+                                              longitudes, latitudes[::-1],
+                                              12, 16, returnxy=True)
+    # Plot vectors as arrows or barbs
+    if vectors is 'arrows':
+        q = windmap.quiver(lns, lts, u, v, zorder=zorder, scale=1000, **kwargs)
 
-        return zmap, z
+    elif vectors is 'barbs':
+        q = windmap.barbs(lns, lts, u, v, zorder=zorder, **kwargs)
 
-    # PLot specific contours
-    else:
-        z = zmap.contour(lons, lats, zdata, colors='r', levels=levels,
-                         zorder=zorder, latlon=True)
-
-        for lvl in range(0, z.levels.size):
-            zl = z.collections[lvl]
-
-            if levels[lvl] in contours:
-                ind = contours.index(levels[lvl])
-                plt.setp(zl, color=colors[ind], linewidth=linewidths[ind])
-            else:
-                plt.setp(zl, color=None, alpha=0)
-
-        return zmap
+    return q
 
 
 def gridlimit(limits, longitudes, latitudes, data):

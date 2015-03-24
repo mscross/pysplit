@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as clr
@@ -145,8 +144,6 @@ class Cluster(TrajectoryGroup):
         cavemap = mm.traj_path(cavemap, self.longitude, self.latitude,
                                color, lw, **kwargs)
 
-        return cavemap
-
 
 class ClusterGroup(object):
     """
@@ -221,8 +218,6 @@ class ClusterGroup(object):
 
         Returns
         -------
-        cavemap : Basemap instance
-            Basemap instance with Trajectory moisture uptake plotted on it.
         colors : list of RGBA tuples
             The color of each cluster
         plot_order : list of ints
@@ -291,7 +286,7 @@ class ClusterGroup(object):
             cavemap = self.clusters[i].map_cluster_path(cavemap, colors[i],
                                                         lw=wdata[i], **kwargs)
 
-        return cavemap, colors, plot_order
+        return colors, plot_order
 
     def trajplot_clusterplot(self, trajmap, clusmap,
                              colors=None,
@@ -337,12 +332,6 @@ class ClusterGroup(object):
 
         Returns
         -------
-        trajmap : Basemap instance
-            Map with trajectory paths plotted on it.
-            Trajectory colors correspond to color of mother cluster
-        clusmap : Basemap instance
-            Map with cluster mean paths plotted on it.
-            Linewidth is given value or is the number of member trajectories.
         colors : list of RGBA tuples
             The color used for each cluster.
 
@@ -385,90 +374,4 @@ class ClusterGroup(object):
                              linewidth=traj_lw, latlon=True,
                              zorder=traj_zorder)
 
-        return trajmap, clusmap, colors
-
-
-def scatterprep(trajgroup, variable, transform):
-    """
-    Gets trajectory attributes in format for plotting
-
-    Masks and transforms specified attribute
-
-    Parameters
-    ----------
-    trajgroup : TrajectoryGroup
-        A TrajectoryGroup object containing trajectories with the
-        specified variable
-    variable : string
-        The trajectory attribute to plot
-    transform : string
-        The transform to be applied to the data
-
-    Keyword Arguments
-    -----------------
-
-    Returns
-    -------
-    data : (M) masked ndarray of floats
-        The trajectory attribute, assembled in one 1D array from all
-        trajectories.  Data is transformed and invalid data masked.
-    lats : (M) ndarray of floats
-        The latitudes of all items in data
-    lons : (M) ndarray of floats
-        The longitudes of all items in data
-
-    """
-
-    datarray = None
-    latarray = None
-    lonarray = None
-
-    for traj in trajgroup.trajectories:
-        dat = getattr(traj, variable)
-        lat = traj.latitude
-        lon = traj.longitude
-        if datarray is None:
-            datarray = dat
-            latarray = lat
-            lonarray = lon
-        else:
-            datarray = np.concatenate((datarray, dat))
-            latarray = np.concatenate((latarray, lat))
-            lonarray = np.concatenate((lonarray, lon))
-
-    data = np.ma.masked_less_equal(datarray, -999.0)
-    lons = lonarray
-    lats = latarray
-
-    if transform is not None:
-        transforms = get_transform(transform)
-        data = transforms[1](data)
-
-    return data, lons, lats
-
-
-def get_transform(transform):
-    """
-    Dictionary of transforms.  Keys are strings representing transforms,
-        values are functions
-
-    Parameters
-    ----------
-    transform : string
-        How the data is to be transformed.  ['sqrt'|'log'|'ln']
-
-    Returns
-    -------
-    transform_dict : list of functions
-        The functions necessary to adjust data to specified transform
-
-    """
-
-    # 0 is used for cluster mapping, 1 for regular trajectory mapping
-    transform_dict = {'sqrt'  : [math.sqrt, np.sqrt],
-                      'log'   : [math.log10, np.log10],
-                      'ln'    : [math.log, np.log]}
-
-    transforms = transform_dict[transform]
-
-    return transforms
+        return colors

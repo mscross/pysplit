@@ -707,8 +707,6 @@ class Trajectory:
 
         Returns
         -------
-        cavemap : Basemap instance
-            Basemap instance with trajectory data plotted on it
         cm : matplotlib PathCollection instance
             Mappable for use in creating colorbars.  Colorbars may be created
             in PySPLIT using make_cbar() or make_cax_cbar()
@@ -722,10 +720,10 @@ class Trajectory:
         else:
             sizedata = None
 
-        cavemap, cm = mm.traj_scatter(data, self.longitude, self.latitude,
-                                      cavemap, sizedata=sizedata, **kwargs)
+        cm = mm.traj_scatter(data, self.longitude, self.latitude,
+                             cavemap, sizedata=sizedata, **kwargs)
 
-        return cavemap, cm
+        return cm
 
     def map_traj_path(self, cavemap, color=None, lw=None, **kwargs):
         """
@@ -746,12 +744,8 @@ class Trajectory:
 
         Other Parameters
         ----------------
-        kwargs passed to traj_scatter() and then ax.plot()
-
-        Returns
-        -------
-        cavemap : Basemap instance
-            Basemap instance with trajectory path plotted on it
+        kwargs passed to traj_scatter() and then Basemap.plot(),
+            and then axis.plot()
 
         """
 
@@ -760,7 +754,5 @@ class Trajectory:
         if lw is None:
             lw = self.linewidth
 
-        cavemap = mm.traj_path(cavemap, self.longitude, self.latitude,
-                               color, lw, **kwargs)
-
-        return cavemap
+        mm.traj_path(cavemap, self.longitude, self.latitude,
+                     color, lw, **kwargs)
