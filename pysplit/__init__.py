@@ -15,6 +15,8 @@ __all__ = ['Trajectory',
            'MapDesign',
            'traj_scatter',
            'traj_path',
+           'meteo_contouring',
+           'adjust_contourparams',
            'make_cbar',
            'make_cax_cbar',
            'edit_cbar',
@@ -55,17 +57,14 @@ __all__ = ['Trajectory',
            'get_hdfdata',
            'averager',
            'windcontours',
-           'windbarbs',
            'plot_othervar',
-           'zplot',
+           'windbarbs',
            'gridlimit',
            'oni_file_reader',
            'oni_file_interrogator',
            'enso_plotprep',
            'enso_winddata',
-           'enso_vardata',
-           'enso_windanomaly',
-           'enso_varanomaly']
+           'enso_vardata']
 
 
 from .traj import Trajectory
@@ -76,7 +75,8 @@ from .clusgroup import Cluster, ClusterGroup
 
 from .mapdesigner import MapDesign
 
-from .mapmaker import (traj_scatter, traj_path, make_cbar, make_cax_cbar,
+from .mapmaker import (traj_scatter, traj_path, meteo_contouring,
+                       adjust_contourparams, make_cbar, make_cax_cbar,
                        edit_cbar)
 
 from .maplabeller import map_labeller, labelfile_reader, labelfile_generator
@@ -99,9 +99,7 @@ from .trajectory_generator import (generate_trajectories,
 
 from .grib_reader import (get_bandnum, getsurface_getvar, file_lister,
                           file_dates, get_gribdata, get_hdfdata, averager,
-                          windcontours, windbarbs, plot_othervar, zplot,
-                          gridlimit)
+                          windcontours, plot_othervar, windbarbs, gridlimit)
 
 from .enso import (oni_file_reader, oni_file_interrogator, enso_plotprep,
-                   enso_winddata, enso_vardata, enso_windanomaly,
-                   enso_varanomaly)
+                   enso_winddata, enso_vardata)

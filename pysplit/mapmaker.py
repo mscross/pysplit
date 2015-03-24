@@ -1,3 +1,4 @@
+from __future__ import division
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
 import matplotlib.colors as clr

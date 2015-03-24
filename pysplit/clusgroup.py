@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -283,15 +284,13 @@ class ClusterGroup(object):
                 colors.append(color)
 
         for i in plot_order:
-            cavemap = self.clusters[i].map_cluster_path(cavemap, colors[i],
-                                                        lw=wdata[i], **kwargs)
+            self.clusters[i].map_cluster_path(cavemap, colors[i], lw=wdata[i],
+                                              **kwargs)
 
         return colors, plot_order
 
-    def trajplot_clusterplot(self, trajmap, clusmap,
-                             colors=None,
-                             cluster_lw='relative', clus_zorder=19,
-                             traj_lw=3, traj_zorder=19):
+    def trajplot_clusterplot(self, trajmap, clusmap, colors=None, traj_lw=3,
+                             cluster_lw='relative', **kwargs):
 
         """
         Plots trajectories on one map and cluster paths on another.
@@ -323,12 +322,8 @@ class ClusterGroup(object):
             The linewidth of the cluster mean path is set with a constant
             value, or is set with a value that depends on the relative or
             absolute number of member trajectories in the cluster
-        clus_zorder : int
-            Default 19.  Zorder of cluster paths
         traj_lw : int
             Default 3.  The linewdith of each trajectory.
-        traj_zorder : int
-            Default 19.  The zorder of trajectory paths.
 
         Returns
         -------
@@ -339,39 +334,27 @@ class ClusterGroup(object):
 
         # Set colors if none provided
         if colors is None:
-            colors = np.random.rand(self.totalclusters, 3)
-            colors = np.vsplit(colors, self.totalclusters)
-            color_tmp = []
-            for c in colors:
-                color_tmp.append(c[0])
-            colors = color_tmp
+            mm.random_colors(self.totalclusters)
 
         # Set cluster mean path width by member trajectory count if not given
+        clus_lw = []
+
         if cluster_lw is 'relative':
-            print 'relative'
-            cluster_lw = []
             for cluster in self.clusters:
-                cluster_lw.append((cluster.trajcount /
-                                   float(self.totaltrajcount)) * 100.0)
-
+                clus_lw.append((cluster.trajcount /
+                                float(self.totaltrajcount)) * 100.0)
         elif cluster_lw is 'absolute':
-            print 'absolute'
-            cluster_lw = []
             for cluster in self.clusters:
-                cluster_lw.append(cluster.trajcount)
-
+                clus_lw.append(cluster.trajcount)
         else:
-            cluster_lw = [cluster_lw]
-            cluster_lw = cluster_lw * self.totalclusters
+            clus_lw = [cluster_lw]
+            clus_lw = cluster_lw * self.totalclusters
 
         # Plot
         for cluster, color, lw in zip(self.clusters, colors, cluster_lw):
-            clusmap.plot(cluster.longitude, cluster.latitude, color=color,
-                         linewidth=lw, latlon=True, zorder=clus_zorder)
+            cluster.map_cluster_path(clusmap, color, lw=lw, **kwargs)
 
             for traj in cluster.trajectories:
-                trajmap.plot(traj.longitude, traj.latitude, color=color,
-                             linewidth=traj_lw, latlon=True,
-                             zorder=traj_zorder)
+                traj.map_traj_path(trajmap, color=color, lw=traj_lw, **kwargs)
 
         return colors

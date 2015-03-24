@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -61,15 +62,17 @@ class TrajectoryGroup(object):
 
     def __getitem__(self, index):
         """
-        Index or slice the Trajectory list to get a new Trajectory Group
+        Index or slice the Trajectory list to get a Trajectory or
+            TrajectoryGroup, respectively
         """
 
         newthing = self.trajectories[index]
 
         try:
+            # TrajectoryGroup requires a list of trajectories
             new_tg = TrajectoryGroup(newthing)
         except:
-            new_tg = TrajectoryGroup([newthing])
+            pass
 
         return new_tg
 

@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import grib_reader as gr
 
@@ -40,8 +41,7 @@ def oni_file_reader(working_dir):
     headerline = oni_file.readline()
     trimonth_list = headerline.split()[1:]
 
-    # Read through rest of file until the file is done
-    # or an incomplete year is encountered
+    # Read through rest of file until at end or incomplete year encountered
     while True:
         oniline = oni_file.readline()
 
@@ -81,13 +81,13 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     monthstring : string
         Three letter string representing three contiguous months
     phase : string
-        'el nino', 'la nina' or 'none'.  The phase of interest
+        The phase of interest.  ['el nino'|'la nina'|'none']
     strength : string
-        'strong', 'moderate', 'weak', 'all', 'high', 'low'.  Ignored if phase
-        is 'none'. 'all', 'high', and 'low' indicate all, strong & moderate,
-        and moderate & low strengths
+        Ignored if `phase` is 'none'.
+        ['strong'|'moderate'|'weak'|'all'|'high'|'low'].  'high' and 'low'
+        encompass 'strong' and 'moderate', 'moderate' and 'weak'
     oni_array : 2D Numpy ndarray of floats
-        ONI data arranged by year (row) and three month period (column)
+        ONI data [year, 3-month period]
     year_list : list of ints
         Years with complete data in ONI file
     trimonth_list : list of strings
@@ -98,6 +98,7 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     -------
     years_ofinterest : Numpy ndarray of ints
         Years where interesting period is the phase and strength(s) of interest
+
     """
 
     # Dictionary of upper and lower limits for each phase and strength
@@ -120,9 +121,9 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     trimonth_index = trimonth_list.index(monthstring)
 
     # Get the upper and lower limits of the phase and strength of interest
-    if phase != 'none':
+    try:
         limits = enso_dict[phase][strength]
-    else:
+    except:
         limits = enso_dict[phase]
 
     # Get the row indices of the appropriate column where the ONI value is
@@ -140,8 +141,8 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     return years_ofinterest
 
 
-def enso_plotprep(working_dir, monthstring, phase, strength,
-                  data_lowerlimit=1979, data_upperlimit=2012):
+def find_years(working_dir, monthstring, phase, strength,
+               data_lowerlimit=1980, data_upperlimit=2012):
     """
     Takes the phase & phase strength and the three month period of interest,
         gets the array of Oceanic Nino Index values via oni_file_reader(),
@@ -157,28 +158,25 @@ def enso_plotprep(working_dir, monthstring, phase, strength,
     working_dir : string
         file name and location of ONI data text file
     monthstring : string
-        Three letter string representing three contiguous months or
-        1 character string representing a single month
+        Three letter string representing three contiguous months
     phase : string
-        'el nino', 'la nina' or 'none'.  The phase of interest
+        The phase of interest.  ['el nino'|'la nina'|'none']
     strength : string
-        'strong', 'moderate', 'weak', 'all', 'high', 'low'.
-        Ignored if phase is 'none'.
-        'all', 'high', and 'low' indicate all, strong & moderate,
-        and moderate & low strengths
+        Ignored if `phase` is 'none'.
+        ['strong'|'moderate'|'weak'|'all'|'high'|'low'].  'high' and 'low'
+        encompass 'strong' and 'moderate', 'moderate' and 'weak'
+
+    Keyword Arguments
+    -----------------
     data_lowerlimit : int
-        Default 1979.  The oldest year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
+        Default 1979.  The oldest year of ENSO information requested/available
     data_upperlimit : int
-        Default 2012.  The most recent year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
+        Default 2012.  The most recent year of ENSO data requested/available
 
     Returns
     -------
-    monthlist : list of lists of 1 int each
-        gr.grib_lister() and gr.hdf_lister() require months in a list format.
+    month_list : list of lists of 1 int each
+        gr.file_dates() requires months in a list format.
         Nested listing permits each month to be passed separately, which is
         necessary when the three month period of interest is one that spans
         the turn of the year.
@@ -194,12 +192,12 @@ def enso_plotprep(working_dir, monthstring, phase, strength,
     year_list, oni_array, trimonth_list = oni_file_reader(working_dir)
 
     # Initialize dictionary
-    monthlist_dict = {'DJF': [[12],[1], [2]], 'JFM': [[1], [2], [3]],
-                      'FMA': [[2], [3], [4]], 'MAM': [[3], [4], [5]],
-                      'AMJ': [[4], [5], [6]], 'MJJ': [[5], [6], [7]],
-                      'JJA': [[6], [7], [8]], 'JAS': [[7], [8], [9]],
-                      'ASO': [[8], [9], [10]], 'SON': [[9], [10],[11]],
-                      'OND': [[10],[11],[12]], 'NDJ': [[11],[12],[1]]}
+    monthlist_dict = {'DJF': [[12], [1],  [2]],  'JFM': [[1],  [2],  [3]],
+                      'FMA': [[2],  [3],  [4]],  'MAM': [[3],  [4],  [5]],
+                      'AMJ': [[4],  [5],  [6]],  'MJJ': [[5],  [6],  [7]],
+                      'JJA': [[6],  [7],  [8]],  'JAS': [[7],  [8],  [9]],
+                      'ASO': [[8],  [9],  [10]], 'SON': [[9],  [10], [11]],
+                      'OND': [[10], [11], [12]], 'NDJ': [[11], [12], [1]]}
 
     singlemonth_dict = {'1' : 'DJF', '2' : 'JFM', '3' : 'FMA', '4' : 'MAM',
                         '5' : 'AMJ', '6' : 'MJJ', '7' : 'JJA', '8' : 'JAS',
@@ -212,10 +210,10 @@ def enso_plotprep(working_dir, monthstring, phase, strength,
     # Get list of lists of months
     if len(monthstring) > 1:
         threemonths = True
-        monthlist = monthlist_dict[monthstring]
+        month_list = monthlist_dict[monthstring]
     else:
         threemonths = False
-        monthlist = [[int(monthstring)]]
+        month_list = [[int(monthstring)]]
         monthstring = singlemonth_dict[monthstring]
 
     # Get the list of years where the phase/strength criteria is met
@@ -252,247 +250,115 @@ def enso_plotprep(working_dir, monthstring, phase, strength,
 
     print years_list
 
-    return monthlist, years_list
+    return month_list, years_list
 
 
-def enso_winddata(monthstring, phase, strength, level,
-                  enso_dir, data_dir,
-                  data_lowerlimit=1979, data_upperlimit=2012):
+def enso_winddata(month_list, years_list, level, data_dir, startstring):
     """
     Prepare for wind plot by gathering data representing the ENSO phase
         and strength of interest
 
+    Can find anomaly by performing file_years(), enso_winddata() twice with
+        different phase, strength
+
     Parameters
     ----------
-    monthstring : string
-        Three letter string representing three contiguous months or
-        1 character string representing a single month
-    phase : string
-        'el nino', 'la nina' or 'none'.  The phase of interest
-    strength : string
-        'strong', 'moderate', 'weak', 'all', 'high', 'low'.
-        Ignored if phase is 'none'.
-        'all', 'high', and 'low' indicate all, strong & moderate,
-        and moderate & low strengths
-    level
-    enso_dir
-    data_dir
+    month_list : list of 1 or 3 lists of 1 int
+        Each month from a one or three-month period in a separate list
+    years_list : list of 1 or 3 lists of ints
+        The years that had the interesting phase/strength during each of the
+        months in list.
+    level : string
+        Desired surface level of data
+    data_dir : string
+        Full or relative path to the data directory.
+    startstring : string
+        Initial part of filenames
 
-    Keyword Arguments
-    -----------------
-    pl
-    measured
-    data_lowerlimit : int
-        Default 1979.  The oldest year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
-    data_upperlimit : int
-        Default 2012.  The most recent year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
+    Returns
+    -------
+    ubanddata : (M, N) ndarray of floats
+        The U component of the wind data
+    vbanddata : (M, N) ndarray of floats
+        The V component of the wind data
+    lats : (N) ndarray of floats
+        The latitudes of the data grid
+    lons : (M) ndarray of floats
+        The longitudes of the data grid
 
     """
-
-    monthlist, years_list = enso_plotprep(enso_dir, monthstring,
-                                          phase, strength, data_lowerlimit,
-                                          data_upperlimit)
 
     ubandlist = []
     vbandlist = []
 
-    for mon, yr, in zip(monthlist, years_list):
+    for monlist, yrlist in zip(month_list, years_list):
 
-        uband, lats, lons = gr.grib_lister(level, 'U', yr, mon, pl,
-                                           wind, data_dir, True)
-        vband, lats, lons = gr.grib_lister(level, 'V', yr, mon, pl,
-                                           wind, data_dir, True)
+        dates = gr.file_dates(yrlist, False, monlist, False)
+
+        uband, lats, lons = gr.get_gribdata(level, 'U', startstring, data_dir,
+                                            dates)
+        vband, _, _ = gr.get_gribdata(level, 'V', startstring, data_dir, dates)
 
         ubandlist.extend(uband)
         vbandlist.extend(vband)
 
-    ubanddata = np.mean(np.dstack(ubandlist), axis=2)
-    vbanddata = np.mean(np.dstack(vbandlist), axis=2)
+    ubanddata = gr.averager(ubandlist)
+    vbanddata = gr.averager(vbandlist)
 
     return ubanddata, vbanddata, lats, lons
 
 
-def enso_vardata(monthstring, phase, strength, var, level, filetype,
-                 enso_dir, data_dir,
-                 data_lowerlimit=1980, data_upperlimit=2012):
+def enso_vardata(month_list, years_list, var, level, filetype,
+                 data_dir, startstring):
     """
     Prepare for plot by gathering data representing the ENSO phase
         and strength of interest
 
+    Can find anomaly by performing file_years(), enso_vardata() twice with
+        different phase, strength
+
     Parameters
     ----------
-    monthstring : string
-        Three letter string representing three contiguous months or
-        1 character string representing a single month
-    phase : string
-        'el nino', 'la nina' or 'none'.  The phase of interest
-    strength : string
-        'strong', 'moderate', 'weak', 'all', 'high', 'low'.
-        Ignored if phase is 'none'.
-        'all', 'high', and 'low' indicate all, strong & moderate,
-        and moderate & low strengths
-    var
-    level
-    filetype
-    enso_dir
-    data_dir
+    month_list : list of 1 or 3 lists of 1 int
+        Each month from a one or three-month period in a separate list
+    years_list : list of 1 or 3 lists of ints
+        The years that had the interesting phase/strength during each of the
+        months in list.
+    var : string
+        The variable to inspect
+    level : string
+        Desired surface level of data
+    data_dir : string
+        Full or relative path to the data directory.
+    startstring : string
+        Initial part of filenames
 
-    Keyword Arguments
-    -----------------
-    pl
-    measured
-    data_lowerlimit : int
-        Default 1979.  The oldest year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
-    data_upperlimit : int
-        Default 2012.  The most recent year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
+    Returns
+    -------
+    varbanddata : (M, N) ndarray of floats
+        The data
+    lats : (N) ndarray of floats
+        The latitudes of the data grid
+    lons : (M) ndarray of floats
+        The longitudes of the data grid
 
     """
 
-    monthlist, years_list = enso_plotprep(enso_dir, monthstring, phase,
-                                          strength, data_lowerlimit,
-                                          data_upperlimit)
+    vardatalist = []
 
-    varlist = []
+    for monlist, yrlist in zip(month_list, years_list):
 
-    for mon, yr in zip(monthlist, years_list):
+        dates = gr.file_dates(yrlist, False, monlist, False)
 
-        if filetype is 'ncar':
-            varband, lats, lons = gr.grib_lister(level, var, yr, mon, pl,
-                                                 False, data_dir, measured)
-
+        if filetype is 'HDF':
+            varlist, lons, lats = gr.get_hdfdata(dates, startstring, data_dir,
+                                                 var=var)
         else:
-            varband, lats, lons = gr.hdf_lister(yr, mon, data_dir)
+            varlist, lats, lons = gr.get_gribdata(level, var, startstring,
+                                                  data_dir, dates)
 
-        varlist.extend(varband)
+        vardatalist.extend(varlist)
 
-    varbanddata = np.mean(np.dstack(varband), axis=2)
+    varbanddata = gr.averager(vardatalist)
 
     return varbanddata, lats, lons
-
-
-def enso_windanomaly(monthstring, phase1, strength1, level, enso_dir,
-                     data_dir, phase2='none', strength2='none', pl=True,
-                     data_lowerlimit=1980, data_upperlimit=2012):
-
-    """
-    Prepare for wind plot by gathering data representing the ENSO phase
-        and strength of interest
-
-    Parameters
-    ----------
-    monthstring : string
-        Three letter string representing three contiguous months or
-        1 character string representing a single month
-    phase1 : string
-        'el nino', 'la nina' or 'none'.  The phase of interest
-    strength1 : string
-        'strong', 'moderate', 'weak', 'all', 'high', 'low'.
-        Ignored if phase is 'none'.
-        'all', 'high', and 'low' indicate all, strong & moderate,
-        and moderate & low strengths
-    level
-    enso_dir
-    data_dir
-
-    Keyword Arguments
-    -----------------
-    phase2
-    strength2
-    pl
-    measured
-    data_lowerlimit : int
-        Default 1979.  The oldest year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
-    data_upperlimit : int
-        Default 2012.  The most recent year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
-
-    """
-
-    u1, v1, lats, lons = enso_winddata(monthstring, phase1, strength1, level,
-                                       enso_dir, data_dir, pl=pl,
-                                       measured=measured,
-                                       data_lowerlimit=data_lowerlimit,
-                                       data_upperlimit=data_upperlimit)
-
-    u2, v2, lats, lons = enso_winddata(monthstring, phase2, strength2, level,
-                                       enso_dir, data_dir, pl=pl,
-                                       measured=measured,
-                                       data_lowerlimit=data_lowerlimit,
-                                       data_upperlimit=data_upperlimit)
-
-    u_anomaly = u1 - u2
-    v_anomaly = v1 - v2
-
-    return u_anomaly, v_anomaly, lats, lons
-
-
-def enso_varanomaly(monthstring, phase1, strength1, var, level, filetype,
-                    enso_dir, data_dir, phase2='none', strength2='none',
-                    pl=True, measured=True,
-                    data_lowerlimit=1980, data_upperlimit=2012):
-
-    """
-    Prepare for plot by gathering data representing the ENSO phase
-        and strength of interest
-
-    Parameters
-    ----------
-    monthstring : string
-        Three letter string representing three contiguous months or
-        1 character string representing a single month
-    phase : string
-        'el nino', 'la nina' or 'none'.  The phase of interest
-    strength : string
-        'strong', 'moderate', 'weak', 'all', 'high', 'low'.
-        Ignored if phase is 'none'.
-        'all', 'high', and 'low' indicate all, strong & moderate,
-        and moderate & low strengths
-    var
-    level
-    filetype
-    enso_dir
-    data_dir
-
-    Keyword Arguments
-    -----------------
-    phase2
-    strength2
-    pl
-    measured
-    data_lowerlimit : int
-        Default 1979.  The oldest year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
-    data_upperlimit : int
-        Default 2012.  The most recent year of ENSO information required,
-        either because of data limits or user is interested
-        in a particular time period
-
-    """
-
-    var1, lats, lons = enso_vardata(monthstring, phase1, strength1, var, level,
-                                    filetype, enso_dir, data_dir,
-                                    pl=pl, measured=measured,
-                                    data_lowerlimit=data_lowerlimit,
-                                    data_upperlimit=data_upperlimit)
-
-    var2, lats, lons = enso_vardata(monthstring, phase2, strength2, var, level,
-                                    filetype, enso_dir, data_dir,
-                                    pl=pl, measured=measured,
-                                    data_lowerlimit=data_lowerlimit,
-                                    data_upperlimit=data_upperlimit)
-
-    var_anomaly = var1 - var2
-
-    return var_anomaly, lats, lons

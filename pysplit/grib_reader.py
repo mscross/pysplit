@@ -1,10 +1,12 @@
+from __future__ import division
 import numpy as np
 import gdal
-from gdalconst import *
+import gdalconst
 import fnmatch
 import pyhdf.SD
 import itertools
 import os
+import mapmaker as mm
 
 
 def get_bandnum(level, variable, datafile):
@@ -28,7 +30,7 @@ def get_bandnum(level, variable, datafile):
     """
 
     # Open the datafile
-    dataset = gdal.Open(datafile, GA_ReadOnly)
+    dataset = gdal.Open(datafile, gdalconst.GA_ReadOnly)
 
     bandnum = 0
 
@@ -65,7 +67,7 @@ def getsurface_getvar(datafile):
 
     """
 
-    dataset = gdal.Open(datafile, GA_ReadOnly)
+    dataset = gdal.Open(datafile, gdalconst.GA_ReadOnly)
 
     if dataset.RasterCount == 444 :
         stop_here = 37 + 1
@@ -227,7 +229,7 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
     # into an array and put array into a list
     for files in filelist:
 
-        dataset = gdal.Open(files, GA_ReadOnly)
+        dataset = gdal.Open(files, gdalconst.GA_ReadOnly)
 
         band = dataset.GetRasterBand(bandnum)
 
@@ -259,8 +261,15 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
     filedates : list of strings
         Default None. List of strings representing dates in the format YYYYMM.
         Generated from file_dates().  Used to gather a list of files.
+    startstring : string
+        Initial part of file names
     data_dir : string
         Path to data location
+
+    Keyword Arguments
+    -----------------
+    var : string
+        Default 'precipitation'.  The variable to select from the HDF file
 
     Returns
     -------
