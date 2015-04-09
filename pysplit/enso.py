@@ -3,14 +3,14 @@ import numpy as np
 import grib_reader as gr
 
 
-def oni_file_reader(working_dir):
+def oni_file_reader(oni_path):
     """
-    Reads the Oceanic Nino Index from a text file into a Numpy array.
+    Reads the Oceanic Nino Index from a text file into a NumPy array.
 
     Parameters
     ----------
-    working_dir : string
-        file name and location of ONI data text file
+    oni_path : string
+        File name and location of ONI data file in plaintext.
 
     Returns
     -------
@@ -24,10 +24,11 @@ def oni_file_reader(working_dir):
 
     Notes
     -----
-    Oceanic Nino Index data may be downloaded here:
-        http://www.cpc.ncep.noaa.gov/products/
-                analysis_monitoring/ensostuff/ensoyears.shtml
-    Data must be saved in a text file before use.
+    Oceanic Nino Index data may be downloaded `here`_:
+
+    .. _here: http://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ensoyears.shtml
+
+    Data must be saved in a plaintext file before use.
 
     """
 
@@ -35,33 +36,33 @@ def oni_file_reader(working_dir):
     oni_array = np.empty((0, 12))
 
     # Open file
-    oni_file = open(working_dir, 'r')
+    with open(oni_path, 'r') as oni_file:
 
-    # Get header
-    headerline = oni_file.readline()
-    trimonth_list = headerline.split()[1:]
+        # Get header
+        headerline = oni_file.readline()
+        trimonth_list = headerline.split()[1:]
 
-    # Read through rest of file until at end or incomplete year encountered
-    while True:
-        oniline = oni_file.readline()
+        # Read through rest of file until at end or incomplete year encountered
+        while True:
+            oniline = oni_file.readline()
 
-        # Break if at end of file
-        if oniline == '':
-            break
+            # Break if at end of file
+            if oniline == '':
+                break
 
-        data = oniline.split()
+            data = oniline.split()
 
-        # Break if an incomplete year is encountered
-        if len(data) < 13:
-            break
+            # Break if an incomplete year is encountered
+            if len(data) < 13:
+                break
 
-        # Put year into list
-        year_list.append(data[0])
+            # Put year into list
+            year_list.append(data[0])
 
-        # Put data into array
-        onidata = np.asarray(data[1:]).astype(np.float64)
-        onidata = np.atleast_2d(onidata)
-        oni_array = np.concatenate((oni_array, onidata), axis=0)
+            # Put data into array
+            onidata = np.asarray(data[1:]).astype(np.float64)
+            onidata = np.atleast_2d(onidata)
+            oni_array = np.concatenate((oni_array, onidata), axis=0)
 
     # Change list of strings to list of ints
     year_list = [int(i) for i in year_list]
@@ -72,9 +73,8 @@ def oni_file_reader(working_dir):
 def oni_file_interrogator(monthstring, phase, strength, oni_array,
                           year_list, trimonth_list):
     """
-    Takes an array of data and indexing information and returns all
-        the years that the given three month period is of the ENSO phase
-        and strength of interest.
+    Find years a given three-month period is of the ENSO phase & strength of
+    interest.
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
                        (oni_array[:, trimonth_index] <= limits[1]))[0]
 
     # Turn the given list of years with data into an array of ints
-    year_array = np.asarray(year_list).astype(int)
+    year_array = np.asarray(year_list).round().astype(int)
 
     # Get an array of ints where each item is only one of the years
     # that meet the phase and strength/ strength range criteria
@@ -141,21 +141,20 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     return years_ofinterest
 
 
-def find_years(working_dir, monthstring, phase, strength,
+def find_years(oni_path, monthstring, phase, strength,
                data_lowerlimit=1980, data_upperlimit=2012):
     """
     Takes the phase & phase strength and the three month period of interest,
-        gets the array of Oceanic Nino Index values via oni_file_reader(),
-        gets the years of interest via oni_file_interrogator(),
-        limits those years to years that are covered by the chosen
-        dataset, and returns the list of single-item lists of the 3 month
-        numbers of interest, plus a list of lists of years of interest
-        corresponding to each month (monthstring = 'DJF', for example,
-        has December of the previous year)
+    gets the array of Oceanic Nino Index values via ``oni_file_reader()``,
+    gets the years of interest via ``oni_file_interrogator()``, limits those
+    years to ranges covered by the chosen dataset, and returns the list of
+    single-item lists of the 3 month numbers of interest, plus a list of lists
+    of years of interest corresponding to each month (monthstring = 'DJF', for
+    example, has December of the previous year)
 
     Parameters
     ----------
-    working_dir : string
+    oni_path : string
         file name and location of ONI data text file
     monthstring : string
         Three letter string representing three contiguous months
@@ -176,7 +175,7 @@ def find_years(working_dir, monthstring, phase, strength,
     Returns
     -------
     month_list : list of lists of 1 int each
-        gr.file_dates() requires months in a list format.
+        ``gr.file_dates()`` requires months in a list format.
         Nested listing permits each month to be passed separately, which is
         necessary when the three month period of interest is one that spans
         the turn of the year.
@@ -189,7 +188,7 @@ def find_years(working_dir, monthstring, phase, strength,
 
     # Get array of Oceanic Nino Index data, plus the list of years (rows)
     # and list of three-month-groups (columns, 12)
-    year_list, oni_array, trimonth_list = oni_file_reader(working_dir)
+    year_list, oni_array, trimonth_list = oni_file_reader(oni_path)
 
     # Initialize dictionary
     monthlist_dict = {'DJF': [[12], [1],  [2]],  'JFM': [[1],  [2],  [3]],
@@ -248,7 +247,7 @@ def find_years(working_dir, monthstring, phase, strength,
     else:
         years_list = [years_ofinterest]
 
-    print years_list
+    # print years_list
 
     return month_list, years_list
 
