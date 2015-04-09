@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as clr
 import traj_accessory as ta
-from traj import Trajectory
 from trajgroup import TrajectoryGroup
 import mapmaker as mm
 
@@ -12,10 +11,11 @@ import mapmaker as mm
 class Cluster(TrajectoryGroup):
     """
     A special subclass of TrajectoryGroup for trajectories that have been
-        clustered together using HYSPLIT's clustering process.
-        Contains TrajectoryGroup attributes and functions, but also has
-        Trajectory-like attributes and functions associated with it, since
-        a Cluster may be represented as a mean trajectory
+    clustered together using HYSPLIT's clustering process.
+
+    Contains TrajectoryGroup attributes and functions, but also has
+    Trajectory-like attributes and functions associated with it, since
+    a Cluster may be represented as a mean trajectory.
     """
 
     def __init__(self, traj_object_list, cluster_number, latitude, longitude):
@@ -31,7 +31,9 @@ class Cluster(TrajectoryGroup):
             from other Clusters in its ClusterGroup
 
         """
+        # Initializes self.trajectories, self.trajcount, and self.directory
         TrajectoryGroup.__init__(self, traj_object_list)
+
         self.start_longitude = self.trajectories[0].longitude[0]
         self.clusternumber = cluster_number
         self.latitude = latitude
@@ -54,6 +56,7 @@ class Cluster(TrajectoryGroup):
 
         print "Basic TrajectoryGroup created, cluster methods unavailable"
 
+        # Initializes self.trajectories, self.trajcount, and self.directory
         new_tg = TrajectoryGroup.__add__(self, other)
 
         return new_tg
@@ -91,8 +94,8 @@ class Cluster(TrajectoryGroup):
         Calculate means and sums of several moisture-related variables.
 
         Means include the mean of every value along every trajectory in the
-            Cluster and the mean of every trajectory's latest value.  Sums are
-            the sum of every trajectory's latest value.
+        Cluster and the mean of every trajectory's latest value.  Sums are
+        the sum of every trajectory's latest value.
 
         Attributes set:
             mean_mf
@@ -140,6 +143,7 @@ class Cluster(TrajectoryGroup):
 
     def map_cluster_path(self, cavemap, color, lw=2, **kwargs):
         """
+        Draw the map! DRAW IT NOW!
         """
 
         cavemap = mm.traj_path(cavemap, self.longitude, self.latitude,
@@ -168,11 +172,6 @@ class ClusterGroup(object):
             totaltraj.append(cluster.trajcount)
         self.totaltrajcount = sum(totaltraj)
 
-    # def map_clusters(self, cavemap,
-    #                  color_var='mean_mf', color_min=None, color_max=None,
-    #                  color_rescale=None, width_var='count',
-    #                  width_rescale=None, width_adjust=1.0,
-    #                  colormap='blues'):
     def map_clusters(self, cavemap, color_var='mean_mf', colors=None,
                      colormap=plt.cm.Blues, width_var='relative count',
                      lw=2, cnormalize=None, wnormalize=None, vmin=None,
@@ -181,16 +180,13 @@ class ClusterGroup(object):
         Plots mean cluster paths with color and width scaled to some variable.
 
         Creates a map where each cluster trajectory is plotted with a color
-            determined by the mean variable value and a width by the trajectory
-            count.  Color and width scaled according to user preferences.
+        determined by the mean variable value and a width by the trajectory
+        count.  Color and width scaled according to user preferences.
 
         Parameters
         ----------
         cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
-
-        Keyword Arguments
-        -----------------
+            Initialize a basemap first using ``MapDesign.make_basemap()``
         color_var : string
             Default 'mean_mf'.  ['total_raint0'|'total_mft1'|'mean_q'|
             'mean_w'|'mean_mf'|'mean_mft1'|'mean_raint0'|'total_mf']
@@ -222,7 +218,7 @@ class ClusterGroup(object):
         colors : list of RGBA tuples
             The color of each cluster
         plot_order : list of ints
-            The order of `colors` relative to self.clusters
+            The order of `colors` relative to ``self.clusters``
 
         """
         transform_dict = {'sqrt' : np.sqrt,
@@ -295,25 +291,19 @@ class ClusterGroup(object):
         """
         Plots trajectories on one map and cluster paths on another.
 
-        Trajectories belonging to a cluster will be plotted as lines of
-            the same color, and in the cluster plot the cluster mean path
-            will also be the same color.  The linewidth of the cluster mean
-            path will reflect the number of member trajectories unless
-            specified otherwise.
-                cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
+        Trajectories belonging to a cluster will be plotted as lines of the
+        same color, and in the cluster plot the cluster mean path will also be
+        the same color.  The linewidth of the cluster mean path will reflect
+        the number of member trajectories unless specified otherwise.
 
         Parameters
         ----------
         trajmap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
+            Initialize a basemap first using ``MapDesign.make_basemap()``
             Will have a plot of all trajectories
         clusmap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
+            Initialize a basemap first using ``MapDesign.make_basemap()``
             Will have a plot of all clusters
-
-        Keyword Arguments
-        -----------------
         colors : list of strings or RGB tuples
             Default None.  Length of list should match self.totalclusters.
             If None, a list of random colors will be generated.
