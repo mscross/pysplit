@@ -70,11 +70,11 @@ class TrajectoryGroup(object):
 
         try:
             # TrajectoryGroup requires a list of trajectories
-            new_tg = TrajectoryGroup(newthing)
+            newthing = TrajectoryGroup(newthing)
         except:
             pass
 
-        return new_tg
+        return newthing
 
     def hystats(self, variable, sort_bytime='month', iterable=True):
         """

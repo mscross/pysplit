@@ -430,7 +430,7 @@ def plot_othervar(varmap, vardata, latitudes, longitudes, contourf=True,
 
     # Make the contour plot
     v = mm.meteo_contouring(varmap, vardata, longitudes, latitudes,
-                            contourf=contourf)
+                            contourf=contourf, **kwargs)
 
     return v
 

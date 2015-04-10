@@ -62,7 +62,6 @@ __all__ = ['Trajectory',
            'gridlimit',
            'oni_file_reader',
            'oni_file_interrogator',
-           'enso_plotprep',
            'enso_winddata',
            'enso_vardata']
 
@@ -101,5 +100,5 @@ from .grib_reader import (get_bandnum, getsurface_getvar, file_lister,
                           file_dates, get_gribdata, get_hdfdata, averager,
                           windcontours, plot_othervar, windbarbs, gridlimit)
 
-from .enso import (oni_file_reader, oni_file_interrogator, enso_plotprep,
-                   enso_winddata, enso_vardata)
+from .enso import (oni_file_reader, oni_file_interrogator, enso_winddata,
+                   enso_vardata)
