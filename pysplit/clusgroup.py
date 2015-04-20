@@ -10,25 +10,25 @@ import mapmaker as mm
 
 class Cluster(TrajectoryGroup):
     """
-    A special subclass of TrajectoryGroup for trajectories that have been
+    A special :subclass: of ``TrajectoryGroup`` for trajectories that have been
     clustered together using HYSPLIT's clustering process.
 
-    Contains TrajectoryGroup attributes and functions, but also has
-    Trajectory-like attributes and functions associated with it, since
-    a Cluster may be represented as a mean trajectory.
+    Contains ``TrajectoryGroup`` attributes and functions, but also has
+    ``Trajectory``-like attributes and functions associated with it, since
+    a ``Cluster`` may be represented as a mean trajectory.
     """
 
     def __init__(self, traj_object_list, cluster_number, latitude, longitude):
         """
-        Initialize Cluster object.
+        Initialize ``Cluster`` object.
 
         Parameters
         ----------
-        traj_object_list : list of trajectory objects
+        traj_object_list : list of ``Trajectory`` objects
             Trajectories that belong in the cluster.
         cluster_number : int
-            The Cluster identification number.  Distinguishes Cluster
-            from other Clusters in its ClusterGroup
+            The ``Cluster`` identification number.  Distinguishes ``Cluster``
+            from other Clusters in its ``ClusterGroup``
 
         """
         # Initializes self.trajectories, self.trajcount, and self.directory
@@ -46,7 +46,7 @@ class Cluster(TrajectoryGroup):
 
     def __add__(self, other):
         """
-        Prints notice before calling TrajectoryGroup.__add__()
+        Prints notice before calling ``TrajectoryGroup.__add__()``
 
         Parameters
         ----------
@@ -63,7 +63,8 @@ class Cluster(TrajectoryGroup):
 
     def set_vector(self):
         """
-        Calculate mean bearing of Cluster path and bearings between timesteps
+        Calculate mean bearing of ``Cluster`` path and bearings between
+            timesteps
 
         """
 
@@ -77,8 +78,8 @@ class Cluster(TrajectoryGroup):
 
     def set_distance(self):
         """
-        Calculate the distance between timesteps fo the Cluster path and the
-            cumulative distance at each time step
+        Calculate the distance between timesteps fo the ``Cluster`` path and
+            the cumulative distance at each time step
 
         """
 
@@ -144,6 +145,18 @@ class Cluster(TrajectoryGroup):
     def map_cluster_path(self, cavemap, color, lw=2, **kwargs):
         """
         Draw the map! DRAW IT NOW!
+
+        Parameters
+        ----------
+        cavemap :  ``matplotlib`` ``Basemap`` instance
+            Any basemap
+        color : string or tuple of floats
+            Any ``matplotlib``-accepted color
+        lw : int
+            Default 2.  The linewidth of the cluster path
+        **kwargs
+            Passed to ``mapmaker.traj_path()``.  Any ``Axes.plot()`` kwargs
+
         """
 
         cavemap = mm.traj_path(cavemap, self.longitude, self.latitude,
