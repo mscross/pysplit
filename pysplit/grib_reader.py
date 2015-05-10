@@ -199,9 +199,6 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
         Default None. List of strings representing dates in the format YYYYMM.
         Generated from file_dates().  Used to gather a list of filenames.
         Only needed if filelist is None.
-
-    Keyword Arguments
-    -----------------
     filelist : list of strings
         A list of filenames.
 
@@ -265,11 +262,12 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
         Initial part of file names
     data_dir : string
         Path to data location
-
-    Keyword Arguments
-    -----------------
     var : string
         Default 'precipitation'.  The variable to select from the HDF file
+    filelist : list of strings
+        Default None.  The list of HDF files to introspect.  If ``None``, list
+        will be assembled from ``filedates`` and ``startstring``, otherwise
+        ``filelist`` will override args.
 
     Returns
     -------
@@ -456,9 +454,6 @@ def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
         Array of latitudes of uband, vband
     longitudes : (N) ndarray of floats
         Array of longitudes of uband, vband
-
-    Keyword Arguments
-    -----------------
     vectors : string
         Default 'arrows'.  ['arrows'|'barbs']
         The vector type to indicate wind velocity.  'arrows' comes with a key.
