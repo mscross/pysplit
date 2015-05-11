@@ -91,8 +91,8 @@ def getsurface_getvar(datafile):
 
 def file_lister(filedates, startstring, data_dir):
     """
-    Get a list of files that have both 1 of a series of dates
-        and match startstring.
+    Get a list of files that have both one of a series of dates
+        and match ``startstring``.
 
     Parameters
     ----------
@@ -107,7 +107,7 @@ def file_lister(filedates, startstring, data_dir):
     Returns
     -------
     completefilenames : list of files
-        List of files that have both startstring and one of the
+        List of files that have both ``startstring`` and one of the
         dates of interest
 
     """
@@ -140,26 +140,26 @@ def file_lister(filedates, startstring, data_dir):
 
 def file_dates(years, years_isrange, months, months_isrange):
     """
-    Constructs list of YYYYMM date strings from the given
-        years and months of interest
+    Constructs list of 'YYYYMM' date strings from the given
+        ``years`` and ``months`` of interest
 
     Parameters
     ----------
     years : list of ints
         The years of interest
     years_isrange : Boolean
-        Indicates whether to use `years` as is or to construct
-        a range of years between years[0] and years[-1]
+        Indicates whether to use ``years`` as is or to construct
+        a range of years between ``years[0]`` and ``years[-1]``
     months : list of ints
         The months of interest
     months_isrange : Boolean
-        Indicates whether to use `months` as is or to construct
-        a range of months between months[0] and months[-1]
+        Indicates whether to use ``months`` as is or to construct
+        a range of months between ``months[0]`` and ``months[-1]``
 
     Returns
     -------
     dates : list of strings
-        List of strings representing dates in the format YYYYMM
+        List of strings representing dates in the format 'YYYYMM'
 
     """
 
@@ -182,7 +182,7 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
     Gets a list of GRIB files, determines which band contains the desired data.
         For each file, the data is read into an array, and the
         data array is put into a list.  Also returns latitudes and longitudes
-        that represent the data grid.
+        that represent the spatial information of the data grid.
 
     Parameters
     ----------
@@ -191,14 +191,14 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
     var : string
         Band variable
     startstring : string
-        Initial part of file names.  Only needed if filelist is None.
+        Initial part of file names.  Only needed if ``filelist`` is ``None``.
     data_dir : string
         Full or relative path to the data directory.  Only needed if
-        filelist is None.
+        ``filelist`` is ``None``.
     filedates : list of strings
-        Default None. List of strings representing dates in the format YYYYMM.
-        Generated from file_dates().  Used to gather a list of filenames.
-        Only needed if filelist is None.
+        Default None. List of strings representing dates in the format
+        'YYYYMM'.  Generated from ``file_dates()``.  Used to gather a
+        list of filenames.  Only needed if ``filelist`` is ``None``.
     filelist : list of strings
         A list of filenames.
 
@@ -251,13 +251,14 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
     """
     Gets a list of HDF files and for each file, reads the data in an array.
         The data arrays are put into a list.  Also returns the latitudes and
-        longitudes that represent the data grid
+        longitudes that represent the spatial information of the data grid
 
     Parameters
     ----------
     filedates : list of strings
-        Default None. List of strings representing dates in the format YYYYMM.
-        Generated from file_dates().  Used to gather a list of files.
+        Default None. List of strings representing dates in the format
+        'YYYYMM'  Generated from ``file_dates()``.  Used to gather a
+        list of files.
     startstring : string
         Initial part of file names
     data_dir : string
@@ -303,11 +304,12 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
 
 def averager(gridded_data):
     """
-    Averages list of numpy arrays along 2nd axis
+    Averages list of numpy arrays along ``axis=2``
 
     Parameters
     ----------
     gridded_data : list of (M, N) ndarrays of floats
+        The data arrays to average along ``axis=2``
 
     Returns
     -------
@@ -328,32 +330,27 @@ def windcontours(windmap, uband, vband, latitudes, longitudes, contourf=True,
     Parameters
     ----------
     windmap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
+        Initialize a basemap first using ``MapDesign.make_basemap()``
     uband : (M, N) ndarray of floats
         Array of the U component of wind velocity
     vband : (M, N) ndarray of floats
         Array of the V component of wind velocity
     latitudes : (M) ndarray of floats
-        Array of latitudes of uband, vband
+        Array of latitudes of ``uband``, ``vband``
     longitudes : (N) ndarray of floats
-        Array of longitudes of uband, vband
-
-    Keyword Arguments
-    -----------------
+        Array of longitudes of ``uband``, ``vband``
     limits : list of floats or ints
-        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        Default None.  Used to trim ``uband`` and ``vband`` grid,
+        ``longitudes``, ``latitudes``.
         [bottom latitude, left longitude, top latitude, right longitude]
-
-    Other Parameters
-    ----------------
-    kwargs : passed to mm.meteo_contouring(), then Basemap.contour() or
-        Basemap.contourf(), then the axis methods
+    kwargs : passed to ``mm.meteo_contouring()``, then ``Basemap.contour()`` or
+        ``Basemap.contourf()``, then the axes methods
 
     Returns
     -------
     w : matplotlib PathCollection instance
         Mappable for use in creating colorbars.  Colorbars may be created
-        using make_cbar() or make_cax_cbar().
+        using ``make_cbar()`` or ``make_cax_cbar()``.
 
     """
 
@@ -383,33 +380,28 @@ def plot_othervar(varmap, vardata, latitudes, longitudes, contourf=True,
     Parameters
     ----------
     varmap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
+        Initialize a basemap first using ``MapDesign.make_basemap()``
     vardata : (M, N) ndarray of floats
         Data array
     latitudes : (M) ndarray of floats
-        Array of latitudes of vardata
+        Array of latitudes of ``vardata``
     longitudes : (N) ndarray of floats
-        Array of longitudes of vardata
-
-    Keyword Arguments
-    -----------------
+        Array of longitudes of ``vardata``
     filetype : string
         Default 'ncar'.  ['ncar'|'trmm'].  TRMM data has a different
         orientation than NCAR data and must be transposed before plotting.
     limits : list of floats or ints
-        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        Default None.  Used to trim ``vardata`` grid,
+        ``longitudes``, ``latitudes``.
         [bottom latitude, left longitude, top latitude, right longitude]
-
-    Other Parameters
-    ----------------
-    kwargs : passed to mm.meteo_contouring(), then Basemap.contour() or
-        Basemap.contourf(), then the axis methods
+    kwargs : passed to ``mm.meteo_contouring()``, then ``Basemap.contour()`` or
+        ``Basemap.contourf()``, then the axes methods
 
     Returns
     -------
     v : matplotlib PathCollection instance
         Mappable for use in creating colorbars.  Colorbars may be created
-        using make_cbar() or make_cax_cbar().
+        using ``make_cbar()`` or ``make_cax_cbar()``.
 
     """
 
@@ -445,30 +437,31 @@ def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
     Parameters
     ----------
     windmap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
+        Initialize a basemap first using ``MapDesign.make_basemap()``
     uband : (M, N) ndarray of floats
         Array of the U component of wind velocity
     vband : (M, N) ndarray of floats
         Array of the V component of wind velocity
     latitudes : (M) ndarray of floats
-        Array of latitudes of uband, vband
+        Array of latitudes of ``uband`` and ``vband
     longitudes : (N) ndarray of floats
-        Array of longitudes of uband, vband
+        Array of longitudes of ``uband`` and ``vband``
     vectors : string
         Default 'arrows'.  ['arrows'|'barbs']
         The vector type to indicate wind velocity.  'arrows' comes with a key.
     limits : list of floats or ints
-        Default None.  Used to trim zdata grid, longitudes, latitudes.
+        Default None.  Used to trim ``vardata`` grid,
+        ``longitudes``, ``latitudes``.
         [bottom latitude, left longitude, top latitude, right longitude]
     zorder : int
-        Default 20.  The zorder of the vectors `windmap`
+        Default 20.  The zorder of the vectors
     scale : int
         Default 1000. Used to adjust arrow size.
 
     Other Parameters
     ----------------
-    kwargs : passed to Basemap.quiver() or Basemap.barbs(), then the axis
-        methods
+    kwargs : passed to ``Basemap.quiver()`` or ``Basemap.barbs()``,
+        then the axes methods
 
     Returns
     -------
@@ -514,18 +507,19 @@ def gridlimit(limits, longitudes, latitudes, data):
     limits : list of floats or ints
         [bottom latitude, left longitude, top latitude, right longitude]
     longitudes : (N) ndarray of floats
-        Array of longitudes of data
+        Array of longitudes of ``data``
     latitudes : (M) ndarray of floats
-        Array of latitudes of data
+        Array of latitudes of ``data``
     data : (M, N) ndarray of floats
         Data array
 
     Returns
     -------
     longitudes : (S) ndarray of floats
-        Potentially trimmed array of longitudes of data, now in -180 to 180.
+        Potentially trimmed array of longitudes of ``data``,
+        now in -180 to 180.
     latitudes : (R) ndarray of floats
-        Potentially trimmed array of latitudes of data
+        Potentially trimmed array of latitudes of ``data``
     data : (R, S) ndarray of floats
         Trimmed data array
 
