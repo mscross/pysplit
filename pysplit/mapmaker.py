@@ -21,9 +21,6 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
         `data` latitudes
     cavemap : Basemap instance
         Initialize a basemap first using MapDesign.make_basemap()
-
-    Keyword Arguments
-    -----------------
     zorder : int
         Default 19.  Data zorder.
     colormap : colormap
@@ -49,9 +46,6 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
     vmax : int or float
     levels : int
         Only used in BoundaryNorm
-
-    Other Parameters
-    ----------------
     kwargs : passed to Basemap.scatter() and ax.scatter()
 
     Returns
@@ -117,9 +111,6 @@ def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
         Trajectory path and/or marker color.  Any matplotlib-accepted color
     lw : int
         Trajectory path linewidth
-
-    Keyword Arguments
-    -----------------
     marker : string
         Default None.  The timestep marker style.
     linestyle : string
@@ -128,9 +119,6 @@ def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
         Default 'none'.  The time step marker edge color.
     zorder : int
         Default 19.  The zorder of the trajectory path.
-
-    Other Parameters
-    ----------------
     kwargs : passed to Basemap.plot() and ax.plot()
 
     """
@@ -156,9 +144,6 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
         X-coordinates of data
     latitudes : (N) ndarray of floats
         Y-coordinates of data
-
-    Keyword Arguments
-    -----------------
     contourf : Boolean
         Default True.  Create filled contour (True) or contour (False) plot.
     vmin : int or float
@@ -178,9 +163,6 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
         Default `plt.cm.Blues`.  Any matplotlib colormap.
     zorder : int
         Default 13.  Zorder of `data` on `cavemap`.
-
-    Other Parameters
-    ----------------
     kwargs : passed to Basemap.contour() then ax.contour() (or contourf)
 
     Returns
@@ -227,17 +209,11 @@ def adjust_contourparams(cm, contours, colors=[None],
         The contour instance to adjust
     contours : list of ints or floats
         The levels to adjust
-
-    Keyword Arguments
-    -----------------
     colors : list of strings, tuples
         Default [None].  The colors of `contours`
     othercontours_visible : Boolean
         Default True.  If False, then levels not in `contours` will be set
         invisible.
-
-    Other Parameters
-    ----------------
     kwargs : collection keywords for `contours`.
 
     """
@@ -268,9 +244,6 @@ def make_cbar(data, ax, orientation='horizontal', cbar_size=(20, 1.0),
         The mappable
     ax : Axis object
         The axis on which data is plotted
-
-    Keyword Arguments
-    -----------------
     orientation : string
         Default 'horizontal'.  ['horizontal'|'vertical'].  The location of the
         colorbar relative to the map.
@@ -280,9 +253,6 @@ def make_cbar(data, ax, orientation='horizontal', cbar_size=(20, 1.0),
     reverse_cbar : Boolean
         Default False. If True, colorbar is flipped over short axis.
         Value-color mapping is unaffected.
-
-    Other Parameters
-    ----------------
     kwargs : passed to edit_cbar()
 
     Returns
@@ -323,9 +293,6 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal',
         bottom, size in x dimension, size in y dimension]
     data : PathCollection
         Mappable
-
-    Keyword Arguments
-    -----------------
     orientation : string
         Default 'horizontal'.  ['horizontal'|'vertical'].  The orientation of
         the colormapping within in the colorbar.
@@ -338,9 +305,6 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal',
     extend : string
         Default 'neither'.  ['both'|'neither'|'under'|'over'].
         Extend colorbar with pointed ends.
-
-    Other Parameters
-    ----------------
     kwargs : passed to edit_cbar()
 
     Returns
@@ -379,9 +343,6 @@ def edit_cbar(cbar, divisions=5, cbar_label=None, tick_fs=16, label_fs=18,
     ----------
     cbar : colorbar instance
         The colorbar created in make_cbar() or make_cax_cbar().
-
-    Keyword Arguments
-    -----------------
     divisions : int
         Default 5.  The number of nice ticks on the colorbar.  May be None.
     cbar_label : string

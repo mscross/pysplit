@@ -457,9 +457,6 @@ def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
         Default 20.  The zorder of the vectors
     scale : int
         Default 1000. Used to adjust arrow size.
-
-    Other Parameters
-    ----------------
     kwargs : passed to ``Basemap.quiver()`` or ``Basemap.barbs()``,
         then the axes methods
 

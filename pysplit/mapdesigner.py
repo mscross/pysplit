@@ -34,9 +34,6 @@ class MapDesign(object):
                 oriented N-S. lat_0 is replaced by the boundinglat,
                 the lowest latitude that should appear on the map.
                 lat_1 and lat_2 not required
-
-        Keyword Arguments
-        -----------------
         projection : string
             Indicates which projection to use.  Default 'cyl'
                 'cyl' : Equidistant cylindrical
@@ -213,8 +210,8 @@ class MapDesign(object):
         Adjust the map resolution and area threshold for plotting.
             Attributes will only be adjusted if not None.
 
-        Keyword Arguments
-        -----------------
+        Parameters
+        ----------
         resolution : char
             Default 'c'.  ['c'|'l'|'i'|'h'|'f'].
             Crude, low, intermediate, high, full. The relative resolution of
@@ -287,8 +284,8 @@ class MapDesign(object):
         """
         Edit the list of shapefiles.
 
-        Keyword Arguments
-        -----------------
+        Parameters
+        ----------
         shp : tuple of list of tuples of strings
             Default None.  Tuples  are (File, color, linewidth)
             r'C:\programming\shapefiles\New_Shapefile'.
@@ -366,8 +363,8 @@ class MapDesign(object):
         Change which labels are applied to the map.  Attributes will change
             only if not None.
 
-        Keyword Arguments
-        -----------------
+        Parameters
+        ----------
         labelpath : string
             Default None.  Full or relative path to labelfile location
         labelgroup : string
@@ -415,8 +412,8 @@ class MapDesign(object):
         Takes the MapDesign attributes plus a figure size and creates a map
             on which data can be plotted.
 
-        Keyword Arguments
-        -----------------
+        Parameters
+        ----------
         ax : axes instance
             Default None, figure and axis will be created.  Otherwise,
             basemap will be created on given axis.
