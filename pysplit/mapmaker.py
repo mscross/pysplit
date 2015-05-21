@@ -9,41 +9,43 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
                  edgecolor='none', size=25, sizedata=None, cnormalize=None,
                  snormalize=None, vmin=None, vmax=None, levels=11, **kwargs):
     """
-    Scatter-plot of trajectory, trajectory group/cluster data.
+    Scatter-plot of ``Trajectory``, ``TrajectoryGroup``, or ``Cluster`` data.
 
     Parameters
     ----------
     data : 1D ndarray of floats, ints
         The data to plot as color change.
     lons : 1D ndarray of floats, ints
-        `data` longitudes
+        ``data`` longitudes
     lats : 1D ndarray of floats, ints
-        `data` latitudes
-    cavemap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
+        ``data`` latitudes
+    cavemap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class
     zorder : int
         Default 19.  Data zorder.
     colormap : colormap
-        Default `plt.cm.Blues`.  Any matplotlib colormap.
+        Default ``plt.cm.Blues``.  Any ``matplotlib`` colormap.
     edgecolor : string, tuple
-        Default `none`.  Any matplotlib-accepted color
+        Default 'none'.  Any ``matplotlib``-accepted color
     size : int
-        Default 25.  Point size of data unless `sizedata` specified.  Then,
-        will be multiplied with `sizedata`.
+        Default 25.  Point size of data unless ``sizedata`` specified.  Then,
+        will be multiplied with ``sizedata``.
     sizedata : 1D ndarray of floats
-        Default None.  The data to plot as a change in marker size.
+        Default ``None``.  The data to plot as a change in marker size.
     cnormalize : string
-        Default None.  [None|'boundary'|'log'|'ln'|'sqrt']
+        Default ``None``.  [None|'boundary'|'log'|'ln'|'sqrt']
         Normalization of color scale.  If 'boundary', will create a discrete
-        color map with `levels` number of colors.  For other norms, colorbar
+        color map with ``levels`` number of colors.  For other norms, colorbar
         ticklabels will be updated with 'log' but not 'ln', 'sqrt', because
         no corresponding matplotlib colors Normalize classes are available.
     snormalize : string
-        Default None.  [None|'log'|'ln'|'sqrt'].  Similar to cnormalize,
+        Default ``None``.  [None|'log'|'ln'|'sqrt'].  Similar to cnormalize,
         except 'boundary' not available and does not use Normalize.
     vmin : int or float
-        Default None.
+        Default ``None``.
     vmax : int or float
+        Default ``None``.
     levels : int
         Only used in BoundaryNorm
     kwargs : passed to Basemap.scatter() and ax.scatter()
@@ -52,7 +54,7 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
     -------
     cm : matplotlib PathCollection instance
         Mappable for use in creating colorbars.  Colorbars may be created
-        in PySPLIT using make_cbar() or make_cax_cbar()
+        in ``PySPLIT`` using ``make_cbar()`` or ``make_cax_cbar()``
 
     """
 
@@ -72,14 +74,21 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
             vmax = data.max()
         bounds = np.linspace(vmin, vmax, levels)
         norm = clr.BoundaryNorm(bounds, colormap.N)
+    elif cnormalize is 'norm':
+        norm = clr.Norm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'log':
-        norm = clr.LogNorm()
+        norm = clr.LogNorm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'ln':
         data = np.log(data)
         print msg, '\nnatural log normalization'
     elif cnormalize is 'sqrt':
         data = np.sqrt(data)
         print msg, '\nsqrt normalization'
+    else:
+        try:
+            norm = clr.PowerNorm(cnormalize, )
+        except:
+            pass
 
     if sizedata is not None:
         if snormalize is not None:

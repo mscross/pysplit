@@ -70,8 +70,8 @@ class Trajectory:
     def set_rainstatus(self, rainy_criterion='rainfall', check_steps=1,
                        rh_threshold=0.8):
         """
-        Determines if a trajectory is 'rainy', sets self.rainstatus
-            accordingly.
+        Determines if ``Trajectory`` is 'rainy', sets ``self.rainstatus``
+        accordingly.
 
         The determination is made by examining the user-given criteria
             within the user-given window of timesteps.
@@ -80,15 +80,15 @@ class Trajectory:
         -----------------
         rainy_criterion : string
             ['rainfall'|'relative humidity'|'specific humidity']
-            'rainfall' : set self.rainstatus to True if trajectory has
-                rain within the indicated timesteps
-            'relative humidity' : set self.rainstatus to True if trajectory
-                is above the given rh_threshold within the indicated timesteps
-            'specific humidity' : set self.rainstatus to True if trajectory
-                meets the rainfall criteria and has a negative change
-                in specific humidity
+            'rainfall' : set ``self.rainstatus`` to ``True`` if rain
+            occurs within the indicated ``check_steps``
+            'relative humidity' : set ``self.rainstatus`` to ``True`` if
+                ``self.relative_humidity`` is above the given ``rh_threshold``
+                within ``check_steps``
+            'specific humidity' : set ``self.rainstatus`` to ``True`` if
+                rain occurs and ``self.specific_humidity`` decreases
         check_steps : integer
-            The number of timesteps from the beginning to search for rain.
+            The number of timesteps from the beginning to inspect.
         rh_threshold : float
             The relative humidity above which it is considered to be raining.
 
@@ -125,13 +125,14 @@ class Trajectory:
 
     def set_trajcolor(self, color=None):
         """
-        Set the color of the trajectory path as it will appear in
-            map_data_line()
+        Set the color of the path as it will appear in
+        ``self.map_traj_path()``
 
         Keyword Arguments
         -----------------
         color : string or tuple of floats
-            Default None.  If None, self.trajcolor will be reset to black.
+            Default ``None``.  If ``None``, ``self.trajcolor`` will be reset
+            to black.
 
         """
 
@@ -142,23 +143,25 @@ class Trajectory:
 
     def set_linewidth(self, lw=None):
         """
-        Set the linewidth of the trajectory path as it will appear in
-            map_data_line()
+        Set the linewidth of the path as it will appear in
+        ``self.map_traj_path()``
 
         Keyword Arguments
         -----------------
         lw : int or float
-            Default None.  If None, self.linewidth will be reset to 2.
+            Default ``None``.  If ``None``, ``self.linewidth`` will be reset
+            to 1.
+
         """
 
         if lw is None:
-            self.linewidth = 2
+            self.linewidth = 1
         else:
             self.linewidth = lw
 
     def set_vector(self):
         """
-        Calculate mean bearing of trajectory and bearings between timesteps
+        Calculate mean bearing of ``Trajectory`` and bearings between timesteps
 
         """
 
@@ -168,7 +171,7 @@ class Trajectory:
     def set_relativehumidity(self):
         """
         Acquire relative humidity data for each timestep
-            from self.data or by calculating relative humidity from other data
+        from ``self.data`` or by calculating relative humidity
 
         """
 
@@ -189,7 +192,7 @@ class Trajectory:
     def set_mixingratio(self):
         """
         Acquire mixing ratio data for each timestep
-            from self.data or by calculating mixing ratio from other data
+        from ``self.data`` or by calculating mixing ratio
 
         """
 
@@ -216,7 +219,7 @@ class Trajectory:
     def set_specifichumidity(self):
         """
         Acquire specific humidity data for each timestep
-            from self.data or by calculating specific humidity from other data
+        from ``self.data`` or by calculating specific humidity
 
         """
 
@@ -243,7 +246,7 @@ class Trajectory:
     def set_distance(self):
         """
         Calculate the distances between each timestep and the distance between
-            each timestep and time zero.
+        each timestep and time zero.
 
         """
 
@@ -255,7 +258,8 @@ class Trajectory:
         """
         Calculate the change in moisture between each timestep
 
-        Works for specific humidity, mixing ratio, and relative humidity.
+        Works for ``self.specific_humidity``, ``self.mixing_ratio``,
+        and ``self.relative_humidity``.
 
         """
 
@@ -297,7 +301,7 @@ class Trajectory:
     def calculate_moistureflux(self, qtype='specific_humidity'):
         """
         Calculate the moisture flux between each timestep
-            using distance and the chosen humidity parameter
+        using ``self.distance`` and the chosen humidity attribute
 
         Keyword Arguments
         -----------------
@@ -327,17 +331,17 @@ class Trajectory:
         mf = np.pad(mf, (0, 1), 'constant', constant_values=(-999.0, -999.0))
         self.moistureflux = np.ma.masked_less_equal(mf, -999.0)
 
-    def last_moistureuptake(self, q_type='specific_humidity'):
-        """
-        Method for finding moisture sources according to Gustafsson 2010.
+    # def last_moistureuptake(self, q_type='specific_humidity'):
+    #     """
+    #     Method for finding moisture sources according to Gustafsson 2010.
 
-        There are three basic scenarios for finding moisure sources.
-            In the first, the trajectory follows the case outlined in
-            Gustafsson 2010, where the trajectory experiences a decrease
-            in q in the target region- the source region is easily
-            identifiable.  The second is where the parcel shows an increase
-            in q to the target area
-        """
+    #     There are three basic scenarios for finding moisure sources.
+    #     In the first, the trajectory follows the case outlined in
+    #     Gustafsson 2010, where the trajectory experiences a decrease
+    #     in q in the target region- the source region is easily
+    #     identifiable.  The second is where the parcel shows an increase
+    #     in q to the target area
+    #     """
 
     def moistureuptake(self, rainout_threshold, evap_threshold,
                        uptake_window=6, window_overlap=0,
@@ -346,7 +350,7 @@ class Trajectory:
 
         """
         Calculate the moisture flux between each timestep
-            using distance and the chosen humidity parameter
+        using ``self.distance`` and the chosen humidity parameter
 
         Parameters
         ----------
@@ -356,18 +360,15 @@ class Trajectory:
         evap_threshold : float
             The level above which changes in humidity are considered to
             indicate moisture uptake.  Recommended 0.2 to 0.5
-
-        Keyword Arguments
-        -----------------
         uptake_window : int
             Default 6.  The length in hours of the period between q0 and qx.
             Assumes that either evaporation or precipitation dominate over
-            a short period of time, such as 6 hours
+            a short period of time, such as 6 hours.
         window_overlap : int
-            Default 0.  The number of hours each uptake window should overlap
-            the previous one.  A value of 0 indicates that uptake windows
+            Default 0.  The number of hours each ``uptake_window`` should
+            overlap the previous one.  A value of 0 indicates that the windows
             should be discrete.  The latest timepoint in the earliest window
-            will still start at endpoint + uptake_window hours.
+            will still start at endpoint + ``uptake_window`` hours.
         vertical_criterion : string
             Default 'pbl'.  ['pbl'|'prs'|'both']
             Criterion for differentiating surficial and other sources of
@@ -645,12 +646,14 @@ class Trajectory:
     def integration_error(self):
         """
         Estimates the xy integration error based on distance between
-            back/forward start/end points and the total distance traveled.
-            Also estimates the z integration error based on altitude difference
-            between back/forward start/end points and the total range of
-            altitude encountered
+        back/forward start/end points and the total distance traveled.
+
+        Also estimates the z integration error based on altitude difference
+        between back/forward start/end points and the total range of
+        altitude encountered
+
         Integration error is a minor source of trajectory error.  Resolution
-            error should also be checked.
+        error should also be checked.
 
         """
 
@@ -688,29 +691,26 @@ class Trajectory:
 
     def map_traj_scatter(self, cavemap, variable, sizevar=None, **kwargs):
         """
-        Scatter plot of trajectory data
+        Scatter plot of ``Trajectory`` data
 
         Parameters
         ----------
-        cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
+        cavemap : ``Basemap`` instance
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class.
         variable : string
-            The variable to plot as a color change
-
-        Keyword Arguments
-        -----------------
+            The attribute to plot as a color change
         sizevar : string
-            Default None.  The variable to plot as a marker size change
-
-        Other Parameters
-        ----------------
-        kwargs : passed to traj_scatter() and then ax.scatter()
+            Default ``None``.  The attribute to plot as a marker size change
+        **kwargs
+            passed to ``traj_scatter()``, then ``cavemap.scatter()`` and
+            ``Axes.scatter()``
 
         Returns
         -------
-        cm : matplotlib PathCollection instance
+        cm : ``matplotlib PathCollection`` instance
             Mappable for use in creating colorbars.  Colorbars may be created
-            in PySPLIT using make_cbar() or make_cax_cbar()
+            in ``PySPLIT`` using ``make_cbar()`` or ``make_cax_cbar()``
 
         """
 
@@ -728,25 +728,22 @@ class Trajectory:
 
     def map_traj_path(self, cavemap, color=None, lw=None, **kwargs):
         """
-        Line plot of trajectory path.
+        Line plot of ``Trajectory`` path.
 
         Parameters
         ----------
         cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
-
-        Keyword Arguments
-        -----------------
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class.
         color : string, tuple
-            Default None.  If None, then traj.color will be used.  Any
-            matplotlib-approved color accepted
+            Default ``None``.  If ``None``, then ``self.color`` will be used.
+            Any ``matplotlib``-approved color accepted
         lw : int
-            Default None.  If None, then traj.linewidth will be used.
-
-        Other Parameters
-        ----------------
-        kwargs passed to traj_scatter() and then Basemap.plot(),
-            and then axis.plot()
+            Default ``None``.  If ``None``, then ``self.linewidth``
+            will be used.
+        **kwargs
+            passed to ``traj_plot()`` and then ``cavemap.plot()``,
+            and then ``Axes.plot()``
 
         """
 

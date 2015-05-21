@@ -10,29 +10,29 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                           meteo_type='gdas1', get_forward=True,
                           get_clippedtraj=True):
     """
-    Run sequence of HYSPLIT simulations over a given time and set of altitudes.
+    Run sequence of HYSPLIT simulations over a given time and levels.
 
-    This does not set along-trajectory meteorological output- edit `SETUP.CFG`
-        in the HYSPLIT working directory or in the HYSPLIT4 GUI to reflect
-        desired output variables.  It is also recommended to change TRATIO
-        in the SETUP file to 0.25 to limit integration error.
+    This does not set along-trajectory meteorological output- edit SETUP.CFG
+    in the HYSPLIT working directory or in the HYSPLIT4 GUI to reflect
+    desired output variables.  It is also recommended to change TRATIO
+    in the SETUP file to 0.25 to limit integration error.
 
     To estimate integration error for back trajectory calculations, forward
-        trajectories must be generated from the start of back trajectories
-        during calculation of back trajectories.
+    trajectories must be generated from the start of back trajectories
+    during calculation of back trajectories.
 
     One trajectory per simulation file is output.  Output may be multiline,
-        depending on number of variables selected in SETUP (maximum 7 of 9
-        may be selected for single-line output).  Multiline output not
-        supported in some applications (clustering).  To cluster multiline
-        output, set get_clippedtraj=True.  Clipped trajectories have all data
-        removed except for their path information, so they are single-line
-        output and supported for clustering operations.
+    depending on number of variables selected in SETUP (maximum 7 of 9
+    may be selected for single-line output).  Multiline output not
+    supported in some applications (clustering).  To cluster multiline
+    output, set ``get_clippedtraj``=``True``.  Clipped trajectories have all
+    data removed except for their path information, so they are single-line
+    output and supported for clustering operations.
 
     Parameters
     ----------
     basename : string
-        Basename for all output files.
+        Base for all output files.
     hysplit_working : string
         Full or relative path to the HYSPLIT working directory.
     output_dir : string
@@ -41,17 +41,17 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         Full or relative path to the location of the meteorology files
     years : list of ints
         The year(s) to run simulations.  Can be a list of specific years
-        (set `years_isrange` to False) or the start and end of an inclusive
-        range of years (set `years_isrange` to True)
+        (set ``years_isrange`` = ``False``) or the start and end of an
+        inclusive range (set ``years_isrange`` = ``True``)
     years_isrange : Boolean
-        Indicates if `years` is a list to be used as is or is a range to
+        Indicates if ``years`` is a list to be used as is or is a range to
         be generated.
     months : list of ints
         The month(s) to run simulations.  Can be a list of specific months
-        (set `months_isrange` to False) or the start and end of an inclusive
-        range of months (set `months_isrange` to True)
+        (set ``months_isrange`` = ``False``) or the start and end of an
+        inclusive range (set `months_isrange` = ``True``)
     months_isrange : Boolean
-        Indicates if `months` is a list to be used as is or a range to
+        Indicates if ``months`` is a list to be used as is or a range to
         be generated.
     hours : list of ints
         Parcel launching times in UTC.
@@ -62,26 +62,24 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         Format is (latitude, longitude)
     run : int
         Length (hours) of simulation.  If necessary, sign is corrected to
-        match isbackward argument.
+        match ``isbackward``.
     isbackward : Boolean
         Indicates back trajectory calculation
-
-    Keyword Arguments
-    -----------------
     meteo_type : string
         Default 'gdas1'.  The type of meteorology to use.
     get_forward : Boolean
-        Default True.  [True|False].  If True and isbackward is also True,
-        then a forward trajectory will be calculated from earliest point of
-        each back trajectory and stored in a subfolder in output_dir
+        Default ``True``.  [True|False].  If ``True`` and ``isbackward`` is
+        also ``True``, then a forward trajectory will be calculated from
+        earliest point of each back trajectory and stored in a subfolder
+        in ``output_dir``
     get_clippedtraj : Boolean
-        Default True.  [True|False].  Outputs trajectory files with
+        Default ``True``.  [True|False].  Outputs trajectory files with
         single-line timesteps containing only path information.  Provides
         clustering support to multiline files.
 
     Returns
     -------
-    Nothing, HYSPLIT is called and results are written to `output_dir`.
+    Nothing, HYSPLIT is called and results are written to ``output_dir``.
 
     """
 
@@ -222,7 +220,7 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
                            output_dir, new_name, meteofiles):
     """
     Takes a back trajectory and calculates a forward trajectory from its
-        location at the earliest point in time.
+    location at the earliest point in time.
 
     Parameters
     ----------
@@ -242,7 +240,8 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
 
     Returns
     -------
-    Nothing, HYSPLIT is called and results are stored in output_dir/forwardtraj
+    Nothing, HYSPLIT is called and results are stored in
+    ``output_dir/forwardtraj``
 
     """
 
@@ -361,9 +360,9 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
 def clip_traj(output_dir, new_name):
     """
     Creates a new back trajectory file with all meteorological data
-        clipped off, perfect for clustering multiline files.
+    clipped off, perfect for clustering multiline files.
 
-    New file lives in subdirectory in output_dir
+    New file lives in subdirectory in ``output_dir``
 
     Parameters
     ----------
@@ -374,7 +373,7 @@ def clip_traj(output_dir, new_name):
 
     Returns
     -------
-    None, creates a file
+    ``None``, creates a file
 
     """
 
@@ -453,7 +452,7 @@ def try_to_remove(string):
 def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
     """
     Takes a month and information about leap year status to create a list of
-        meteorology files to be output to CONTROL.
+    meteorology files to be output to CONTROL.
 
     Parameters
     ----------
@@ -465,11 +464,11 @@ def meteofile_lister(meteo_path, meteo_type, mon, isleap, year):
     mon : int
         int representing the month
     isleap : Boolean
-        [True|False].  True if year of simulation is a leap year
+        [True|False].  ``True`` if year of simulation is a leap year
     year : int
         int representing the year
     backward : Boolean
-        [True|False].  True if performing backwards trajectory calculation
+        [True|False].  ``True`` if performing backwards trajectory calculation
 
     Returns
     -------

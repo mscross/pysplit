@@ -5,26 +5,23 @@ import math
 
 def tracemean_vector(latitude, longitude):
     """
-    Takes a latitude array and a longitude array and calculates the bearing of
-        the mean vector of the trace they represent
+    Calculates the bearing of the mean vector of a trace with points
+    (``latitude``, ``longitude``)
 
     Parameters
     ----------
     latitude : iterable of floats
-        The latitudes of a set of points, such as those that consitute a trace
+        The latitudes of a set of points
     longitude ; iterable of floats
-        The longitudes of a set of points, such as those that consitute a trace
-
-    Keyword Arguments
-    -----------------
+        The longitudes of a set of points
 
     Returns
     -------
     mean_vector : float
         The mean bearing of the trace
-    bearings : NumPy ndarray of floats
+    bearings : 1D ndarray of floats
         The bearing at t0 along great circles between t0 and
-        each point of the trac
+        each point of the trace
 
     """
 
@@ -59,9 +56,6 @@ def great_circle_bearing(t0, tx):
     tx : tuple of floats
         (Latitude, longitude) coordinate pair; endpoint of great circle.
 
-    Keyword Arguments
-    -----------------
-
     Returns
     -------
     bearing : float
@@ -89,19 +83,16 @@ def circular_means(bearings):
     Average an array of bearings by finding the circular mean
 
     The circular mean is the correct way to average angles.  For example,
-        the arithmetic mean of a vector at 90 degrees and one at 270 (-90)
-        degrees is 180 (0) degrees (i.e., the average of east and west is south
-        or north).  The circular mean correctly calculates that the average is
-        a vector of length 0 with no direction.
+    the arithmetic mean of a vector at 90 degrees and one at 270 (-90)
+    degrees is 180 (0) degrees (i.e., the average of east and west is south
+    or north).  The circular mean correctly calculates that the average is
+    a vector of length 0 with no direction.
 
     Parameters
     ----------
-    bearings : NumPy ndarray of floats
+    bearings : 1D ndarray of floats
         Array of (great circle) bearings from the location of time 0 to the
         location of each point along a trace
-
-    Keyword Arguments
-    -----------------
 
     Returns
     -------
@@ -139,19 +130,14 @@ def distance_overearth(latitude, longitude):
 
     Parameters
     ----------
-    latitude : iterable of floats of at least size 2
-        The latitudes of a set of points on the surface of the earth,
-        such as those along a trace
-    longitude : iterable of floats of at least size 2
-        The longitudes of a set of points on the surface of the earth,
-        such as those along a trace
-
-    Keyword Arguments
-    -----------------
+    latitude : iterable of floats of at least length 2
+        The latitudes of a set of points on the surface of the earth
+    longitude : iterable of floats of at least length 2
+        The longitudes of a set of points on the surface of the earth
 
     Returns
     -------
-    distance : NumPy ndarray of floats
+    distance : 1D ndarray of floats
         The distance in meters between each latitude, longitude point
         and the previous latitude, longitude point.  The first item in
         distance is 0, there being no previous point.
@@ -187,14 +173,14 @@ def sum_distance(distance):
 
     Parameters
     ----------
-    distance : NumPy ndarray of floats
+    distance : 1D ndarray of floats
         The distance in meters between a point and a previous point
         along a trace on the earth's surface.
 
     Returns
     -------
-    total_distance : NumPy ndarray of floats
-        The distance (m) between a point in a trace on the earth's surface
+    total_distance : 1D ndarray of floats
+        The distance between a point in a trace on the earth's surface
         and the point at time 0 of the trace.
 
     """
@@ -216,30 +202,26 @@ def find_destination(t0, bearing, distance, unit='m'):
     Calculate destination given initial location, bearing, and distance.
 
     Bearing is taken at t0 along great circle arc from t0 to destination.
-        Related to distance_overearth(), great_circle_bearing().
+    Related to ``distance_overearth()``, ``great_circle_bearing()``.
 
     Parameters
     ----------
     t0 : tuple of floats
         (Latitude, Longitude) coordinates of starting point
     bearing : float
-        The bearing in degrees at t0 along a great circle between
+        The bearing in degrees at ``t0`` along a great circle between
         t0 and the destination
     distance : float
         The distance in meters, kilometers, or miles
-        between t0 and the destination
-
-    Keyword Arguments
-    -----------------
+        between ``t0`` and the destination
     unit : string
-        Default 'm'.  ['m'|'km'|'mi'].  Indicates whether distance is given
-        in meters, kilometers, or miles.
+        Default 'm'.  ['m'|'km'|'mi'].  The unit of ``distance``
 
     Returns
     -------
     tx : tuple of floats
-        (Latitude, Longitude) coordinates of destination at specified bearing
-        and distance relative to t0
+        (Latitude, Longitude) coordinates of destination at ``bearing``
+        and ``distance`` relative to ``t0``
 
     """
 
@@ -368,7 +350,7 @@ def convert_q2w(specific_humidity):
 
 def convert_w2rh(mixing_ratio, temperature, pressure):
     """
-    Convert mixing ratio (absolute humidity) to relative humidity
+    Convert ``mixing ratio`` (absolute humidity) to relative humidity
 
     Parameters
     ----------
@@ -425,20 +407,17 @@ def convert_w2rh(mixing_ratio, temperature, pressure):
 
 def convert_rh2w(relative_humidity, temperature, pressure):
     """
-    Convert relative humidity to mixing ratio (absolute humidity)
+    Convert ``relative_humidity`` to mixing ratio (absolute humidity)
 
     Parameters
     ----------
-    rh : iterable of floats, or float
-        relative humidity on a scale of 0.0 to 100.0 %
+    relative_humidity : iterable of floats, or float
+        Relative humidity on a scale of 0.0 to 100.0 %
     temperature : iterable of floats, or float
         Temperature in K or degrees C.  Automatic conversion of units,
         for temperatures reasonable at the earth's surface
     pressure : iterable of floats, or float
         Atmospheric pressure in hectopascals
-
-    Keyword Arguments
-    -----------------
 
     Returns
     -------
@@ -493,9 +472,9 @@ def geographic_midpt(t0, tx):
     Parameters
     ----------
     t0 : tuple of floats
-        Latitude, longitude of a point
+        Latitude, longitude (in decimal degrees) of a point
     tx : tuple of floats
-        Latitude, longitude of a second point
+        Latitude, longitude (in decimal degrees) of a second point
 
     Returns
     -------
@@ -503,10 +482,6 @@ def geographic_midpt(t0, tx):
         The latitude of the midpoint
     lon : float
         The longitude of the midpoint
-
-    Notes
-    -----
-    Latitudes and longitudes must be in decimal degrees
 
     """
 
@@ -545,10 +520,10 @@ def geographic_midpt(t0, tx):
 def grid_data(x, y, data, cell_value, binsize):
     """
     Place unevenly spaced 2D data on a grid by 2D binning using nearest
-        neighbor interpolation.
+    neighbor interpolation.
 
     Originally Example 3 by ccampo (2010-07-11) from
-        http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data,
+    http://wiki.scipy.org/Cookbook/Matplotlib/Gridding_irregularly_spaced_data,
 
     Adapted for PySPLIT by mscross, 2014-06-12.
 
@@ -571,18 +546,19 @@ def grid_data(x, y, data, cell_value, binsize):
     -------
     grid : masked 2D ndarray of scalars
         The evenly gridded data.  The value of each cell in relation to the
-        bin contents is determined by `cell_value`.  Invalid values are masked.
+        bin contents is determined by ``cell_value``.
+        Invalid values are masked.
     xi : 2D ndarray of floats
         The grid of x bin bounds
     yi : 2D ndarray of floats
         The grid of y bin bounds
     bins : 2D ndarray of floats
-        A grid the same shape as `grid`, except the value of each cell is
+        A grid the same shape as ``grid``, except the value of each cell is
         the number of points in the bin.
     wherebin : 2D list
-        A 2D list the same shape as `grid` and `bins` where each cell contains
-        the indices of `data` that correspond to the values stored in the
-        particular bin.
+        A 2D list the same shape as ``grid`` and ``bins`` where each cell
+        contains the indices of ``data`` that correspond to the values stored
+        in the particular bin.
 
     """
 
@@ -661,7 +637,8 @@ def grid_data(x, y, data, cell_value, binsize):
 
 def maxmin_diff(x):
     """
-    Calculate difference between the maximum and minimum values of iterable.
+    Calculate difference between the maximum and minimum values of
+    iterable ``x``.
 
     Parameters
     ----------
@@ -671,7 +648,7 @@ def maxmin_diff(x):
     Returns
     -------
     diff : the difference between the maximum and minimum values
-        in the iterable
+        in the iterable ``x``
 
     """
 

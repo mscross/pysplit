@@ -5,37 +5,37 @@ import os
 def map_labeller(cavemap, ax, labelgroups, label_list, labelzorder,
                  labelstyle):
     """
-    Writes labels on a map.
+    Writes labels on ``cavemap``.
 
-    Use labelfile_generator() and labelfile_reader() to get label_list in the
-        appropriate order and format.
+    Use ``labelfile_generator()`` and ``labelfile_reader()`` to get
+    ``label_list`` in the appropriate order and format.
 
     Parameters
     ----------
-    cavemap : plot
-        Instance of basemap to be labelled
-    ax : axes instance
-        axis of cavemap
+    cavemap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class.
+    ax : ``matplotlib Axes`` instance
+        Axis of ``cavemap``
     labelgroups : string
-        Determines what labelgroups are applied.
+        Determines what ``labelgroups`` are applied.
         ['all_1'|'all_2'|'cave'|'important'|'justcave']
     label_list : list of lists of strings or tuples of floats
         List of lists of labels and coordinates
-        sea labels and coordinates
-        cities
-        oceans
-        countries
-        caves
+        'sea labels'
+        'cities'
+        'oceans'
+        'countries'
+        'caves'
     labelzorder : int
         Zorder of map labels.
     labelstyle : list of dictionaries
         List of dictonaries that contain label formatting parameters
 
-
     Returns
     -------
-    cavemap : Basemap instance
-        Labelled instance of basemap
+    cavemap : ``Basemap`` instance
+        Labelled instance of ``Basemap``
 
     """
 
@@ -154,12 +154,12 @@ def labelfile_reader(labelfile):
 
     If the file does not exist, the user will be prompted to:
     -Create a new label file at the given path, then continue attempting to
-        label the map
+     label the map
     -Continue generating the map without labelgroups
     -Enter a different path
 
     These three options will be presented until the user provides a valid
-        labelfile or the user chooses to forgo labelling
+    ``labelfile`` or the user chooses to forgo labelling
 
     Parameters
     ----------
@@ -175,6 +175,8 @@ def labelfile_reader(labelfile):
         oceans
         countries
         caves
+    labelstyle : list of dictionaries
+        List of dictonaries that contain label formatting parameters
 
     """
 
@@ -304,5 +306,3 @@ def labelfile_generator(labelfile):
     labelfile.writelines(labels)
     labelfile.flush()
     labelfile.close()
-
-    return None

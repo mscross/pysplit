@@ -9,18 +9,18 @@ import mapmaker as mm
 
 class TrajectoryGroup(object):
     """
-    Class for processing and plotting multiple trajectories.
+    Class for processing and plotting multiple ``Trajectory`` instances.
 
     """
 
     def __init__(self, traj_object_list):
         """
-        Initialize TrajectoryGroup object.
+        Initialize ``TrajectoryGroup`` object.
 
         Parameters
         ----------
-        traj_object_list : list of trajectory objects
-            Trajectories that belong in the group.
+        traj_object_list : list of ``Trajectory`` instances
+            ``Trajectory`` instances that belong in the group.
 
         """
         self.trajectories = traj_object_list
@@ -29,19 +29,20 @@ class TrajectoryGroup(object):
 
     def __add__(self, other):
         """
-        Combine two trajectory groups into one.  Checks for duplicate
-            trajectories.
+        Create new ``TrajectoryGroup`` from two ``TrajectoryGroup`` instances.
+        Checks for duplicate ``Trajectory`` instances.
 
         Parameters
         ----------
-        other : TrajectoryGroup or Cluster
-            A different TrajectoryGroup or Cluster that may or may not
-            contain some of the same trajectories
+        other : ``TrajectoryGroup`` or ``Cluster``
+            A different ``TrajectoryGroup`` or ``Cluster`` that may or may not
+            contain some of the same ``Trajectory`` instances
 
         Returns
         -------
-        new_self : TrajectoryGroup
-            A new TrajectoryGroup from the combination of self and other
+        new_self : ``TrajectoryGroup``
+            A new ``TrajectoryGroup`` from the combination of
+            ``self`` and ``other``
 
         """
 
@@ -62,8 +63,9 @@ class TrajectoryGroup(object):
 
     def __getitem__(self, index):
         """
-        Index or slice the Trajectory list to get a Trajectory or
-            TrajectoryGroup, respectively
+        Index or slice the ``self.trajectories`` to get a ``Trajectory`` or
+        ``TrajectoryGroup``, respectively
+
         """
 
         newthing = self.trajectories[index]
@@ -83,36 +85,36 @@ class TrajectoryGroup(object):
         Parameters
         ----------
         variable : string
-            Trajectory attribute that may or may not be an iterable
-            (if it is not, set iterable=False)
-
-        Keyword Arguments
-        -----------------
+            ``Trajectory`` attribute that may or may not be an iterable
+            (if it is not, set ``iterable``=``False``)
         sort_bytime
             ['month'|'hour'|'day'|'year'|'season'|'none']
             Lets user split array of all t=0 data into a list of subarrays,
-            where each subarrays represents a unique `sort_bytime`.  For more
+            where each subarrays represents a unique ``sort_bytime``.  For more
             sophisticated sorting, or sorting by something other than
             one time division, it is recommended that the user choose
             'none' and perform the sorting themselves.
         iterable : Boolean
-            Default True.  Set to False if inspecting a trajectory attribute
-            that is not an iterable, like rainstatus
+            Default ``True``.  Set to ``False`` if inspecting a ``Trajectory``
+            attribute that is not an iterable, like ``Trajectory.rainstatus``
 
         Returns
         -------
         sortedvar_list : list of 1D ndarrays
-            List of arrays where each array contains the var at t=0 of each
-            trajectory in a  unique `sort_bytime`.
-            Returned if `sort_bytime` is not 'none'.
+            List of arrays where each array contains ``var`` at t=0
+            of each ``Trajectory`` in a  unique ``sort_bytime``.
+            Returned if ``sort_bytime`` is not 'none'.
         unique_times : list of ints
-            The unique `sort_bytime`s.  Returned if `sort_bytime` is not 'none'
+            The unique ``sort_bytimes``.
+            Returned if ``sort_bytime`` is not 'none'
         var : 1D ndarray
-            The array of the requested variable at t=0* for each trajectory.
+            The array of the requested ``variable`` at t=0* for each
+            ``Trajectory``.
 
         Notes
         -----
-        * If var is `distance`, t=1.  If var is `total_distance`, t=-1.
+        * If ``variable`` is ``distance``, t=1.
+        If ``variable`` is ``total_distance``, t=-1.
 
         """
 
@@ -178,12 +180,17 @@ class TrajectoryGroup(object):
 
     def stack_trajdata(self, var):
         """
-        Put data from all trajectories into one array.
+        Put data from all member ``Trajectory`` instances into one array.
 
         Parameters
         ----------
         var : string
-            The attribute to collect from all trajectories
+            The attribute to collect from all ``Trajectory`` instances
+
+        Returns
+        -------
+        var_array : 1D ndarray of floats
+            Compilation of data from all ``Trajectory`` instances
 
         """
 
@@ -204,7 +211,7 @@ class TrajectoryGroup(object):
     def grid_trajvar(self, variable, cell_value, grid_res=0.5,
                      use_wherebin=True, normalize=False):
         """
-        Grids
+        Grids a particular ``Trajectory`` attribute
 
         Parameters
         ----------
@@ -213,17 +220,15 @@ class TrajectoryGroup(object):
         cell_value : string
             Determines the value of each cell from the contents of the bin.
             ['median'|'mean'|'cumulative'|'max'|'min'|'range'|'stdev']
-
-        Keyword Arguments
-        -----------------
         grid_res : float
             Default 0.5.  The grid cell size in degrees
         use_wherebin : Boolean
-            Default True.  Use wherebin to repopulate a new self.grid, if
-            gridding has already occurred.  If grid_res != self.grid_res,
-            then use_wherebin will be overridden.
+            Default ``True``.  Use ``wherebin`` to repopulate a new
+            ``self.grid``, if gridding has already occurred.
+            If ``grid_res`` != ``self.grid_res``, then ``use_wherebin``
+            will be overridden.
         normalize : Boolean
-            Default False.  If True, normalizes grid to a 0-1 scale.
+            Default ``False``.  If ``True``, normalizes grid to a 0-1 scale.
 
         """
 
@@ -297,17 +302,14 @@ class TrajectoryGroup(object):
             ['both'|'above'|'below'|'all points']
         scale : string
             Moisture variable to gather into one array
-            ['absolute dq'|'absolute dqi|'fractional']
+            ['absolute dq'|'absolute dqi'|'fractional']
         cell_value : string
             Determines the value of each cell from the contents of the bin.
             ['median'|'mean'|'cumulative'|'max'|'min'|'range'|'stdev']
-
-        Keyword Arguments
-        -----------------
         grid_res : float
             Default 0.5.  The grid cell size in degrees
         normalize : Boolean
-            Default False.  If True, normalizes grid to a 0-1 scale.
+            Default ``False``.  If ``True``, normalizes grid to a 0-1 scale.
 
         """
 
@@ -403,33 +405,35 @@ class TrajectoryGroup(object):
                       rainy_criterion='rainfall', check_steps=1,
                       rh_threshold=0.8):
         """
-        Finds the number of trajectories with `rainstatus` = True.
+        Finds the number of ``Trajectory`` instances with
+        ``self.rainstatus``` = ``True``.
 
-        If the trajectories do not currently have the attribute `rainstatus` or
-            the user wants to reset rainstatus (`reset_traj_rainstatus`=True),
-            then the rainstatus of the trajectories will be set using the
-            given criteria.
+        If the ``Trajectory`` instances do not currently have the attribute
+        ``rainstatus`` or the user wants to reset ``rainstatus``
+        (``reset_traj_rainstatus``=``True``), then the ``rainstatus``
+        for each ``Trajectory`` will be set using the given criteria.
 
-        Keyword Arguments
-        -----------------
+        Parameters
+        ----------
         reset_traj_rainstatus : Boolean
-            Default False.  Examines preset self.trajectories `rainstatus`.
-            If the trajectories do not have `rainstatus` attribute, then
-            `reset_traj_rainstatus` will be automatically set to True.
-            When True, `rainstatus` is set using given criteria.
+            Default ``False``.  Examines current ``self.trajectories``
+            ``rainstatus``.  If the ``Trajectory`` instances do not have the
+            ``rainstatus`` attribute, then ``reset_traj_rainstatus``
+            will be automatically set to ``True``.  When ``True``,
+            ``rainstatus`` is set using given criteria.
         rainy_criterion : string
             ['rainfall'|'relative humidity'|'specific humidity']
-            'rainfall' : set self.rainstatus to True if trajectory has
-                rain within the indicated timesteps
-            'relative humidity' : set self.rainstatus to True if trajectory
-                is above the given rh_threshold within the indicated timesteps
-            'specific humidity' : set self.rainstatus to True if trajectory
-                meets the rainfall criteria and has a negative change
-                in specific humidity
+            'rainfall' : set ``Trajectory.rainstatus`` to ``True`` if rain
+            occurs within the indicated ``check_steps``
+            'relative humidity' : set ``Trajectory.rainstatus`` to ``True`` if
+                ``Trajectory.relative_humidity`` is above the given
+                ``rh_threshold`` within ``check_steps``
+            'specific humidity' : set ``Trajectory.rainstatus`` to ``True`` if
+                rain occurs and ``Trajectory.specific_humidity`` decreases
         check_steps : integer
-            The number of timesteps from the beginning to search for rain.
+            The number of timesteps from the beginning to inspect.
         rh_threshold : float
-            The relative humidity above which it is considered to be raining.):
+            The relative humidity above which it is considered to be raining.
 
         """
 
@@ -450,11 +454,12 @@ class TrajectoryGroup(object):
 
     def make_infile(self):
         """
-        Take trajectories in trajectory group and write path to infile
+        Take ``Trajectory`` instances in ``TrajectoryGroup`` and write
+        path to infile
 
-        If a specific subset of the trajectory group is needed (i.e.,
-            only rainy trajectories), create a new trajectory group
-            that has only trajectories meeting that criteria
+        If a specific subset of ``Trajectory`` instances is needed,
+        create a new ``TrajectoryGroup`` containing only qualifying
+        ``Trajectory`` instances
 
         """
 
@@ -468,20 +473,20 @@ class TrajectoryGroup(object):
 
     def map_data_line(self, cavemap, **kwargs):
         """
-        Make a plot of the trajectories in the TrajectoryGroup.
+        Plot ``Trajectory`` paths.
 
-        Trajectory color and linewidth is controlled by the trajectory
-            attributes of the same names.  Use trajectory.set_color() and
-            trajectory.set_lw() to adjust.
+        Path color and linewidth is controlled by the ``Trajectory``
+        attributes of the same names.  Use ``trajectory.set_color()`` and
+        ``trajectory.set_lw()`` to adjust.
 
         Parameters
         ----------
-        cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
-
-        Other Parameters
-        ----------------
-        kwargs
+        cavemap : ``Basemap`` instance
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class.
+        **kwargs
+            Passed to ``Trajectory.map_traj_path()``, ``traj_path()``,
+            ``cavemap.plot()``, then ``Axes.plot()``
 
         """
 
@@ -490,30 +495,32 @@ class TrajectoryGroup(object):
 
     def map_data_scatter(self, cavemap, variable, sizevar=None, **kwargs):
         """
-        Make a scatter plot of the trajectories in the TrajectoryGroup.
+        Make a scatter plot of ``Trajectory`` attribute data.
 
         Data may be scatter plotted as color change and is rescaled or not
         according to user preferences.
 
-        Scatter plot may have second variable plotted as size.
+        Scatter plot may have second attribute plotted as size.
 
         Parameters
         ----------
         cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class.
         variable : string
-            Trajectory attribute name.  The variable plotted as a color change.
-
-        Keyword Arguments
-        -----------------
+            ``Trajectory`` attribute name.  The attribute plotted as a
+            color change.
         sizevar : string
-            Default None.  The variable to plot as a change in marker size.
+            Default ``None``.  The attribute to plot as a change in point size.
+        **kwargs
+            Passed to ``traj_scatter()``, ``cavemap.scatter()``,
+            then ``Axes.scatter()``
 
         Returns
         -------
-        cm : matplotlib PathCollection instance
+        cm : ``matplotlib PathCollection`` instance
             Mappable for use in creating colorbars.  Colorbars may be created
-            using make_cbar() or make_cax_cbar().
+            using ``make_cbar()`` or ``make_cax_cbar()``.
 
         """
 
@@ -537,36 +544,33 @@ class TrajectoryGroup(object):
         Plot moisture uptakes as a scatter plot.
 
         Plot all points considered for moisture uptake; plot all uptakes in
-            fractional or absolute values, plot uptakes below or uptakes
-            above vertical criteria in fractional or absolute values
+        fractional or absolute values, plot uptakes below or uptakes
+        above vertical criteria in fractional or absolute values
 
         Parameters
         ----------
         cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class.
         uptake : string
             ['both'|'above'|'below'|'all points']
         scale : string
             ['absolute dq'|'absolute dqi|'fractional']
-
-        Keyword Arguments
-        -----------------
         vmin : int or float
-            Default None.  The minimum value for color mapping.  If None,
-            vmin will be the minimum value of the data.
+            Default ``None``.  The minimum value for color mapping.
+            If ``None``, ``vmin`` will be the minimum value of the data.
         vmax : int or float
-            Default None.  The maximum value for color mapping.  If None,
-            vmax will be the maximum value of the data.
-
-        Other Parameters
-        ----------------
-        kwargs : passed to traj_scatter(), then Basemap.scatter(), ax.scatter()
+            Default ``None``.  The maximum value for color mapping.
+            If ``None``, ``vmax`` will be the maximum value of the data.
+        **kwargs
+            passed to ``traj_scatter()``, then c``avemap.scatter()``,
+            ``Axes.scatter()``
 
         Returns
         -------
-        cm : matplotlib PathCollection instance
+        cm : ``matplotlib PathCollection`` instance
             Mappable for use in creating colorbars.  Colorbars can be created
-            using make_cbar() or make_cax_cbar().
+            using ``make_cbar()`` or ``make_cax_cbar()``.
 
         """
 
@@ -644,40 +648,39 @@ class TrajectoryGroup(object):
         Parameters
         ----------
         cavemap : Basemap instance
-            Initialize a basemap first using MapDesign.make_basemap()
-
-        Keyword Arguments
-        -----------------
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class.
         ismoisture : Boolean
-            Default False.  Access gridded moisture uptake data if True.
-            If False, access regular gridded data.
+            Default ``False``.  Access gridded moisture uptake data
+            if ``True``.  If ``False``, access regular gridded data.
         mapcount : Boolean
-            Default False.  If true, plot counts in each gridbox.  Else,
-            plot gridded variable.
+            Default ``False``.  If ``True``, plot counts in each gridbox.
+            Else, plot gridded variable.
         usecontourf : Boolean
-            Default False.  Use contourf (True) or pcolormesh (False) to
-            plot gridded data.
+            Default ``False``.  Use contourf (``True``) or pcolormesh
+            (``False``) to plot gridded data.
         vmin : int or float
-            Default None.  The minimum value for color mapping.  If None,
-            vmin will be the minimum value of the data.
+            Default ``None``.  The minimum value for color mapping.
+            If ``None``, ``vmin`` will be the minimum value of the data.
         vmax : int or float
-            Default None.  The maximum value for color mapping.  If None,
-            vmax will be the maximum value of the data.
-        colormap : matplotlib colormap
+            Default ``None``.  The maximum value for color mapping.
+            If ``None``, ``vmax`` will be the maximum value of the data.
+        colormap : ``matplotlib`` colormap
             Default plt.cm.Blues.  The gridded data colormap
         zorder : int
             Default 20.  The zorder of the gridded data
 
         Other Parameters
         ----------------
-        kwargs : passed to Basemap.pcolormesh(), ax.pcolormesh(), or
-            passed to traj_scatter, Basemap.contourf(), ax.contourf()
+        kwargs : passed to ``cavemap.pcolormesh()``, ``ax.pcolormesh()``, or
+            passed to ``meteo_contouring()``, ``cavemap.contourf()``,
+            ``ax.contourf()``
 
         Returns
         -------
-        cm : matplotlib PathCollection instance
+        cm : ``matplotlib PathCollection`` instance
             Mappable for use in creating colorbars.  Colorbars can be created
-            using make_cbar() or make_cax_cbar().
+            using ``make_cbar()`` or ``make_cax_cbar()``.
 
         """
 
