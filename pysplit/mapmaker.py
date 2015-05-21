@@ -86,7 +86,7 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
         print msg, '\nsqrt normalization'
     else:
         try:
-            norm = clr.PowerNorm(cnormalize, )
+            norm = clr.PowerNorm(cnormalize, vmin=vmin, vmax=vmax)
         except:
             pass
 
