@@ -28,7 +28,7 @@ class Cluster(TrajectoryGroup):
             Trajectories that belong in the cluster.
         cluster_number : int
             The ``Cluster`` identification number.  Distinguishes ``Cluster``
-            from other Clusters in its ``ClusterGroup``
+            from other ``Clusters`` in its ``ClusterGroup``
 
         """
         # Initializes self.trajectories, self.trajcount, and self.directory
@@ -50,7 +50,8 @@ class Cluster(TrajectoryGroup):
 
         Parameters
         ----------
-        other : TrajectoryGroup
+        other : ``TrajectoryGroup``
+            Another ``TrajectoryGroup`` or ``Cluster``
 
         """
 
@@ -94,9 +95,10 @@ class Cluster(TrajectoryGroup):
         """
         Calculate means and sums of several moisture-related variables.
 
-        Means include the mean of every value along every trajectory in the
-        Cluster and the mean of every trajectory's latest value.  Sums are
-        the sum of every trajectory's latest value.
+        Means include the mean of every value along every Trajectory instance
+        in the ``Cluster`` and the mean of every Trajectory instances's
+        latest value.  Sums are the sum of every Trajectory instances's
+        latest value.
 
         Attributes set:
             mean_mf
@@ -115,7 +117,7 @@ class Cluster(TrajectoryGroup):
         raint0_list = []
         mft1_list = []
 
-        for traj in self.trajectories:
+        for traj in self:
             # Get trajectory attributes, if necessary setting them first
             if not hasattr(traj, 'specific_humidity'):
                 traj.set_specifichumidity()
@@ -148,8 +150,9 @@ class Cluster(TrajectoryGroup):
 
         Parameters
         ----------
-        cavemap :  ``matplotlib`` ``Basemap`` instance
-            Any basemap
+        cavemap : ``Basemap`` instance
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class
         color : string or tuple of floats
             Any ``matplotlib``-accepted color
         lw : int
@@ -165,17 +168,17 @@ class Cluster(TrajectoryGroup):
 
 class ClusterGroup(object):
     """
-    Class for processing and plotting Clusters
+    Class for processing and plotting member ``Cluster`` instances
     """
 
     def __init__(self, cluster_object_list):
         """
-        Initialize ClusterGroup object.
+        Initialize ``ClusterGroup`` object.
 
         Parameters
         ----------
-        cluster_object_list : list of cluster objects
-            Cluster objects from the same HYSPLIT clustering run.
+        cluster_object_list : list of ``Cluster`` instances
+            ``Cluster`` instances from the same HYSPLIT clustering run.
         """
 
         self.totalclusters = len(cluster_object_list)
@@ -185,6 +188,22 @@ class ClusterGroup(object):
             totaltraj.append(cluster.trajcount)
         self.totaltrajcount = sum(totaltraj)
 
+    def __getitem__(self, index):
+        """
+        Index or slice ``self.clusters`` to get a ``Cluster`` or
+        ``ClusterGroup``, respectively.
+
+        """
+
+        newthing = self.clusters[index]
+
+        try:
+            newthing = ClusterGroup(newthing)
+        except:
+            pass
+
+        return newthing
+
     def map_clusters(self, cavemap, color_var='mean_mf', colors=None,
                      colormap=plt.cm.Blues, width_var='relative count',
                      lw=2, cnormalize=None, wnormalize=None, vmin=None,
@@ -192,46 +211,47 @@ class ClusterGroup(object):
         """
         Plots mean cluster paths with color and width scaled to some variable.
 
-        Creates a map where each cluster trajectory is plotted with a color
-        determined by the mean variable value and a width by the trajectory
+        Creates a map where each ``Cluster`` path is plotted with a color
+        determined by the mean variable value and a width by the ``Trajectory``
         count.  Color and width scaled according to user preferences.
 
         Parameters
         ----------
-        cavemap : Basemap instance
-            Initialize a basemap first using ``MapDesign.make_basemap()``
+        cavemap : ``Basemap`` instance
+            Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+            class
         color_var : string
             Default 'mean_mf'.  ['total_raint0'|'total_mft1'|'mean_q'|
             'mean_w'|'mean_mf'|'mean_mft1'|'mean_raint0'|'total_mf']
         color_min : int or float
-            Default None.  The minimum value for color mapping.  If None,
-            color_min will be the minimum value of the data.
+            Default ``None``.  The minimum value for color mapping.
+            If ``None``, color_min will be the minimum value of the data.
         color_max : int or float
-            Default None.  The maximum value for color mapping.  If None,
-            color_max will be the maximum value of the data.
+            Default ``None``.  The maximum value for color mapping.
+            If ``None``, ``color_max`` will be the maximum value of the data.
         color_rescale : string
-            Default None.  ['sqrt'|ln'|'log']
+            Default ``None``.  ['sqrt'|ln'|'log']
             Determines how color data is transformed, if at all
         width_var : string
             Default 'count'.  ['absolute_count'|'relative_count'|
             'total_raint0'|'total_mft1'|'mean_q'|
             'mean_w'|'mean_mf'|'mean_mft1'|'mean_raint0'|'total_mf']
         width_rescale : string
-            Default None.  [sqrt'|'ln'|'log']
+            Default ``None``.  [sqrt'|'ln'|'log']
             Determines how width data is transformed, if at all
         width_adjust : float
             Default 1.0.  Used to adjust linewidths to a reasonable value
             while maintaining relationships between linesizes.
-        colormap : string
-            Default 'blues'.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
-            Passed to a dictionary which retrieves the indicated colormap
+        colormap : ``matplotlib`` colormap
+            Default ``plt.cm.Blues``.  ['jet'|'blues'|'anomaly'|'heat'|'earth']
+            Any ``matplotlib`` colormap
 
         Returns
         -------
         colors : list of RGBA tuples
-            The color of each cluster
+            The color of each ``Cluster``
         plot_order : list of ints
-            The order of `colors` relative to ``self.clusters``
+            The order of ``colors`` relative to ``self``
 
         """
         transform_dict = {'sqrt' : np.sqrt,
@@ -243,7 +263,7 @@ class ClusterGroup(object):
             plot_order = range(0, self.totalclusters)
         else:
             wdata = []
-            for clus in self.clusters:
+            for clus in self:
                 if 'count' in width_var:
                     wdata.append(clus.trajcount)
 
@@ -271,7 +291,7 @@ class ClusterGroup(object):
                     colors = [colors[0]] * self.totalclusters
         else:
             cdata = []
-            for clus in self.clusteres:
+            for clus in self:
                 cdata.append(getattr(clus, color_var))
 
             cdata = np.asarray(cdata, dtype=np.float64)
@@ -293,14 +313,13 @@ class ClusterGroup(object):
                 colors.append(color)
 
         for i in plot_order:
-            self.clusters[i].map_cluster_path(cavemap, colors[i], lw=wdata[i],
-                                              **kwargs)
+            self[i].map_cluster_path(cavemap, colors[i], lw=wdata[i],
+                                     **kwargs)
 
         return colors, plot_order
 
     def trajplot_clusterplot(self, trajmap, clusmap, colors=None, traj_lw=3,
                              cluster_lw='relative', **kwargs):
-
         """
         Plots trajectories on one map and cluster paths on another.
 
@@ -343,21 +362,21 @@ class ClusterGroup(object):
         clus_lw = []
 
         if cluster_lw is 'relative':
-            for cluster in self.clusters:
+            for cluster in self:
                 clus_lw.append((cluster.trajcount /
                                 float(self.totaltrajcount)) * 100.0)
         elif cluster_lw is 'absolute':
-            for cluster in self.clusters:
+            for cluster in self:
                 clus_lw.append(cluster.trajcount)
         else:
             clus_lw = [cluster_lw]
             clus_lw = cluster_lw * self.totalclusters
 
         # Plot
-        for cluster, color, lw in zip(self.clusters, colors, cluster_lw):
+        for cluster, color, lw in zip(self, colors, cluster_lw):
             cluster.map_cluster_path(clusmap, color, lw=lw, **kwargs)
 
-            for traj in cluster.trajectories:
+            for traj in cluster:
                 traj.map_traj_path(trajmap, color=color, lw=traj_lw, **kwargs)
 
         return colors

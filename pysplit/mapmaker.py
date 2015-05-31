@@ -48,11 +48,12 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
         Default ``None``.
     levels : int
         Only used in BoundaryNorm
-    kwargs : passed to Basemap.scatter() and ax.scatter()
+    **kwargs
+        passed to ``Basemap.scatter()`` and ``Axes.scatter()``
 
     Returns
     -------
-    cm : matplotlib PathCollection instance
+    cm : ``matplotlib PathCollection`` instance
         Mappable for use in creating colorbars.  Colorbars may be created
         in ``PySPLIT`` using ``make_cbar()`` or ``make_cax_cbar()``
 
@@ -104,31 +105,33 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
 
 def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
               markeredgecolor='none', zorder=19, **kwargs):
-
     """
     Line plot of trajectory or cluster path
 
     Parameters
     ----------
-    cavemap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
+    cavemap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class
     lons : 1D ndarray of floats, ints
-        `data` longitudes
+        ``data`` longitudes
     lats : 1D ndarray of floats, ints
-        `data` latitudes
+        ``data`` latitudes
     color : string, tuple
-        Trajectory path and/or marker color.  Any matplotlib-accepted color
+        ``Trajectory`` path and/or marker color.  Any ``matplotlib-accepted``
+        color
     lw : int
-        Trajectory path linewidth
+        ``Trajectory`` path linewidth
     marker : string
-        Default None.  The timestep marker style.
+        Default ``None``.  The timestep marker style.
     linestyle : string
-        Default '-'.  The trajectory path linestyle.
+        Default '-'.  The ``Trajectory`` path linestyle.
     markeredgecolor : string, tuple
         Default 'none'.  The time step marker edge color.
     zorder : int
-        Default 19.  The zorder of the trajectory path.
-    kwargs : passed to Basemap.plot() and ax.plot()
+        Default 19.  The zorder of the ``Trajectory`` path.
+    **kwargs
+        Passed to ``Basemap.plot()`` and ``Axes.plot()``
 
     """
 
@@ -141,38 +144,43 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
                      vmin=None, vmax=None, steps=50, levels=None, colors=None,
                      colormap=plt.cm.nipy_spectral, zorder=13, **kwargs):
     """
-    Create contour or filled contour maps of `data`.
+    Create contour or filled contour maps of ``data``.
 
     Parameters
     ----------
-    cavemap : Basemap instance
-        Initialize a basemap first using MapDesign.make_basemap()
+    cavemap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class
     data : (M, N) ndarray of floats
         The data to contour
     longitudes : (M) ndarray of floats
-        X-coordinates of data
+        X-coordinates of ``data``
     latitudes : (N) ndarray of floats
-        Y-coordinates of data
+        Y-coordinates of ``data``
     contourf : Boolean
-        Default True.  Create filled contour (True) or contour (False) plot.
+        Default ``True``.  Create filled contour (``True``)
+        or contour (``False``) plot.
     vmin : int or float
-        Default None.  The forced minimum for drawing contours.  If None,
-        `vmin` is the `data` minimum.
+        Default ``None``.  The forced minimum for drawing contours.
+        If ``None``, ``vmin`` is the ``data`` minimum.
     vmax : int or float
-        Default None.  The forced maximum for drawing contours.  If None,
-        `vmax` is the `data` maximum.
+        Default ``None``.  The forced maximum for drawing contours.
+        If ``None``, ``vmax`` is the ``data`` maximum.
     steps : int
-        Default 50.  The number of steps to contour between `vmin` and `vmax`.
+        Default 50.  The number of steps to contour between ``vmin``
+        and ``vmax``.
     levels : list of ints or floats
-        Default None.  The contouring levels, overriding level creation with
-        `vmin`, `vmax`, `steps`
+        Default ``None``.  The contouring levels, overriding level creation
+        with ``vmin``, ``vmax``, ``steps``
     colors : list of strings or tuples
-        Default None.  The colors to use for contouring.
+        Default ``None``.  The colors to use for contouring.
     colormap : matplotlib colormap
-        Default `plt.cm.Blues`.  Any matplotlib colormap.
+        Default ``plt.cm.Blues``.  Any ``matplotlib`` colormap.
     zorder : int
-        Default 13.  Zorder of `data` on `cavemap`.
-    kwargs : passed to Basemap.contour() then ax.contour() (or contourf)
+        Default 13.  Zorder of ``data`` on ``cavemap``.
+    **kwargs
+        Passed to ``Basemap.contour()`` then ``Axes.contour()``
+        (or ``Axes.contourf()``)
 
     Returns
     -------
@@ -210,20 +218,21 @@ def adjust_contourparams(cm, contours, colors=[None],
                          othercontours_visible=True, **kwargs):
     """
     Shortcut for recoloring particular contours and/or rendering other
-        contours invisible.  Can also pass other kwargs to chosen contours.
+    contours invisible.  Can also pass other kwargs to chosen contours.
 
     Parameters
     ----------
-    cm : matplotlib.contour.QuadContourSet instance
+    cm : ``matplotlib.contour.QuadContourSet`` instance
         The contour instance to adjust
     contours : list of ints or floats
         The levels to adjust
     colors : list of strings, tuples
-        Default [None].  The colors of `contours`
+        Default [``None``].  The colors of ``contours``
     othercontours_visible : Boolean
-        Default True.  If False, then levels not in `contours` will be set
-        invisible.
-    kwargs : collection keywords for `contours`.
+        Default ``True``.  If ``False``, then levels not in ``contours``
+        will be set        invisible.
+    **kwargs
+        Collection of keywords for ``contours``.
 
     """
 
@@ -245,28 +254,28 @@ def adjust_contourparams(cm, contours, colors=[None],
 def make_cbar(data, ax, orientation='horizontal', cbar_size=(20, 1.0),
               reverse_cbar=False, **kwargs):
     """
-    Make a colorbar on the same axis as ax.
+    Make a colorbar on the same axis as ``ax``.
 
     Parameters
     ----------
-    data : PathCollection
+    data : ``matplotlib PathCollection``
         The mappable
-    ax : Axis object
+    ax : ``Axes`` instance
         The axis on which data is plotted
     orientation : string
-        Default 'horizontal'.  ['horizontal'|'vertical'].  The location of the
-        colorbar relative to the map.
+        Default 'horizontal'.  ['horizontal'|'vertical'].  Colorbar orientation
     cbar_size : tuple of int, float
         Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
         colorbar, the fractional size of the colorbar.
     reverse_cbar : Boolean
-        Default False. If True, colorbar is flipped over short axis.
+        Default ``False``. If ``True``, colorbar is flipped over short axis.
         Value-color mapping is unaffected.
-    kwargs : passed to edit_cbar()
+    **kwargs
+        Passed to ``edit_cbar()``
 
     Returns
     -------
-    cbar : matplotlib colorbar instance
+    cbar : ``matplotlib Colorbar`` instance
         The new colorbar
 
     """
@@ -295,12 +304,11 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal',
 
     Parameters
     ----------
-    fig : figure instance
-        The figure that needs a colorbar
+    fig : ``figure`` instance
     rect : list of floats
         The colorbar position and size.  [Distance from left, distance from
         bottom, size in x dimension, size in y dimension]
-    data : PathCollection
+    data : ``matplotlib PathCollection``
         Mappable
     orientation : string
         Default 'horizontal'.  ['horizontal'|'vertical'].  The orientation of
@@ -309,18 +317,19 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal',
         Default (20, 1.0).  Colobar (aspect, shrink).  The H/W ratio of the
         colorbar, the fractional size of the colorbar.
     reverse_cbar : Boolean
-        Default False. If True, colorbar is flipped over short axis.
+        Default ``False``. If ``True``, colorbar is flipped over short axis.
         Value-color mapping is unaffected.
     extend : string
         Default 'neither'.  ['both'|'neither'|'under'|'over'].
         Extend colorbar with pointed ends.
-    kwargs : passed to edit_cbar()
+    **kwargs
+        Passed to ``edit_cbar()``
 
     Returns
     -------
-    cax : matplotlib axes instance
-        The axis of the new colorbar.  Remove using fig.delaxes(cax)
-    cbar : matplotlib colorbar instance
+    cax : ``matplotlib Axes`` instance
+        The axis of the new colorbar.  Remove using ``fig.delaxes(cax)``
+    cbar : ``matplotlib colorbar`` instance
         The new colorbar
 
     """
@@ -346,24 +355,24 @@ def edit_cbar(cbar, divisions=5, cbar_label=None, tick_fs=16, label_fs=18,
               labelpad=24, rotation=0, tick_dir='out', tick_dim=(4, 2)):
     """
     Make the colorbar pretty.  Adjust fontsizes, add label, get a reasonable
-        number of nice ticks, etc.
+    number of nice ticks, etc.
 
     Parameters
     ----------
-    cbar : colorbar instance
-        The colorbar created in make_cbar() or make_cax_cbar().
+    cbar : ``matplotlib colorbar`` instance
+        The colorbar created in ``make_cbar()`` or ``make_cax_cbar()``.
     divisions : int
-        Default 5.  The number of nice ticks on the colorbar.  May be None.
+        Default 5.  The number of nice ticks on the colorbar.  May be ``None``.
     cbar_label : string
-        Default None.  Colorbar label.
+        Default ``None``.  Colorbar label.
     tick_fs : int
         Default 16.  Font size of ticks
     label_fs : int
-        Default 18.  Font size of cbar_label
+        Default 18.  Font size of ``cbar_label``
     labelpad : int
         Default 24.  Spacing between tick labels and colorbar label
     rotation : int
-        Default 0.  Rotation in degrees of label.
+        Default 0.  Label rotation in degrees.
     tick_dir : string
         Default 'out'.  ['out'|'in'|'inout']
         Direction that ticks are pointing relative to colorbar
@@ -402,7 +411,7 @@ def random_colors(number_ofcolors):
     Returns
     -------
     colors : list of tuples of floats
-        List of len(number_ofcolors), the requested random colors
+        List of ``len(number_ofcolors)``, the requested random colors
     """
 
     color_tmp = np.random.rand(number_ofcolors, 3)

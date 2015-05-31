@@ -58,7 +58,7 @@ def get_bandnum(level, variable, datafile):
 def getsurface_getvar(datafile):
     """
     Opens GRIB (ncar) files, prints the surface level
-        and variable of each raster band.
+    and variable of each raster band.
 
     Parameters
     ----------
@@ -92,7 +92,7 @@ def getsurface_getvar(datafile):
 def file_lister(filedates, startstring, data_dir):
     """
     Get a list of files that have both one of a series of dates
-        and match ``startstring``.
+    and match ``startstring``.
 
     Parameters
     ----------
@@ -141,7 +141,7 @@ def file_lister(filedates, startstring, data_dir):
 def file_dates(years, years_isrange, months, months_isrange):
     """
     Constructs list of 'YYYYMM' date strings from the given
-        ``years`` and ``months`` of interest
+    ``years`` and ``months`` of interest
 
     Parameters
     ----------
@@ -180,9 +180,9 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
                  filelist=None):
     """
     Gets a list of GRIB files, determines which band contains the desired data.
-        For each file, the data is read into an array, and the
-        data array is put into a list.  Also returns latitudes and longitudes
-        that represent the spatial information of the data grid.
+    For each file, the data is read into an array, and the
+    data array is put into a list.  Also returns latitudes and longitudes
+    that represent the spatial information of the data grid.
 
     Parameters
     ----------
@@ -196,7 +196,7 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
         Full or relative path to the data directory.  Only needed if
         ``filelist`` is ``None``.
     filedates : list of strings
-        Default None. List of strings representing dates in the format
+        Default ``None``. List of strings representing dates in the format
         'YYYYMM'.  Generated from ``file_dates()``.  Used to gather a
         list of filenames.  Only needed if ``filelist`` is ``None``.
     filelist : list of strings
@@ -207,9 +207,9 @@ def get_gribdata(level, var, startstring, data_dir, filedates,
     gribdata : list of (M, N) ndarray of floats
         Arrays of data from all GRIB files in indicated time period
     latitudes : ndarray of floats
-        (M) array of latitudes of gribdata
+        (M) array of latitudes of ``gribdata``
     longitudes : ndarray of floats
-        (N) array of longitudes of gribdata
+        (N) array of longitudes of ``gribdata``
 
     """
 
@@ -250,13 +250,13 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
                 filelist=None):
     """
     Gets a list of HDF files and for each file, reads the data in an array.
-        The data arrays are put into a list.  Also returns the latitudes and
-        longitudes that represent the spatial information of the data grid
+    The data arrays are put into a list.  Also returns the latitudes and
+    longitudes that represent the spatial information of the data grid
 
     Parameters
     ----------
     filedates : list of strings
-        Default None. List of strings representing dates in the format
+        Default ``None``. List of strings representing dates in the format
         'YYYYMM'  Generated from ``file_dates()``.  Used to gather a
         list of files.
     startstring : string
@@ -266,18 +266,18 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
     var : string
         Default 'precipitation'.  The variable to select from the HDF file
     filelist : list of strings
-        Default None.  The list of HDF files to introspect.  If ``None``, list
-        will be assembled from ``filedates`` and ``startstring``, otherwise
-        ``filelist`` will override args.
+        Default ``None``.  The list of HDF files to introspect.  If ``None``,
+        list will be assembled from ``filedates`` and ``startstring``,
+        otherwise ``filelist`` will override args.
 
     Returns
     -------
     hdfdata : list of (M, N) ndarray of floats
-        arrays of data from all trmm (HDF) files given
+        Arrays of data from all trmm (HDF) files given
     longitudes : (M) ndarray of floats
-        array of longitudes of hdfdata
+        Array of longitudes of ``hdfdata``
     latitudes : (N) ndarray of floats
-        array of latitudes of hdfdata
+        Array of latitudes of ``hdfdata``
 
     """
     if filelist is None:
@@ -304,16 +304,17 @@ def get_hdfdata(filedates, startstring, data_dir, var='precipitation',
 
 def averager(gridded_data):
     """
-    Averages list of numpy arrays along ``axis=2``
+    Averages list of numpy arrays along the second axis
 
     Parameters
     ----------
     gridded_data : list of (M, N) ndarrays of floats
-        The data arrays to average along ``axis=2``
+        The data arrays to average along the second axis
 
     Returns
     -------
     gridded_data : (M, N) ndarray of floats
+        The average data array
 
     """
 
@@ -329,8 +330,9 @@ def windcontours(windmap, uband, vband, latitudes, longitudes, contourf=True,
 
     Parameters
     ----------
-    windmap : Basemap instance
-        Initialize a basemap first using ``MapDesign.make_basemap()``
+    windmap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class
     uband : (M, N) ndarray of floats
         Array of the U component of wind velocity
     vband : (M, N) ndarray of floats
@@ -340,15 +342,15 @@ def windcontours(windmap, uband, vband, latitudes, longitudes, contourf=True,
     longitudes : (N) ndarray of floats
         Array of longitudes of ``uband``, ``vband``
     limits : list of floats or ints
-        Default None.  Used to trim ``uband`` and ``vband`` grid,
+        Default ``None``.  Used to trim ``uband`` and ``vband`` grid,
         ``longitudes``, ``latitudes``.
         [bottom latitude, left longitude, top latitude, right longitude]
     kwargs : passed to ``mm.meteo_contouring()``, then ``Basemap.contour()`` or
-        ``Basemap.contourf()``, then the axes methods
+        ``Basemap.contourf()``, then the ``matplotlib Axes`` methods
 
     Returns
     -------
-    w : matplotlib PathCollection instance
+    w : ``matplotlib PathCollection`` instance
         Mappable for use in creating colorbars.  Colorbars may be created
         using ``make_cbar()`` or ``make_cax_cbar()``.
 
@@ -379,8 +381,9 @@ def plot_othervar(varmap, vardata, latitudes, longitudes, contourf=True,
 
     Parameters
     ----------
-    varmap : Basemap instance
-        Initialize a basemap first using ``MapDesign.make_basemap()``
+    varmap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class
     vardata : (M, N) ndarray of floats
         Data array
     latitudes : (M) ndarray of floats
@@ -391,15 +394,15 @@ def plot_othervar(varmap, vardata, latitudes, longitudes, contourf=True,
         Default 'ncar'.  ['ncar'|'trmm'].  TRMM data has a different
         orientation than NCAR data and must be transposed before plotting.
     limits : list of floats or ints
-        Default None.  Used to trim ``vardata`` grid,
+        Default ``None``.  Used to trim ``vardata`` grid,
         ``longitudes``, ``latitudes``.
         [bottom latitude, left longitude, top latitude, right longitude]
     kwargs : passed to ``mm.meteo_contouring()``, then ``Basemap.contour()`` or
-        ``Basemap.contourf()``, then the axes methods
+        ``Basemap.contourf()``, then the ``matplotlib Axes`` methods
 
     Returns
     -------
-    v : matplotlib PathCollection instance
+    v : ``matplotlib PathCollection`` instance
         Mappable for use in creating colorbars.  Colorbars may be created
         using ``make_cbar()`` or ``make_cax_cbar()``.
 
@@ -436,8 +439,9 @@ def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
 
     Parameters
     ----------
-    windmap : Basemap instance
-        Initialize a basemap first using ``MapDesign.make_basemap()``
+    windmap : ``Basemap`` instance
+        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
+        class
     uband : (M, N) ndarray of floats
         Array of the U component of wind velocity
     vband : (M, N) ndarray of floats
@@ -458,7 +462,7 @@ def windbarbs(windmap, uband, vband, latitudes, longitudes, vectors='arrows',
     scale : int
         Default 1000. Used to adjust arrow size.
     kwargs : passed to ``Basemap.quiver()`` or ``Basemap.barbs()``,
-        then the axes methods
+        then the ``matplotlib Axes`` methods
 
     Returns
     -------

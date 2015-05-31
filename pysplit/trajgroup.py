@@ -49,11 +49,11 @@ class TrajectoryGroup(object):
         filename_ls = []
         traj_ls = []
 
-        for traj in self.trajectories:
+        for traj in self:
             filename_ls.append(traj.filename)
             traj_ls.append(traj)
 
-        for traj in other.trajectories:
+        for traj in other:
             if traj.filename not in filename_ls:
                 traj_ls.append(traj)
 
@@ -123,7 +123,7 @@ class TrajectoryGroup(object):
         time = None
 
         # Get the variable at each t=0
-        for traj in self.trajectories:
+        for traj in self:
             v = getattr(traj, variable)
 
             if iterable:
@@ -141,7 +141,7 @@ class TrajectoryGroup(object):
 
         # Sort data, if a `sort_bytime` is specified
         if sort_bytime is not 'none':
-            for traj in self.trajectories:
+            for traj in self:
                 t = getattr(traj, sort_bytime)
 
                 if sort_bytime is not 'season':
@@ -196,7 +196,7 @@ class TrajectoryGroup(object):
 
         var_array = None
 
-        for traj in self.trajectories:
+        for traj in self:
             dat = getattr(traj, var)
             if var_array is None:
                 var_array = dat
@@ -243,9 +243,9 @@ class TrajectoryGroup(object):
         else:
             raise AttributeError('Please set ' + variable + ' and try again')
 
+        has_wb = hasattr(self, 'wherebin')
         # Grid the data if you haven't before or you don't want to use wherebin
-        if (not hasattr(self, 'wherebin') or not use_wherebin
-            or grid_res != self.grid_res):
+        if (not has_wb or not use_wherebin or grid_res != self.grid_res):
 
             (self.grid, self.xi, self.yi,
                 self.bins, self.wherebin) = ta.grid_data(self.all_trajlons,
@@ -342,7 +342,7 @@ class TrajectoryGroup(object):
         mlons = None
         mdata = None
 
-        for traj in self.trajectories:
+        for traj in self:
             moistarray = traj.moisture_sources
             if moisture_data is None:
                 moisture_data = moistarray
@@ -394,7 +394,7 @@ class TrajectoryGroup(object):
         """
 
         datestrs = []
-        for traj in self.trajectories:
+        for traj in self:
             datestrs.append(traj.datestring)
 
         datestrs = list(set(datestrs))
@@ -441,12 +441,12 @@ class TrajectoryGroup(object):
             reset_traj_rainstatus = True
 
         if reset_traj_rainstatus:
-            for traj in self.trajectories:
+            for traj in self:
                 traj.set_rainstatus(rainy_criterion, check_steps, rh_threshold)
 
         raincount = 0
 
-        for traj in self.trajectories:
+        for traj in self:
             if traj.rainstatus:
                 raincount += 1
 
@@ -465,7 +465,7 @@ class TrajectoryGroup(object):
 
         infile = open(os.path.join(self.directory, 'INFILE'), 'w')
 
-        for traj in self.trajectories:
+        for traj in self:
             output = str(traj.cfullpath)
             output = output.replace('\\', '/')
             infile.writelines(output + '\n')
@@ -490,7 +490,7 @@ class TrajectoryGroup(object):
 
         """
 
-        for traj in self.trajectories:
+        for traj in self:
             self.map_traj_path(cavemap, **kwargs)
 
     def map_data_scatter(self, cavemap, variable, sizevar=None, **kwargs):

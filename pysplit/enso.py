@@ -5,7 +5,7 @@ import grib_reader as gr
 
 def oni_file_reader(oni_path):
     """
-    Reads the Oceanic Nino Index from a text file into a NumPy array.
+    Reads the Oceanic Nino Index from a text file into a ``NumPy`` array.
 
     Parameters
     ----------
@@ -16,10 +16,11 @@ def oni_file_reader(oni_path):
     -------
     year_list : list of ints
         Years with complete data in ONI file
-    oni_array : 2D Numpy ndarray of floats
+    oni_array : 2D ``Numpy`` ndarray of floats
         ONI data arranged by year (row) and three month period (column)
     trimonth_list : list of strings
-        Column header for oni_array.  List of three character strings ('DJF')
+        Column header for ``oni_array``.
+        List of three character strings ('DJF')
         representing three month periods.  Length = 12
 
     Notes
@@ -83,7 +84,7 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     phase : string
         The phase of interest.  ['el nino'|'la nina'|'none']
     strength : string
-        Ignored if `phase` is 'none'.
+        Ignored if ``phase`` is 'none'.
         ['strong'|'moderate'|'weak'|'all'|'high'|'low'].  'high' and 'low'
         encompass 'strong' and 'moderate', 'moderate' and 'weak'
     oni_array : 2D Numpy ndarray of floats
@@ -91,12 +92,13 @@ def oni_file_interrogator(monthstring, phase, strength, oni_array,
     year_list : list of ints
         Years with complete data in ONI file
     trimonth_list : list of strings
-        Column header for oni_array.  List of three character strings ('DJF')
+        Column header for ``oni_array``.
+        List of three character strings ('DJF')
         representing three month periods.  Length = 12
 
     Returns
     -------
-    years_ofinterest : Numpy ndarray of ints
+    years_ofinterest : ndarray of ints
         Years where interesting period is the phase and strength(s) of interest
 
     """
@@ -161,7 +163,7 @@ def find_years(oni_path, monthstring, phase, strength,
     phase : string
         The phase of interest.  ['el nino'|'la nina'|'none']
     strength : string
-        Ignored if `phase` is 'none'.
+        Ignored if ``phase`` is 'none'.
         ['strong'|'moderate'|'weak'|'all'|'high'|'low'].  'high' and 'low'
         encompass 'strong' and 'moderate', 'moderate' and 'weak'
 
@@ -255,10 +257,10 @@ def find_years(oni_path, monthstring, phase, strength,
 def enso_winddata(month_list, years_list, level, data_dir, startstring):
     """
     Prepare for wind plot by gathering data representing the ENSO phase
-        and strength of interest
+    and strength of interest
 
-    Can find anomaly by performing file_years(), enso_winddata() twice with
-        different phase, strength
+    Can find anomaly by performing ``file_years()``, ``enso_winddata()`` twice
+    with different phase, strength
 
     Parameters
     ----------
@@ -268,7 +270,7 @@ def enso_winddata(month_list, years_list, level, data_dir, startstring):
         The years that had the interesting phase/strength during each of the
         months in list.
     level : string
-        Desired surface level of data
+        Desired surface of data
     data_dir : string
         Full or relative path to the data directory.
     startstring : string
@@ -311,10 +313,10 @@ def enso_vardata(month_list, years_list, var, level, filetype,
                  data_dir, startstring):
     """
     Prepare for plot by gathering data representing the ENSO phase
-        and strength of interest
+    and strength of interest
 
-    Can find anomaly by performing file_years(), enso_vardata() twice with
-        different phase, strength
+    Can find anomaly by performing ``file_years()``, ``enso_vardata()`` twice
+    with different phase, strength
 
     Parameters
     ----------

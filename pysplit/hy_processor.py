@@ -9,7 +9,8 @@ from clusgroup import Cluster, ClusterGroup
 
 def make_trajectorygroup(signature):
     """
-    Initialize trajectory objects from HYSPLIT back trajectory data files.
+    Initialize ``Trajectory`` instances from HYSPLIT back trajectory
+    data files.
 
     Parameters
     ----------
@@ -21,9 +22,9 @@ def make_trajectorygroup(signature):
 
     Returns
     -------
-    trajectories : trajectory group
-        Trajectory group object containing trajectory objects created from all
-        simulation files matching `signature`.
+    trajectories : ``TrajectoryGroup``
+        ``TrajectoryGroup`` object containing ``Trajectory`` instances created
+        from all simulation files matching ``signature``.
 
     """
 
@@ -73,22 +74,22 @@ def make_trajectorygroup(signature):
 
 def spawn_clusters(traj_group, cfile, endpoint_dir):
     """
-    Acquires the distribution of trajectories from `cfile` and
-        creates new cluster objects and a cluster group object based
-        on that information
+    Acquires the distribution of ``Trajectories`` from ``cfile`` and
+    creates new ``Cluster`` and ``ClusterGroup`` instances based
+    on that information
 
     Parameters
     ----------
     cfile : string
-        The filename of the CLUSLIST_# file that indicates
-        trajectory distribution among clusters
+        The filename of the 'CLUSLIST_#'' file that indicates
+        ``Trajectory`` distribution among ``Clusters``
 
     Returns
     -------
-    clustergroup : ClusterGroup object
-        The group of clusters derived from original TrajectoryGroup.
-        A ClusterGroup consists of a list of Cluster objects, which are
-        specialized TrajectoryGroup objects.
+    clustergroup : `ClusterGroup` instance
+        A group of `Clusters` derived from original ``TrajectoryGroup``
+        (``traj_group``).  A ``ClusterGroup`` consists of a list of ``Cluster``
+        objects, which are specialized ``TrajectoryGroup`` objects.
 
     """
 

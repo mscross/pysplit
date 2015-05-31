@@ -18,22 +18,23 @@ class MapDesign(object):
                  lon_labelspacing=20, latlon_fs=20, latspacing=10,
                  lonspacing=20):
         """
-        Initialize MapDesign object.
+        Initialize ``MapDesign`` instance.
 
         Parameters
         ----------
         mapcorners : list of floats
-            Used to construct the map view for conic and cyl projections.
+            Used to construct the map view for 'conic' and 'cyl' projections.
             Lower left longitude, latitude; upper right longitude, latitude.
         standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians (lon_0, lat_0, lat_1, lat_2).
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat,
-                the lowest latitude that should appear on the map.
-                lat_1 and lat_2 not required
+            For `cyl` and `conic` projections, the list creates standard
+                parallels and meridians
+                (``lon_0``, ``lat_0``, ``lat_1``, ``lat_2``).
+            For 'orthographic' projection, ``lon_0`` and ``lat_0`` only
+                are required.  Sets the view from above the earth.
+            For polar projections, ``lon_0`` indicates the longitude that
+                will be oriented N-S. ``lat_0`` is replaced by
+                the ``boundinglat``, the lowest latitude that should appear
+                on the map.  ``lat_1`` and ``lat_2`` not required
         projection : string
             Indicates which projection to use.  Default 'cyl'
                 'cyl' : Equidistant cylindrical
@@ -52,7 +53,7 @@ class MapDesign(object):
             Default is [].  (File, color, linewidth)
             r'C:\programming\shapefiles\New_Shapefile'
         maplabels : tuple of strings
-            Default None.
+            Default ``None``.
             (Label group, label file full/relative path, optional: zorder).
             Determines what label groups are applied, if any:
             Label group choices:  ['all_1'|'all_2'|important'|
@@ -132,7 +133,7 @@ class MapDesign(object):
     def view_prefs(self):
         """
         Create a table of the current map design elements (i.e. attributes)
-            and their values.
+        and their values.
 
         """
 
@@ -196,7 +197,15 @@ class MapDesign(object):
     def edit_latlonspacing(self, lonspacing=None, latspacing=None):
         """
         Change the spacing between the lines of latitude, longitude drawn on
-            the basemap.
+        the map.
+
+        Parameters
+        ----------
+        lonspacing : int or float
+            Default 20.  Degrees between plotted lines of longitude.
+        latspacing : int or float
+            Default 10.  Degrees between plotted lines of latitude.
+
         """
 
         if lonspacing is not None:
@@ -208,16 +217,16 @@ class MapDesign(object):
     def edit_resolution(self, resolution=None, area_threshold=None):
         """
         Adjust the map resolution and area threshold for plotting.
-            Attributes will only be adjusted if not None.
+        Attributes will only be adjusted if not ``None``.
 
         Parameters
         ----------
-        resolution : char
+        resolution : string
             Default 'c'.  ['c'|'l'|'i'|'h'|'f'].
             Crude, low, intermediate, high, full. The relative resolution of
             map boundaries.  Drops off by about 80 percent between datasets.
         area_threshold : int or string
-            Default None.  ['auto'|1|10|100|1000|10000]
+            Default ``None``.  ['auto'|1|10|100|1000|10000]
             The minimum surface area a feature must have to
             be plotted on the map.  If 'auto', an area threshold
             will be selected based on the current map resolution.
@@ -235,13 +244,14 @@ class MapDesign(object):
 
     def edit_mapcorners(self, mapcorners):
         """
-        Update the mapcorners.
+        Update the map extent.
 
         Parameters
         ----------
         mapcorners : list of floats
-            Used to construct the map view for conic and cyl projections.
+            Used to construct the map view for 'conic' and 'cyl' projections.
             Lower left longitude, latitude; upper right longitude, latitude.
+
         """
 
         self.mapcorners = mapcorners
@@ -253,14 +263,15 @@ class MapDesign(object):
         Parameters
         ----------
         standard_pm : list of floats
-            For cyl and conic projections, the list creates standard parallels
-                and meridians [lon_0, lat_0, lat_1, lat_2].
-            For orthographic projection, lon_0 and lat_0 only are required.
-                Sets the view from above the earth.
-            For polar projections, lon_0 indicates the longitude that will be
-                oriented N-S. lat_0 is replaced by the boundinglat,
-                the lowest latitude that should appear on the map.
-                lat_1 and lat_2 not required
+            For `cyl` and `conic` projections, the list creates standard
+                parallels and meridians
+                (``lon_0``, ``lat_0``, ``lat_1``, ``lat_2``).
+            For 'orthographic' projection, ``lon_0`` and ``lat_0`` only
+                are required.  Sets the view from above the earth.
+            For polar projections, ``lon_0`` indicates the longitude that
+                will be oriented N-S. ``lat_0`` is replaced by
+                the ``boundinglat``, the lowest latitude that should appear
+                on the map.  ``lat_1`` and ``lat_2`` not required
 
         """
 
@@ -268,7 +279,12 @@ class MapDesign(object):
 
     def set_mapcolor(self, mapcolor):
         """
-        Change the mapcolor.
+        Change the map grayscheme.
+
+        Parameters
+        ----------
+        mapcolor : string
+            Grayscheme option.  ['light'|'medium'|'dark']
 
         """
 
@@ -287,13 +303,13 @@ class MapDesign(object):
         Parameters
         ----------
         shp : tuple of list of tuples of strings
-            Default None.  Tuples  are (File, color, linewidth)
+            Default ``None``.  Tuples  are (File, color, linewidth)
             r'C:\programming\shapefiles\New_Shapefile'.
             Used to extend or overwrite current list of shapefiles.
         delete_shp : int or list of ints
-            Default None.  The indices of shapefiles to delete.
+            Default ``None``.  The indices of shapefiles to delete.
         overwrite_shps : Boolean
-            Default False.  Indicates whether to extend the current
+            Default ``False``.  Indicates whether to extend the current
             shapefiles attributes with new shapes or to overwrite.
 
         """
@@ -361,14 +377,14 @@ class MapDesign(object):
     def edit_labels(self, labelpath=None, labelgroup=None, label_zorder=None):
         """
         Change which labels are applied to the map.  Attributes will change
-            only if not None.
+        only if not None.
 
         Parameters
         ----------
         labelpath : string
-            Default None.  Full or relative path to labelfile location
+            Default ``None``.  Full or relative path to labelfile location
         labelgroup : string
-            Default None.  ['all_1'|'all_2'|important'|'justcave'|'cave']
+            Default ``None``.  ['all_1'|'all_2'|important'|'justcave'|'cave']
             The set of labels to apply.  'all_1' has caves instead of cities,
             'all_2' has cities instead of caves.
 
@@ -410,7 +426,7 @@ class MapDesign(object):
     def make_basemap(self, ax=None, figsize=(15, 15)):
         """
         Takes the MapDesign attributes plus a figure size and creates a map
-            on which data can be plotted.
+        on which data can be plotted.
 
         Parameters
         ----------
@@ -419,13 +435,13 @@ class MapDesign(object):
             basemap will be created on given axis.
         figsize : tuple of ints
             Default (15, 15). The size of the figure in inches.  Only
-            used if ax is None.
+            used if ax is ``None``.
 
         Returns
         -------
-        cavemap : Basemap instance
+        cavemap : ``Basemap`` instance
             A map ready for data plotting.  Can access axis and figure
-            via cavemap.ax and cavemap.ax.get_figure(), respectively.
+            via ``cavemap.ax`` and ``cavemap.ax.get_figure()``, respectively.
 
         """
 

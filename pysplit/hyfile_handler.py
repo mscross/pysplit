@@ -13,13 +13,13 @@ def hysplit_filelister(signature):
     signature : string
         Signature shared by group of HYSPLIT simulation files from a single or
         multiple model runs (if multiple, must contain same output variables).
-        This is a Bash-style signature, not a real expression.  The `*` char is
+        This is a Bash-style signature, not a real expression.  The '*' char is
         a wildcard.  Can include an absolute or relative path, or no path.
 
     Returns
     -------
     matching_files : list of strings
-        List of files matching `signature`
+        List of files matching ``signature``
 
     Notes
     -----
@@ -53,7 +53,7 @@ def hysplit_filelister(signature):
 def load_hysplitfile(filename):
     """
     Load data from each trajectory (a single hysplit file) into a
-        NumPy ndarray.
+    ``NumPy ndarray``.
 
     Parameters
     ----------
@@ -67,11 +67,11 @@ def load_hysplitfile(filename):
         represents one trajectory; typically but not always there is one
         trajectory per file
     header : list of N strings
-        The column headers for `hydata` arrays.  Used to parse hydata into
-        different trajectory attributes
+        The column headers for ``hydata`` arrays.  Used to parse ``hydata``
+        into different trajectory attributes
     filelist : list of identical strings
         len(filelist)= len(hydata)
-        The filename.  Eventually becomes attribute in trajectory object
+        The filename.  Eventually becomes attribute in ``Trajectory`` object
 
     """
 
@@ -148,15 +148,10 @@ def trajsplit(hydata):
         Array with L rows and N variables, introspected from a hysplit
         data file.
 
-    Keyword Arguments
-    -----------------
-
     Returns
     -------
     split_hydata : list of (M, N) ndarrays of floats
-        `hydata` split into individual trajectories
-    OR
-    [hydata] : `hydata` in list
+        ``hydata`` split into individual trajectories
 
     """
 
@@ -172,45 +167,32 @@ def trajsplit(hydata):
         # Split `hydata` into a list of arrays of three equal sizes
         split_hydata = np.split(sorted_hydata, unique_traj.size)
 
-        return split_hydata
-
     else:
+        split_hydata = [hydata]
 
-        return [hydata]
+    return split_hydata
 
 
 def load_clusterfile(clusterfilename):
     """
-    Load a CLUSLIST_# file into an array
+    Load a 'CLUSLIST_#' file into an array
 
-    The CLUSLIST_# file contains the information on how trajectories
-        within a trajectory group are distributed among clusters
+    The 'CLUSLIST_#' file contains the information on how trajectories
+    within a trajectory group are distributed among clusters.  Called by
+    ``hy_processor.spawn_clusters()``
 
     Parameters
     ----------
     clusterfilename : string
         Path to CLUSLIST_# file
 
-    Keyword Arguments
-    -----------------
-
     Returns
     -------
     traj_inds : list of lists of ints
-        Lists of lists of trajectory numbers belonging to each cluster
+        Lists of lists of trajectory indices.
     totalclusters : int
         Number of unique clusters.  Corresponds to number of arrays in
-        `clusterarray_list`, number of sublists in `traj_inds`.
-
-    Notes
-    -----
-    `load_clusterfile` returns a list of trajectory indices that may be
-        used to pull trajectories out of a TrajectoryGroup's list to create
-        Cluster objects and a ClusterGroup.
-    All trajectories in a TrajectoryGroup are used in the clustering
-        process, so if a subset of the original TrajectoryGroup were desired,
-        a new TrajectoryGroup should be created with only that subset, and
-        the cluster process should be performed on the new TrajectoryGroup.
+        ``clusterarray_list``, number of sublists in ``traj_inds``.
 
     """
 
