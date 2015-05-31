@@ -732,7 +732,7 @@ class Trajectory:
 
         Parameters
         ----------
-        cavemap : Basemap instance
+        cavemap : ``Basemap`` instance
             Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
             class.
         color : string, tuple
