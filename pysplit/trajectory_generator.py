@@ -5,9 +5,8 @@ import itertools
 
 
 def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
-                          years, years_isrange, months, months_isrange, hours,
-                          altitudes, coordinates, run, isbackward,
-                          meteo_type='gdas1', get_forward=True,
+                          years, months, hours, altitudes, coordinates, run,
+                          isbackward, meteo_type='gdas1', get_forward=True,
                           get_clippedtraj=True):
     """
     Run sequence of HYSPLIT simulations over a given time and levels.
@@ -40,19 +39,9 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
     meteo_path : string
         Full or relative path to the location of the meteorology files
     years : list of ints
-        The year(s) to run simulations.  Can be a list of specific years
-        (set ``years_isrange`` = ``False``) or the start and end of an
-        inclusive range (set ``years_isrange`` = ``True``)
-    years_isrange : Boolean
-        Indicates if ``years`` is a list to be used as is or is a range to
-        be generated.
+        The year(s) to run simulations.
     months : list of ints
-        The month(s) to run simulations.  Can be a list of specific months
-        (set ``months_isrange`` = ``False``) or the start and end of an
-        inclusive range (set `months_isrange` = ``True``)
-    months_isrange : Boolean
-        Indicates if ``months`` is a list to be used as is or a range to
-        be generated.
+        The month(s) to run simulations.
     hours : list of ints
         Parcel launching times in UTC.
     altitudes : list of ints
@@ -95,12 +84,6 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         if run < 0:
             run = run * -1
         get_forward = False
-
-    if years_isrange:
-        years = range(years[0], years[-1] + 1)
-
-    if months_isrange:
-        months = range(months[0], months[-1] + 1)
 
     season_month_days = {12: ['winter', 'dec', 31],
                          1 : ['winter', 'jan', 31],

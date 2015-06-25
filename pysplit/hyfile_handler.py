@@ -93,7 +93,7 @@ def load_hysplitfile(filename):
               'Time step (hr)',
               'Latitude',
               'Longitude',
-              'Altitude (magl)']
+              'Altitude']
 
     # Acquire rest of header
     new_header = line.split()[1:]

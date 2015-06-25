@@ -466,7 +466,11 @@ class TrajectoryGroup(object):
         infile = open(os.path.join(self.directory, 'INFILE'), 'w')
 
         for traj in self:
-            output = str(traj.cfullpath)
+            try:
+                output = str(traj.cfullpath)
+            except:
+                output = str(traj.fullpath)
+
             output = output.replace('\\', '/')
             infile.writelines(output + '\n')
             infile.flush()
@@ -563,7 +567,7 @@ class TrajectoryGroup(object):
             Default ``None``.  The maximum value for color mapping.
             If ``None``, ``vmax`` will be the maximum value of the data.
         **kwargs
-            passed to ``traj_scatter()``, then c``avemap.scatter()``,
+            passed to ``traj_scatter()``, then ``cavemap.scatter()``,
             ``Axes.scatter()``
 
         Returns

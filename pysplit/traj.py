@@ -12,7 +12,7 @@ class Trajectory:
 
     """
 
-    def __init__(self, trajdata, trajheader, path):
+    def __init__(self, trajdata, trajheader, path, alt_in_magl=True):
         """
         Initialize (back) trajectory object.
 
@@ -48,10 +48,20 @@ class Trajectory:
         self.latitude = self.data[:, self.header.index('Latitude')]
         self.longitude = self.data[:, self.header.index('Longitude')]
         self.pressure = self.data[:, self.header.index('PRESSURE')]
-        self.altitude = self.data[:, self.header.index('Altitude (magl)')]
-        self.temperature = self.data[:, self.header.index('AIR_TEMP')]
-        self.rainfall = self.data[:, self.header.index('RAINFALL')]
-        self.mixdepth = self.data[:, self.header.index('MIXDEPTH')]
+        self.altitude = self.data[:, self.header.index('Altitude')]
+        self.magl = alt_in_magl
+
+        possible_attr = ['AIR_TEMP', 'RAINFALL', 'MIXDEPTH', 'RELHUMID',
+                         'H2OMIXRA', 'SPCHUMID', 'SUN_FLUX', 'TERR_MSL',
+                         'THETA']
+        poss_attr_names = ['temperature, rainfall, mixdepth',
+                           'relative_humidity', 'mixing_ratio',
+                           'specific_humidity', 'solar_radiation',
+                           'terrain_altitude', 'potential_temperature']
+
+        for pa, pa_name in zip(possible_attr, poss_attr_names):
+            if pa in self.header:
+                setattr(self, pa_name, self.data[:, self.header.index(pa)])
 
         self.year = self.data[:, self.header.index('Year')]
         self.month = self.data[:, self.header.index('Month')]
@@ -168,77 +178,70 @@ class Trajectory:
         self.meanvector, self.bearings = ta.tracemean_vector(self.latitude,
                                                              self.longitude)
 
+    def reset_original_attr(self, attr_name):
+        """
+        Reset an original attribute to the original data.
+
+        """
+        possible_attr = ['AIR_TEMP', 'RAINFALL', 'MIXDEPTH', 'RELHUMID',
+                         'H2OMIXRA', 'SPCHUMID', 'SUN_FLUX', 'TERR_MSL',
+                         'THETA']
+        poss_attr_names = ['temperature, rainfall, mixdepth',
+                           'relative_humidity', 'mixing_ratio',
+                           'specific_humidity', 'solar_radiation',
+                           'terrain_altitude', 'potential_temperature']
+
+        if hasattr(self, attr_name) and attr_name in poss_attr_names:
+            header_name = possible_attr[poss_attr_names.index(attr_name)]
+            setattr(self, attr_name,
+                    self.data[:, self.header.index(header_name)])
+
     def set_relativehumidity(self):
         """
-        Acquire relative humidity data for each timestep
-        from ``self.data`` or by calculating relative humidity
+        Calculate relative humidity.  Requires ``temperature`` and
+        ``mixing_ratio`` or ``specific_humidity``
 
         """
 
-        if 'RELHUMID' in self.header:
-            self.relative_humidity = self.data[:,
-                                               self.header.index('RELHUMID')]
-        else:
-            if hasattr(self, 'mixing_ratio'):
-                self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
-                                                         self.temperature,
-                                                         self.pressure)
-            else:
-                self.set_mixingratio()
-                self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
-                                                         self.temperature,
-                                                         self.pressure)
+        if not hasattr(self, 'relative_humidity'):
+            self.set_mixingratio()
+            self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
+                                                     self.temperature,
+                                                     self.pressure)
 
     def set_mixingratio(self):
         """
-        Acquire mixing ratio data for each timestep
-        from ``self.data`` or by calculating mixing ratio
+        Calculate mixing ratio.  Requires ``specific_humidity`` or
+        ``temperature`` and ``relative_humidity``.
 
         """
 
-        if 'H2OMIXRA' in self.header:
-            self.mixing_ratio = self.data[:, self.header.index('H2OMIXRA')]
-        else:
+        if not hasattr(self, 'mixing_ratio'):
             if hasattr(self, 'specific_humidity'):
-                self.mixing_ratio = ta.convert_q2w(self.specific_humidity)
-            elif 'SPCHUMID' in self.header:
-                self.set_specifichumidity()
                 self.mixing_ratio = ta.convert_q2w(self.specific_humidity)
 
             elif hasattr(self, 'relative_humidity'):
                 self.mixing_ratio = ta.convert_rh2w(self.relative_humidity,
                                                     self.temperature,
                                                     self.pressure)
-            elif 'RELHUMID' in self.header:
-                self.set_relativehumidity()
-
             else:
                 raise AttributeError('Not enough information to ' +
                                      'calculate mixing ratio!')
 
     def set_specifichumidity(self):
         """
-        Acquire specific humidity data for each timestep
-        from ``self.data`` or by calculating specific humidity
+        Calculate specific humidity.  Requires ``mixing_ratio`` or
+        the calculation of ``mixing_ratio`` from ``temperature`` and
+        ``relative_humidity``.
 
         """
 
-        if 'SPCHUMID' in self.header:
-            self.specific_humidity = self.data[:,
-                                               self.header.index('SPCHUMID')]
-        else:
+        if not hasattr(self, 'specific_humidity'):
             if hasattr(self, 'mixing_ratio'):
                 self.specific_humidity = ta.convert_w2q(self.mixing_ratio)
-            elif ('H2OMIXRA' in self.header or
-                  hasattr(self, 'relative_humidity')):
+            elif hasattr(self, 'relative_humidity'):
                 self.set_mixingratio()
                 self.specific_humidity = ta.convert_w2q(self.mixing_ratio)
-
-            elif 'RELHUMID' in self.header:
-                self.set_relativehumidity()
-                self.set_mixingratio()
-                self.ta.convert_w2q(self.mixing_ratio)
-
             else:
                 raise AttributeError('Not enough information to ' +
                                      'calculate specific humidity!')
@@ -254,7 +257,7 @@ class Trajectory:
 
         self.total_distance = ta.sum_distance(self.distance)
 
-    def dq_dw_drh(self):
+    def dq_dw_drh(self, qtype):
         """
         Calculate the change in moisture between each timestep
 
@@ -262,41 +265,30 @@ class Trajectory:
         and ``self.relative_humidity``.
 
         """
+        humidity_dict = {'specific_humidity' : 'dq',
+                         'relative_humidity' : 'drh',
+                         'mixing_ratio' : 'dw'}
 
-        if not hasattr(self, 'specific_humidity'):
-            self.set_specifichumidity()
-        if not hasattr(self, 'relative_humidity'):
-            self.set_relativehumidity()
-        if not hasattr(self, 'mixing_ratio'):
-            self.set_mixingratio()
+        try:
+            humidity = getattr(self, qtype)
+        except:
+            raise AttributeError('Please calculate ' + qtype +
+                                 ' and try again.')
 
-        dq_list = []
-        dw_list = []
-        drh_list = []
+        dhumid_list = []
 
         for i in range(0, self.sim_length):
-            dq = self.specific_humidity[i] - self.specific_humidity[i + 1]
-            dw = self.mixing_ratio[i] - self.mixing_ratio[i + 1]
-            drh = self.relative_humidity[i] = self.relative_humidity[i + 1]
+            dhumid = humidity[i] - humidity[i + 1]
+            dhumid_list.append(dhumid)
 
-            dq_list.append(dq)
-            dw_list.append(dw)
-            drh_list.append(drh)
+        dhumid_arr = np.asarray(dhumid_list).astype(np.float64)
+        dhumid_arr = np.pad(dhumid_arr, (0, 1), 'constant',
+                            constant_values=(-999.0, -999.0))
+        dhumid_arr = np.ma.masked_less_equal(dhumid_arr, -999.0)
 
-        self.dq = np.asarray(dq_list).astype(np.float64)
-        self.dw = np.asarray(dw_list).astype(np.float64)
-        self.drh = np.asarray(drh_list).astype(np.float64)
+        attr_name = humidity_dict[qtype]
 
-        self.dq = np.pad(self.dq, (0, 1), 'constant',
-                         constant_values=(-999.0, -999.0))
-        self.dw = np.pad(self.dw, (0, 1), 'constant',
-                         constant_values=(-999.0, -999.0))
-        self.drh = np.pad(self.drh, (0, 1), 'constant',
-                          constant_values=(-999.0, -999.0))
-
-        self.dq = np.ma.masked_less_equal(self.dq, -999.0)
-        self.dw = np.ma.masked_less_equal(self.dw, -999.0)
-        self.drh = np.ma.masked_less_equal(self.drh, -999.0)
+        setattr(self, attr_name, dhumid_arr)
 
     def calculate_moistureflux(self, qtype='specific_humidity'):
         """
@@ -311,22 +303,17 @@ class Trajectory:
 
         """
 
-        if not hasattr(self, qtype):
-            if qtype == 'specific_humidity':
-                self.set_specifichumidity()
-            elif qtype == 'mixing_ratio' :
-                self.set_mixingratio()
-
         if not hasattr(self, 'Distance'):
             self.set_distance()
 
-        if qtype == 'specific_humidity':
-            moisture = self.specific_humidity
-        elif qtype == 'mixing_ratio':
-            moisture = self.mixing_ratio
+        try:
+            humidity = getattr(self, qtype)
+        except:
+            raise AttributeError('Please calculate ' + qtype +
+                                 ' and try again.')
 
         speed = self.distance / 3600
-        mf = speed[1:] * moisture[:-1]
+        mf = speed[1:] * humidity[:-1]
 
         mf = np.pad(mf, (0, 1), 'constant', constant_values=(-999.0, -999.0))
         self.moistureflux = np.ma.masked_less_equal(mf, -999.0)
@@ -376,7 +363,7 @@ class Trajectory:
         pressure_threhold : float
             Default 900.0. The pressure level defined as equivalent
             to the planetary boundary layer (parcel is considered in
-            communication with sample )
+            communication with sample)
         mixdepth_factor : int or float
             Default 1.  The value by which to adjust the mixed layer depth.
             Use if mixed layer depth seems to be under- or over-estimated
@@ -638,7 +625,7 @@ class Trajectory:
             self.flatitude = self.fdata[:, self.header.index('Latitude')]
             self.flongitude = self.fdata[:, self.header.index('Longitude')]
             self.faltitude = self.fdata[:,
-                                        self.header.index('Altitude (magl)')]
+                                        self.header.index('Altitude')]
             self.fdistance = ta.distance_overearth(self.flatitude,
                                                    self.flongitude)
             self.ftotal_dist = ta.sum_distance(self.fdistance)
