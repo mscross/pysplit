@@ -6,7 +6,7 @@ import itertools
 
 def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                           years, months, hours, altitudes, coordinates, run,
-                          isbackward, meteo_type='gdas1', get_forward=True,
+                          meteo_type='gdas1', get_forward=True,
                           get_clippedtraj=True):
     """
     Run sequence of HYSPLIT simulations over a given time and levels.
@@ -50,17 +50,14 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         The parcel starting location in decimal degrees.
         Format is (latitude, longitude)
     run : int
-        Length (hours) of simulation.  If necessary, sign is corrected to
-        match ``isbackward``.
-    isbackward : Boolean
-        Indicates back trajectory calculation
+        Length (hours) of simulation.  Back trajectories should have a
+        negative run.
     meteo_type : string
         Default 'gdas1'.  The type of meteorology to use.
     get_forward : Boolean
-        Default ``True``.  [True|False].  If ``True`` and ``isbackward`` is
-        also ``True``, then a forward trajectory will be calculated from
-        earliest point of each back trajectory and stored in a subfolder
-        in ``output_dir``
+        Default ``True``.  [True|False].  If ``True`` then a trajectory
+        in the opposite direction will be calculated from last point
+        in each trajectory file and stored in a subfolder in ``output_dir``
     get_clippedtraj : Boolean
         Default ``True``.  [True|False].  Outputs trajectory files with
         single-line timesteps containing only path information.  Provides
@@ -75,15 +72,6 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
     # Hardcode "CONTROL" as this is required
     filename = "CONTROL"
     orig_dir = os.getcwd()
-
-    # Simulation direction check
-    if isbackward:
-        if run > 0:
-            run = run * -1
-    else:
-        if run < 0:
-            run = run * -1
-        get_forward = False
 
     season_month_days = {12: ['winter', 'dec', 31],
                          1 : ['winter', 'jan', 31],
@@ -179,7 +167,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                                 "{0:02}{1:02}{2:02}".format(mon, day, hour))
 
                     # Generate a forward trajectory, if specified
-                    if isbackward and get_forward:
+                    if get_forward:
                         forwards_and_backwards(hysplit_working, basename,
                                                filename, output_dir, new_name,
                                                meteofiles)
@@ -202,8 +190,8 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
 def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
                            output_dir, new_name, meteofiles):
     """
-    Takes a back trajectory and calculates a forward trajectory from its
-    location at the earliest point in time.
+    Takes a trajectory and calculates another trajectory from its
+    location at the earliest point in time in the opposite direction.
 
     Parameters
     ----------

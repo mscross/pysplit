@@ -417,8 +417,14 @@ class Trajectory:
                                     + 1]:
             initial_timept.append(getattr(self, item)[-1])
 
-        initial_timept.extend([self.pressure[-1], self.mixdepth[-1],
-                               self.altitude[-1], getattr(self, q_type)[-1]])
+        try:
+            initial_timept.extend([self.pressure[-1], self.mixdepth[-1],
+                                   self.altitude[-1],
+                                   getattr(self, q_type)[-1]])
+        except:
+            initial_timept.extend([self.pressure[-1], -999.0,
+                                   self.altitude[-1],
+                                   getattr(self, q_type)[-1]])
 
         # Initialize dqi, dq, e, f, dtot, etot, ftot
         initial_timept.extend([-999, -999, -999, -999, 1.0, 0.0, 0.0])
@@ -466,8 +472,13 @@ class Trajectory:
 
             # Get the average pressure, mixdepth, and altitude over the window
             pressure = np.mean(self.pressure[ts:ts + uptake_window])
-            mixdepth = (np.mean(self.mixdepth[ts:ts + uptake_window])
-                        * mixdepth_factor)
+            try:
+                mixdepth = (np.mean(self.mixdepth[ts:ts + uptake_window])
+                            * mixdepth_factor)
+            except:
+                mixdepth = -999.0
+                vertical_criterion = 'prs'
+
             altitude = np.mean(self.altitude[ts:ts + uptake_window])
 
             # Find q and initial dq from previous q
