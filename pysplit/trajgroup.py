@@ -495,7 +495,7 @@ class TrajectoryGroup(object):
         """
 
         for traj in self:
-            self.map_traj_path(cavemap, **kwargs)
+            traj.map_traj_path(cavemap, **kwargs)
 
     def map_data_scatter(self, cavemap, variable, sizevar=None, **kwargs):
         """

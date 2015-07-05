@@ -54,7 +54,7 @@ class Trajectory:
         possible_attr = ['AIR_TEMP', 'RAINFALL', 'MIXDEPTH', 'RELHUMID',
                          'H2OMIXRA', 'SPCHUMID', 'SUN_FLUX', 'TERR_MSL',
                          'THETA']
-        poss_attr_names = ['temperature, rainfall, mixdepth',
+        poss_attr_names = ['temperature', 'rainfall', 'mixdepth',
                            'relative_humidity', 'mixing_ratio',
                            'specific_humidity', 'solar_radiation',
                            'terrain_altitude', 'potential_temperature']
