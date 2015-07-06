@@ -6,7 +6,7 @@ import itertools
 
 def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                           years, months, hours, altitudes, coordinates, run,
-                          meteo_type='gdas1', get_forward=True,
+                          meteo_type='gdas1', get_reverse=True,
                           get_clippedtraj=True):
     """
     Run sequence of HYSPLIT simulations over a given time and levels.
@@ -54,7 +54,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         negative run.
     meteo_type : string
         Default 'gdas1'.  The type of meteorology to use.
-    get_forward : Boolean
+    get_reverse : Boolean
         Default ``True``.  [True|False].  If ``True`` then a trajectory
         in the opposite direction will be calculated from last point
         in each trajectory file and stored in a subfolder in ``output_dir``
@@ -167,7 +167,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                                 "{0:02}{1:02}{2:02}".format(mon, day, hour))
 
                     # Generate a forward trajectory, if specified
-                    if get_forward:
+                    if get_reverse:
                         forwards_and_backwards(hysplit_working, basename,
                                                filename, output_dir, new_name,
                                                meteofiles)
@@ -187,7 +187,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
     return None
 
 
-def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
+def forwards_and_backwards(hysplit_working, original_fname, control_fname,
                            output_dir, new_name, meteofiles):
     """
     Takes a trajectory and calculates another trajectory from its
@@ -197,14 +197,14 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     ----------
     hysplit_working : string
         Full or relative path to HYSPLIT working directory
-    backtraj_fname : string
-        Basename of current back trajectory file
+    original_fname : string
+        Basename of current trajectory file
     control_fname : string
         Name of the control file, which should be 'CONTROL'
     output_dir : string
-        Full or relative path to back trajectory output directory
+        Full or relative path to original trajectory output directory
     new_name : string
-        Back trajectory basename plus month, altitude, season, YYMMDDHH
+        Original trajectory basename plus month, altitude, season, YYMMDDHH
     meteofiles : list of strings
         List of full paths to meteorology files used to construct
         back trajectory
@@ -212,14 +212,14 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     Returns
     -------
     Nothing, HYSPLIT is called and results are stored in
-    ``output_dir/forwardtraj``
+    ``output_dir/reversetraj``
 
     """
 
     # Initialize
     meteofile_count = len(meteofiles)
     last_step_data = []
-    forward_fname = new_name + 'FORWARD'
+    reverse_fname = new_name + 'REVERSE'
 
     trajheader = ['Year',
                   'Month',
@@ -231,10 +231,10 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
                   'Altitude (magl)']
 
     # Open the file
-    backtraj = open(backtraj_fname, 'r')
+    originaltraj = open(original_fname, 'r')
     # Get through meteofile info at the head of the file
     while True:
-        line = backtraj.readline()
+        line = originaltraj.readline()
         if 'PRESSURE' in line:
             break
 
@@ -246,24 +246,24 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     # Multiline data not supported for some applications (clustering)
     if columns > 20:
         multiline = True
-        line1 = backtraj.readline()
-        line2 = backtraj.readline()
+        line1 = originaltraj.readline()
+        line2 = originaltraj.readline()
         linelength = len(line1) + len(line2)
     else:
         multiline = False
-        line = backtraj.readline()
+        line = originaltraj.readline()
         linelength = len(line)
 
     lastline_start = (linelength + 1) * -1
 
     # Skip to the last line, read it in
-    backtraj.seek(lastline_start, 2)
-    last_step = backtraj.readline().split()
+    originaltraj.seek(lastline_start, 2)
+    last_step = originaltraj.readline().split()
     if multiline:
-        last_step.extend(backtraj.readline().split())
+        last_step.extend(originaltraj.readline().split())
 
     # Close file
-    backtraj.close()
+    originaltraj.close()
 
     # Get forward trajectory start information
     last_step_data.extend(last_step[2:6])
@@ -282,7 +282,7 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     if alt >= 10000:
         alt = 9999
 
-    output_fdir = os.path.join(output_dir, 'forwardtraj')
+    output_fdir = os.path.join(output_dir, 'reversetraj')
 
     # Make forward trajectory repository if it doesn't exist
     if not os.path.isdir(output_fdir):
@@ -290,8 +290,8 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
 
     # Remove (if present) any existing CONTROL or temp files
     try_to_remove(os.path.join(hysplit_working, control_fname))
-    try_to_remove(os.path.join(hysplit_working, forward_fname))
-    try_to_remove(os.path.join(output_fdir, forward_fname))
+    try_to_remove(os.path.join(hysplit_working, reverse_fname))
+    try_to_remove(os.path.join(output_fdir, reverse_fname))
 
     # Make a new control file and a new temp file
     control = open(os.path.join(hysplit_working, control_fname), 'w')
@@ -312,7 +312,7 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
         ctrltxt.append("{0}\n".format(fname))
 
     ctrltxt.append("./\n")
-    ctrltxt.append("{0}\n".format(forward_fname))
+    ctrltxt.append("{0}\n".format(reverse_fname))
 
     # Write and flush to disk
     control.writelines(ctrltxt)
@@ -322,8 +322,8 @@ def forwards_and_backwards(hysplit_working, backtraj_fname, control_fname,
     call("C:\\hysplit4\\exec\\hyts_std")
 
     # Move the trajectory file to the desired output directory
-    os.rename(os.path.join(hysplit_working, forward_fname),
-              os.path.join(output_fdir, forward_fname))
+    os.rename(os.path.join(hysplit_working, reverse_fname),
+              os.path.join(output_fdir, reverse_fname))
 
     return None
 

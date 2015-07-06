@@ -602,44 +602,44 @@ class Trajectory:
         self.masked_sources = masked_moistarr
         self.moisture_header = moisture_header
 
-    def load_forwardtraj(self, forward_dir):
+    def load_reversetraj(self, reverse_dir):
         """
-        Acquires data from forward trajectory launched from earliest timepoint.
+        Acquires data from reverse trajectory.
 
         Parameters
         ----------
-        forward_dir : string
-            Location of forward trajectory (do not include filename)
+        reverse_dir : string
+            Location of reverse trajectory
 
         """
 
         # Check for directory
-        if not os.path.isdir(forward_dir):
-            raise OSError('Forward trajectory directory does not exist!')
+        if not os.path.isdir(reverse_dir):
+            raise OSError('Reverse trajectory directory does not exist!')
 
         # Construct filename of forward trajectory
-        self.forwardpath = os.path.join(forward_dir, self.filename + 'FORWARD')
+        self.reversepath = os.path.join(reverse_dir, self.filename + 'REVERSE')
 
         # Check that this trajectory has a corresponding forward trajectory
-        if not os.path.exists(self.forwardpath):
-            raise OSError('File not found: ' + self.forwardpath)
+        if not os.path.exists(self.reversepath):
+            raise OSError('File not found: ' + self.reversepath)
 
-        fdatlist, _, _ = hh.load_hysplitfile(self.forwardpath)
+        rdatlist, _, _ = hh.load_hysplitfile(self.reversepath)
 
         # Check that there is only one trajectory in the file
-        if len(fdatlist) > 1:
+        if len(rdatlist) > 1:
             print 'Multiple-trajectory files not supported!'
-            self.forwardpath = None
-            self.fdata = None
+            self.reversepath = None
+            self.rdata = None
         else:
-            self.fdata = fdatlist[0]
-            self.flatitude = self.fdata[:, self.header.index('Latitude')]
-            self.flongitude = self.fdata[:, self.header.index('Longitude')]
-            self.faltitude = self.fdata[:,
+            self.rdata = rdatlist[0]
+            self.rlatitude = self.rdata[:, self.header.index('Latitude')]
+            self.rlongitude = self.rdata[:, self.header.index('Longitude')]
+            self.raltitude = self.rdata[:,
                                         self.header.index('Altitude')]
-            self.fdistance = ta.distance_overearth(self.flatitude,
-                                                   self.flongitude)
-            self.ftotal_dist = ta.sum_distance(self.fdistance)
+            self.rdistance = ta.distance_overearth(self.rlatitude,
+                                                   self.rlongitude)
+            self.rtotal_dist = ta.sum_distance(self.rdistance)
 
     def integration_error(self):
         """
@@ -656,21 +656,21 @@ class Trajectory:
         """
 
         # Check for necessary data
-        if not hasattr(self, 'ftotal_dist'):
-            raise AttributeError('Forward trajectory data missing!')
+        if not hasattr(self, 'rtotal_dist'):
+            raise AttributeError('Reverse trajectory data missing!')
         if not hasattr(self, 'total_distance'):
             self.set_distance()
 
         # Acquire total horizontal and vertical distances
-        f_distance = self.ftotal_dist[-1]
+        r_distance = self.rtotal_dist[-1]
         b_distance = self.total_distance[-1]
-        falt_range = np.max(self.faltitude) - np.min(self.faltitude)
+        falt_range = np.max(self.raltitude) - np.min(self.raltitude)
         balt_range = np.max(self.altitude) - np.min(self.altitude)
 
         # Gather coordinates of back trajectory launch location
         # according to both back and forward trajectories.
-        site_lats = [self.latitude[0], self.flatitude[-1]]
-        site_lons = [self.longitude[0], self.flongitude[-1]]
+        site_lats = [self.latitude[0], self.rlatitude[-1]]
+        site_lons = [self.longitude[0], self.rlongitude[-1]]
 
         site_lats = np.asarray(site_lats).astype(np.float64)
         site_lons = np.asarray(site_lons).astype(np.float64)
@@ -679,10 +679,10 @@ class Trajectory:
         site_distance = ta.distance_overearth(site_lats, site_lons)[1]
 
         # Vertical distance between back traj launch and forward traj end pts
-        z_distance = self.altitude[0] - self.faltitude[-1]
+        z_distance = self.altitude[0] - self.raltitude[-1]
 
         # Distance between points divided by total h or v distance
-        self.integ_error_xy = (((site_distance / (f_distance + b_distance))
+        self.integ_error_xy = (((site_distance / (r_distance + b_distance))
                                * 100) / 2)
         self.integ_error_z = (((z_distance / (falt_range + balt_range))
                               * 100) / 2)
