@@ -7,7 +7,8 @@ import itertools
 def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                           years, months, hours, altitudes, coordinates, run,
                           meteo_type='gdas1', get_reverse=True,
-                          get_clippedtraj=True):
+                          get_clippedtraj=True,
+                          hysplit="C:\\hysplit4\\exec\\hyts_std"):
     """
     Run sequence of HYSPLIT simulations over a given time and levels.
 
@@ -62,6 +63,9 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
         Default ``True``.  [True|False].  Outputs trajectory files with
         single-line timesteps containing only path information.  Provides
         clustering support to multiline files.
+    hysplit : string
+        Default "C:\\hysplit4\\exec\\hyts_std".  The location of the
+        "hyts_std" executable that generates trajectories.
 
     Returns
     -------
@@ -159,7 +163,7 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
                     control.flush()
 
                     # Call HYSPLIT to generate trajectory
-                    call("C:\\hysplit4\\exec\\hyts_std")
+                    call(hysplit)
 
                     # Create descriptive back trajectory filename
                     new_name = (basename + monname + '{:04}'.format(alt) +
