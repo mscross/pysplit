@@ -29,12 +29,12 @@ import os
 import sys
 import re
 import setuptools
+import pkg_resources
 from numpy.distutils.core import setup
 try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
     from distutils.command.build_py import build_py
-
 
 def check_requirements():
     if sys.version_info < PYTHON_VERSION:
@@ -47,28 +47,35 @@ def check_requirements():
         try:
             package = __import__(package_name)
         except ImportError:
-            dep_err = True
-        else:
-            package_version = get_package_version(package)
-            if min_version > package_version:
+            try:
+                package_version = tuple(
+                    pkg_resources.require(package_name)[0].version)
+            except DistributionNotFound:
                 dep_err = True
+        else:
+            package_version = get_package_version(package, package_name)
+
+        if min_version > package_version:
+            dep_err = True
 
         if dep_err:
             raise ImportError('`%s` version %d.%d or later required.'
                               % ((package_name, ) + min_version))
 
-
-def get_package_version(package):
+def get_package_version(package, package_name):
     version = []
-    for version_attr in ('version', 'VERSION', '__version__'):
-        if hasattr(package, version_attr) \
-                and isinstance(getattr(package, version_attr), str):
-            version_info = getattr(package, version_attr, '')
-            for part in re.split('\D+', version_info):
-                try:
-                    version.append(int(part))
-                except ValueError:
-                    pass
+    try:
+        return tuple(pkg_resources.require(package_name)[0].version)
+    except:
+        for version_attr in ('version', 'VERSION', '__version__'):
+            if hasattr(package, version_attr) \
+                    and isinstance(getattr(package, version_attr), str):
+                version_info = getattr(package, version_attr, '')
+                for part in re.split('\D+', version_info):
+                    try:
+                        version.append(int(part))
+                    except ValueError:
+                        pass
 
     return tuple(version)
 
