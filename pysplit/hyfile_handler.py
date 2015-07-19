@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+import pandas as pd
 import os
 import fnmatch
 
@@ -74,16 +75,7 @@ def load_hysplitfile(filename):
         The filename.  Eventually becomes attribute in ``Trajectory`` object
 
     """
-
-    hyfile = open(filename, 'r')
-
-    # Get through meteofile info at the head of the file
-    while True:
-        line = hyfile.readline()
-        if 'PRESSURE' in line:
-            break
-
-    # Begin constructing header
+    # Every header- first part
     header = ['Parcel Number',
               'Year',
               'Month',
@@ -95,41 +87,65 @@ def load_hysplitfile(filename):
               'Longitude',
               'Altitude']
 
-    # Acquire rest of header
-    new_header = line.split()[1:]
-    columns = 10 + 2 + len(new_header)
-    header.extend(new_header)
+    with open(filename, 'r') as hyfile:
 
-    # Check if data is multiline
-    # Multiline data not supported for some applications
-    multiline = False
-    if columns > 20:
-        multiline = True
+        contents = hyfile.readlines()
 
-    # Initialize empty data array
-    hydata = np.empty((0, columns - 2))
+        # Three lines from OMEGA to data
+        flen = len(contents) - 3
+        # print(flen)
+        skip = False
+        atdata = False
 
-    while True:
-        line = hyfile.readline()
-        if line == '':
-            break
+        for ind, line in enumerate(contents[:-1]):
+            if skip:
+                skip = False
+                continue
 
-        time_step = line.split()
+            if atdata:
+                data = [float(x) for x in line.split()]
+                if multiline:
+                    data.extend([float(x) for x in contents[ind+1].split()])
+                    skip = True
 
-        # Check if data is multiline.  Multi-line data not supported for
-        # all applications
-        if multiline:
-            time_step.extend(hyfile.readline().split())
+                del data[6]  # column of zeros
+                del data[1]  # column of ones
+                hydata[arr_ind, :] = data
+                arr_ind += 1
+                continue
 
-        # Put into array with unnecessary data sliced out, concatenate
-        time_step = np.asarray(time_step).astype(np.float64)
-        time_step = np.r_[time_step[0], time_step[2:6], time_step[7:]]
-        time_step = np.atleast_2d(time_step)
+            # OMEGA happens first
+            if 'OMEGA' in line:
+                flen -= ind
+                # print flen
+                if 'BACKWARD' in line:
+                    slr = slice(None, None, -1)
+                    startdate = contents[ind + 1].split()[:4]
+                    dt_key = 'end'
+                else:
+                    slr = slice(None, None, 1)
+                    startdate = contents[ind + 1].split()[:4]
+                    dt_key = 'start'
+                continue
 
-        if time_step.shape[1] != hydata.shape[1]:
-            raise ValueError("Introspected number of columns incorrect!")
+            # PRESSURE happens second
+            if 'PRESSURE' in line:
+                new_header = line.split()[1:]
+                columns = 12 + len(new_header)
+                header.extend(new_header)
 
-        hydata = np.concatenate((hydata, time_step), axis=0)
+                multiline = False
+                if columns > 20:
+                    multiline = True
+
+                    # print(flen /2.)
+                    flen /= 2
+
+                # Initialize empty data array
+                hydata = np.empty((flen, columns - 2))
+                atdata = True
+                arr_ind = 0
+                continue
 
     # Split hydata into individual trajectories (in case there are multiple)
     if 2 in hydata[:, 0]:
