@@ -132,13 +132,16 @@ def load_hysplitfile(filename):
         hydata = np.concatenate((hydata, time_step), axis=0)
 
     # Split hydata into individual trajectories (in case there are multiple)
-    hydata = trajsplit(hydata)
-    filelist = [filename] * len(hydata)
+    if 2 in hydata[:, 0]:
+        hydata, filelist = trajsplit(hydata, filename)
+    else:
+        hydata = [hydata]
+        filelist = [filename]
 
     return hydata, header, filelist
 
 
-def trajsplit(hydata):
+def trajsplit(hydata, filename):
     """
     Splits an array of hysplit data into list of unique trajectory arrays
 
@@ -157,20 +160,18 @@ def trajsplit(hydata):
 
     # Find number of unique trajectories within `hydata`
     unique_traj = np.unique(hydata[:, 0])
-    if unique_traj.size > 1:
 
-        # Sort the array row-wise by the first column
-        traj_id = hydata[:, 0]
-        sorted_indices = np.argsort(traj_id, kind='mergesort')
-        sorted_hydata = hydata[sorted_indices, :]
+    # Sort the array row-wise by the first column
+    traj_id = hydata[:, 0]
+    sorted_indices = np.argsort(traj_id, kind='mergesort')
+    sorted_hydata = hydata[sorted_indices, :]
 
-        # Split `hydata` into a list of arrays of three equal sizes
-        split_hydata = np.split(sorted_hydata, unique_traj.size)
+    # Split `hydata` into a list of arrays of three equal sizes
+    split_hydata = np.split(sorted_hydata, unique_traj.size)
 
-    else:
-        split_hydata = [hydata]
+    filelist = [filename] * unique_traj.size
 
-    return split_hydata
+    return split_hydata, filelist
 
 
 def load_clusterfile(clusterfilename):

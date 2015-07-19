@@ -60,7 +60,8 @@ def make_trajectorygroup(signature):
 
             fullpath = os.path.join(head, filename)
 
-            trajectory = Trajectory(data, header, fullpath)
+            # Get rid of parcel number
+            trajectory = Trajectory(data[:, 1:], header[1:], fullpath)
 
             trajectories.append(trajectory)
 

@@ -178,6 +178,58 @@ class TrajectoryGroup(object):
         else:
             return var
 
+    def uptakelocation_stats(self):
+        """
+        Gather (uptake-weighted) latitutdes, longitudes, distances of
+        moisture uptake locations
+
+        """
+
+        try:
+            lons_ind = self[0].moisture_header.index('longitude')
+        except:
+            AttributeError('Perform moisture uptake analysis first')
+
+        lats_ind = self[0].moisture_header.index('latitude')
+        dq_ind = self[0].moisture_header.index('delta q')
+        f_ind = self[0].moisture_header.index('f')
+        dist_ind = self[0].moisture_header.index('total_distance')
+
+        moisture_data = None
+
+        # Get data from all the trajectories
+        for traj in self:
+            moistarray = traj.moisture_sources
+            if moisture_data is None:
+                moisture_data = moistarray
+            else:
+                moisture_data = np.concatenate((moisture_data, moistarray))
+
+        # Find rows with moisture uptakes below pbl
+        f_rows = np.nonzero(moisture_data[:, f_ind] > -999.0)
+
+        lons = np.ravel(moisture_data[f_rows, lons_ind])
+        lats = np.ravel(moisture_data[f_rows, lats_ind])
+        dist = np.ravel(moisture_data[f_rows, dist_ind])
+        data = np.ravel(moisture_data[f_rows, dq_ind])
+
+        weights = sum(data)
+        counts = data.size
+        wtd_lons = sum(lons * data)
+        wtd_lats = sum(lats * data)
+        wtd_dist = sum(dist * data)
+
+        wtdavg_lons = wtd_lons / weights
+        wtdavg_lats = wtd_lats / weights
+        wtdavg_dist = wtd_dist / weights
+
+        avg_lons = sum(lons) / counts
+        avg_lats = sum(lats) / counts
+        avg_dist = sum(dist) / counts
+
+        return (wtdavg_lons, wtdavg_lats, wtdavg_dist, avg_lons, avg_lats,
+                avg_dist)
+
     def stack_trajdata(self, var):
         """
         Put data from all member ``Trajectory`` instances into one array.
@@ -257,13 +309,13 @@ class TrajectoryGroup(object):
         elif use_wherebin:
 
             # Initialize dictionary
-            cell_value_dict = {'cumulative' : np.sum,
-                               'mean' : np.mean,
-                               'median' : np.median,
-                               'max' : np.max,
-                               'min' : np.min,
-                               'stdev' : np.std,
-                               'range' : ta.maxmin_diff}
+            cell_value_dict = {'cumulative': np.sum,
+                               'mean': np.mean,
+                               'median': np.median,
+                               'max': np.max,
+                               'min': np.min,
+                               'stdev': np.std,
+                               'range': ta.maxmin_diff}
 
             # Initialize grid
             newgrid = np.zeros(self.grid.shape, dtype=self.grid.dtype)

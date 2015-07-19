@@ -602,7 +602,7 @@ class Trajectory:
         self.masked_sources = masked_moistarr
         self.moisture_header = moisture_header
 
-    def load_reversetraj(self, reverse_dir):
+    def load_reversetraj(self, reverse_dir, fname_end):
         """
         Acquires data from reverse trajectory.
 
@@ -617,10 +617,10 @@ class Trajectory:
         if not os.path.isdir(reverse_dir):
             raise OSError('Reverse trajectory directory does not exist!')
 
-        # Construct filename of forward trajectory
-        self.reversepath = os.path.join(reverse_dir, self.filename + 'REVERSE')
+        # Construct filename of reverse trajectory
+        self.reversepath = os.path.join(reverse_dir, self.filename + fname_end)
 
-        # Check that this trajectory has a corresponding forward trajectory
+        # Check that this trajectory has reverse trajectory
         if not os.path.exists(self.reversepath):
             raise OSError('File not found: ' + self.reversepath)
 
