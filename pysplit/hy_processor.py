@@ -46,6 +46,10 @@ def make_trajectorygroup(signature):
         # Will also sort in ascending altitude within each same datestring
         hyfiles.sort(key=lambda x: x[-8:])
 
+        clipdir = os.path.join(head, 'clippedtraj')
+        if not os.path.isdir(clipdir):
+            clipdir = None
+
         # Load in the hysplit file data
         # Get lists of the datestrings and filenames of the hysplit files
         for hyfile in hyfiles:
@@ -58,10 +62,9 @@ def make_trajectorygroup(signature):
         # Initialize trajectory objects
         for data, filename in zip(traj_list, filename_list):
 
-            fullpath = os.path.join(head, filename)
-
             # Get rid of parcel number
-            trajectory = Trajectory(data[:, 1:], header[1:], fullpath)
+            trajectory = Trajectory(data[:, 1:], header[1:], head, filename,
+                                    cfolder=clipdir)
 
             trajectories.append(trajectory)
 
