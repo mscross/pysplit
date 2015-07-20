@@ -77,11 +77,6 @@ def load_hysplitfile(filename):
     """
     # Every header- first part
     header = ['Parcel Number',
-              'Year',
-              'Month',
-              'Date',
-              'Hour (UTC)',
-              '24 mod 6 (hr)',
               'Time step (hr)',
               'Latitude',
               'Longitude',
@@ -105,11 +100,10 @@ def load_hysplitfile(filename):
             if atdata:
                 data = [float(x) for x in line.split()]
                 if multiline:
-                    data.extend([float(x) for x in contents[ind+1].split()])
+                    data.extend([float(x) for x in contents[ind + 1].split()])
                     skip = True
 
-                del data[6]  # column of zeros
-                del data[1]  # column of ones
+                del data[1:8]
                 hydata[arr_ind, :] = data
                 arr_ind += 1
                 continue
@@ -119,11 +113,11 @@ def load_hysplitfile(filename):
                 flen -= ind
                 # print flen
                 if 'BACKWARD' in line:
-                    slr = slice(None, None, -1)
+                    freq = '-1H'
                     startdate = contents[ind + 1].split()[:4]
                     dt_key = 'end'
                 else:
-                    slr = slice(None, None, 1)
+                    freq = 'H'
                     startdate = contents[ind + 1].split()[:4]
                     dt_key = 'start'
                 continue
@@ -147,17 +141,21 @@ def load_hysplitfile(filename):
                 arr_ind = 0
                 continue
 
+    startdate = "20" + "{0:02}{1:02}{2:02}{3:02}".format(*startdate) + '0000'
+
+    datetime = pd.date_range(**{dt_key: startdate,
+                                'freq':freq, 'periods':flen})
+
     # Split hydata into individual trajectories (in case there are multiple)
+    multiple_traj = False
     if 2 in hydata[:, 0]:
-        hydata, filelist = trajsplit(hydata, filename)
-    else:
-        hydata = [hydata]
-        filelist = [filename]
+        hydata = trajsplit(hydata)
+        multiple_traj = True
 
-    return hydata, header, filelist
+    return hydata, header, datetime, multiple_traj
 
 
-def trajsplit(hydata, filename):
+def trajsplit(hydata):
     """
     Splits an array of hysplit data into list of unique trajectory arrays
 
@@ -185,9 +183,7 @@ def trajsplit(hydata, filename):
     # Split `hydata` into a list of arrays of three equal sizes
     split_hydata = np.split(sorted_hydata, unique_traj.size)
 
-    filelist = [filename] * unique_traj.size
-
-    return split_hydata, filelist
+    return split_hydata
 
 
 def load_clusterfile(clusterfilename):

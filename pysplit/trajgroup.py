@@ -25,7 +25,6 @@ class TrajectoryGroup(object):
         """
         self.trajectories = traj_object_list
         self.trajcount = len(traj_object_list)
-        self.directory, _ = os.path.split(traj_object_list[0].fullpath)
 
     def __add__(self, other):
         """
@@ -504,7 +503,7 @@ class TrajectoryGroup(object):
 
         self.raincount = raincount
 
-    def make_infile(self):
+    def make_infile(self, infile_dir):
         """
         Take ``Trajectory`` instances in ``TrajectoryGroup`` and write
         path to infile
@@ -515,7 +514,7 @@ class TrajectoryGroup(object):
 
         """
 
-        infile = open(os.path.join(self.directory, 'INFILE'), 'w')
+        infile = open(os.path.join(infile_dir, 'INFILE'), 'w')
 
         for traj in self:
             try:

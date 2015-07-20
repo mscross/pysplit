@@ -30,23 +30,19 @@ def make_trajectorygroup(signature):
 
     # Get list of hysplit files matching signature
     hyfiles = hh.hysplit_filelister(signature)
-
     orig_dir = os.getcwd()
-
-    traj_list = []
-    filename_list = []
     trajectories = []
 
     try:
-        head, _ = os.path.split(signature)
+        folder, _ = os.path.split(signature)
 
-        os.chdir(head)
+        os.chdir(folder)
 
         # Sort list of hysplit files by the datestring at the end
         # Will also sort in ascending altitude within each same datestring
         hyfiles.sort(key=lambda x: x[-8:])
 
-        clipdir = os.path.join(head, 'clippedtraj')
+        clipdir = os.path.join(folder, 'clippedtraj')
         if not os.path.isdir(clipdir):
             clipdir = None
 
@@ -54,19 +50,24 @@ def make_trajectorygroup(signature):
         # Get lists of the datestrings and filenames of the hysplit files
         for hyfile in hyfiles:
 
-            hydata, header, filelist = hh.load_hysplitfile(hyfile)
+            data, header, datetime, multitraj = hh.load_hysplitfile(hyfile)
+            header = header[1:]
 
-            traj_list.extend(hydata)
-            filename_list.extend(filelist)
+            if multitraj:
+                # Initialize trajectory objects
+                for d in data:
 
-        # Initialize trajectory objects
-        for data, filename in zip(traj_list, filename_list):
+                    # Get rid of parcel number
+                    trajectory = Trajectory(d[:, 1:], datetime, header, folder,
+                                            hyfile, cfolder=clipdir)
 
-            # Get rid of parcel number
-            trajectory = Trajectory(data[:, 1:], header[1:], head, filename,
-                                    cfolder=clipdir)
+                    trajectories.append(trajectory)
 
-            trajectories.append(trajectory)
+            else:
+                trajectory = Trajectory(data[:, 1:], datetime, header, folder,
+                                        hyfile, cfolder=clipdir)
+
+                trajectories.append(trajectory)
 
         # initialize trajectory group
         trajectories = TrajectoryGroup(trajectories)

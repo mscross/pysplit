@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+import pandas as pd
 import os
 import hyfile_handler as hh
 import traj_accessory as ta
@@ -12,7 +13,8 @@ class Trajectory:
 
     """
 
-    def __init__(self, trajdata, trajheader, path, alt_in_magl=True):
+    def __init__(self, trajdata, datetime, trajheader, folder, filename,
+                 alt_in_magl=True, cfolder=None):
         """
         Initialize (back) trajectory object.
 
@@ -28,56 +30,46 @@ class Trajectory:
 
         """
 
-        season_dict = {12: 'winter', 1 : 'winter', 2 : 'winter',
-                       3 : 'spring', 4 : 'spring', 5 : 'spring',
-                       6 : 'summer', 7 : 'summer', 8 : 'summer',
-                       9 : 'autumn', 10: 'autumn', 11: 'autumn'}
+        # season_dict = {12: 'winter', 1 : 'winter', 2 : 'winter',
+        #                3 : 'spring', 4 : 'spring', 5 : 'spring',
+        #                6 : 'summer', 7 : 'summer', 8 : 'summer',
+        #                9 : 'autumn', 10: 'autumn', 11: 'autumn'}
 
-        self.data = trajdata
-        self.header = trajheader
-        self.fullpath = path
-        self.folder, self.filename = os.path.split(self.fullpath)
+        self.data = pd.DataFrame(data=trajdata, columns=trajheader)
+        self.data['DateTime'] = datetime
+        self.data.set_index('Timestep')
 
-        if os.path.isdir(os.path.join(self.folder, 'clippedtraj')):
-            self.cfolder = os.path.join(self.folder, 'clippedtraj')
+        self.data.rename(columns={'AIR_TEMP' : 'Temperature',
+                                  'PRESSURE' : 'Pressure',
+                                  'RAINFALL' : 'Rainfall',
+                                  'MIXDEPTH' : 'Mixing_Depth',
+                                  'RELHUMID' : 'Relative_Humidity',
+                                  'H2OMIXRA' : 'Mixing_Ratio',
+                                  'SPCHUMID' : 'Specific_Humidity',
+                                  'SUN_FLUX' : 'Solar_Radiation',
+                                  'TERR_MSL' : 'Terrain_Altitude',
+                                  'THETA' : 'Potential_Temperature'})
+
+        self.folder = folder
+        self.filename = filename
+
+        if cfolder is not None:
+            self.cfolder = cfolder
             if os.path.exists(os.path.join(self.cfolder,
                                            self.filename + 'CLIPPED')):
                 self.cfilename = self.filename + 'CLIPPED'
                 self.cfullpath = os.path.join(self.cfolder, self.cfilename)
 
-        self.latitude = self.data[:, self.header.index('Latitude')]
-        self.longitude = self.data[:, self.header.index('Longitude')]
-        self.pressure = self.data[:, self.header.index('PRESSURE')]
-        self.altitude = self.data[:, self.header.index('Altitude')]
         self.magl = alt_in_magl
 
-        possible_attr = ['AIR_TEMP', 'RAINFALL', 'MIXDEPTH', 'RELHUMID',
-                         'H2OMIXRA', 'SPCHUMID', 'SUN_FLUX', 'TERR_MSL',
-                         'THETA']
-        poss_attr_names = ['temperature', 'rainfall', 'mixdepth',
-                           'relative_humidity', 'mixing_ratio',
-                           'specific_humidity', 'solar_radiation',
-                           'terrain_altitude', 'potential_temperature']
-
-        for pa, pa_name in zip(possible_attr, poss_attr_names):
-            if pa in self.header:
-                setattr(self, pa_name, self.data[:, self.header.index(pa)])
-
-        self.year = self.data[:, self.header.index('Year')]
-        self.month = self.data[:, self.header.index('Month')]
-        self.day = self.data[:, self.header.index('Date')]
-        self.hour = self.data[:, self.header.index('Hour (UTC)')]
-
-        self.timesteps = self.data[:, self.header.index('Time step (hr)')]
         self.sim_length = self.data.shape[0] - 1
-        self.datestring = os.path.split(path)[1][-8:]
 
-        self.season_t0 = season_dict[self.month[0]]
+        # self.season_t0 = season_dict[self.DateTime.month[0]]
 
         self.trajcolor = 'black'
         self.linewidth = 2
 
-    def set_rainstatus(self, rainy_criterion='rainfall', check_steps=1,
+    def set_rainstatus(self, rainy_criterion='Rainfall', check_steps=1,
                        rh_threshold=0.8):
         """
         Determines if ``Trajectory`` is 'rainy', sets ``self.rainstatus``
@@ -89,8 +81,8 @@ class Trajectory:
         Keyword Arguments
         -----------------
         rainy_criterion : string
-            ['rainfall'|'relative humidity'|'specific humidity']
-            'rainfall' : set ``self.rainstatus`` to ``True`` if rain
+            ['Rainfall'|'relative humidity'|'specific humidity']
+            'Rainfall' : set ``self.rainstatus`` to ``True`` if rain
             occurs within the indicated ``check_steps``
             'relative humidity' : set ``self.rainstatus`` to ``True`` if
                 ``self.relative_humidity`` is above the given ``rh_threshold``
@@ -114,9 +106,9 @@ class Trajectory:
                 is_rainy = True
 
         else:
-            # Test if rainfall is recorded
-            if np.any(self.rainfall[:check_steps] > 0.0):
-                if rainy_criterion == 'rainfall':
+            # Test if Rainfall is recorded
+            if np.any(self.Rainfall[:check_steps] > 0.0):
+                if rainy_criterion == 'Rainfall':
                     is_rainy = True
                 else:
                     # Further refine results by examining
@@ -133,42 +125,6 @@ class Trajectory:
 
         self.rainstatus = is_rainy
 
-    def set_trajcolor(self, color=None):
-        """
-        Set the color of the path as it will appear in
-        ``self.map_traj_path()``
-
-        Keyword Arguments
-        -----------------
-        color : string or tuple of floats
-            Default ``None``.  If ``None``, ``self.trajcolor`` will be reset
-            to black.
-
-        """
-
-        if color is None:
-            self.trajcolor = 'black'
-        else:
-            self.trajcolor = color
-
-    def set_linewidth(self, lw=None):
-        """
-        Set the linewidth of the path as it will appear in
-        ``self.map_traj_path()``
-
-        Keyword Arguments
-        -----------------
-        lw : int or float
-            Default ``None``.  If ``None``, ``self.linewidth`` will be reset
-            to 1.
-
-        """
-
-        if lw is None:
-            self.linewidth = 1
-        else:
-            self.linewidth = lw
-
     def set_vector(self):
         """
         Calculate mean bearing of ``Trajectory`` and bearings between timesteps
@@ -178,27 +134,9 @@ class Trajectory:
         self.meanvector, self.bearings = ta.tracemean_vector(self.latitude,
                                                              self.longitude)
 
-    def reset_original_attr(self, attr_name):
-        """
-        Reset an original attribute to the original data.
-
-        """
-        possible_attr = ['AIR_TEMP', 'RAINFALL', 'MIXDEPTH', 'RELHUMID',
-                         'H2OMIXRA', 'SPCHUMID', 'SUN_FLUX', 'TERR_MSL',
-                         'THETA']
-        poss_attr_names = ['temperature, rainfall, mixdepth',
-                           'relative_humidity', 'mixing_ratio',
-                           'specific_humidity', 'solar_radiation',
-                           'terrain_altitude', 'potential_temperature']
-
-        if hasattr(self, attr_name) and attr_name in poss_attr_names:
-            header_name = possible_attr[poss_attr_names.index(attr_name)]
-            setattr(self, attr_name,
-                    self.data[:, self.header.index(header_name)])
-
     def set_relativehumidity(self):
         """
-        Calculate relative humidity.  Requires ``temperature`` and
+        Calculate relative humidity.  Requires ``Temperature`` and
         ``mixing_ratio`` or ``specific_humidity``
 
         """
@@ -206,13 +144,13 @@ class Trajectory:
         if not hasattr(self, 'relative_humidity'):
             self.set_mixingratio()
             self.relative_humidity = ta.convert_w2rh(self.mixing_ratio,
-                                                     self.temperature,
+                                                     self.Temperature,
                                                      self.pressure)
 
     def set_mixingratio(self):
         """
         Calculate mixing ratio.  Requires ``specific_humidity`` or
-        ``temperature`` and ``relative_humidity``.
+        ``Temperature`` and ``relative_humidity``.
 
         """
 
@@ -222,7 +160,7 @@ class Trajectory:
 
             elif hasattr(self, 'relative_humidity'):
                 self.mixing_ratio = ta.convert_rh2w(self.relative_humidity,
-                                                    self.temperature,
+                                                    self.Temperature,
                                                     self.pressure)
             else:
                 raise AttributeError('Not enough information to ' +
@@ -231,7 +169,7 @@ class Trajectory:
     def set_specifichumidity(self):
         """
         Calculate specific humidity.  Requires ``mixing_ratio`` or
-        the calculation of ``mixing_ratio`` from ``temperature`` and
+        the calculation of ``mixing_ratio`` from ``Temperature`` and
         ``relative_humidity``.
 
         """
