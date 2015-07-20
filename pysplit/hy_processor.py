@@ -70,7 +70,7 @@ def make_trajectorygroup(signature):
     finally:
         os.chdir(orig_dir)
 
-    return trajectories, filename_list
+    return trajectories
 
 
 def spawn_clusters(traj_group, cfile, endpoint_dir):
