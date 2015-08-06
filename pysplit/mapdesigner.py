@@ -16,7 +16,7 @@ class MapDesign(object):
                  area_threshold=10000, resolution='c', zborder=14,
                  lat_labels=['left'], lon_labels=['top'], lat_labelspacing=10,
                  lon_labelspacing=20, latlon_fs=20, latspacing=10,
-                 lonspacing=20):
+                 lonspacing=20, drawstates=False, drawoutlines=True):
         """
         Initialize ``MapDesign`` instance.
 
@@ -116,6 +116,9 @@ class MapDesign(object):
 
         self.latspacing = latspacing
         self.lonspacing = lonspacing
+
+        self.drawstates = drawstates
+        self.drawoutlines = drawoutlines
 
         # Try to set label attributes
         if maplabels is not None:
@@ -537,9 +540,11 @@ class MapDesign(object):
                                       color=shp[1], linewidth=shp[2])
 
         # Draw countries, states, coastlines, and map boundary
-        cavemap.drawcountries(zorder=self.zborder)
-        cavemap.drawstates(zorder=14)
-        cavemap.drawcoastlines(zorder=self.zborder, linewidth=1.5)
+        if self.drawstates:
+            cavemap.drawstates(zorder=14)
+        if self.drawoutlines:
+            cavemap.drawcountries(zorder=self.zborder)
+            cavemap.drawcoastlines(zorder=self.zborder)
 
         if self.latstep == 20:
             lat = -80

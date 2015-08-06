@@ -7,14 +7,15 @@ import traj_accessory as ta
 import mapmaker as mm
 
 
-class Trajectory:
+class Trajectory(pd.DataFrame):
     """
     Class for processing individual HYSPLIT back trajectories.
+    Subclass of pandas DataFrame.
 
     """
 
     def __init__(self, trajdata, datetime, trajheader, folder, filename,
-                 alt_in_magl=True, cfolder=None):
+                 cfolder=None):
         """
         Initialize (back) trajectory object.
 
@@ -29,26 +30,25 @@ class Trajectory:
             The full path to the original HYSPLIT file
 
         """
+        name = ''
+        if trajdata[0,0] < 1:
+            name = '_' + trajdata[0,0]
 
-        # season_dict = {12: 'winter', 1 : 'winter', 2 : 'winter',
-        #                3 : 'spring', 4 : 'spring', 5 : 'spring',
-        #                6 : 'summer', 7 : 'summer', 8 : 'summer',
-        #                9 : 'autumn', 10: 'autumn', 11: 'autumn'}
+        pd.DataFrame.__init__(self, data=trajdata[:, 1:], columns=trajheader[1:])
 
-        self.data = pd.DataFrame(data=trajdata, columns=trajheader)
-        self.data['DateTime'] = datetime
-        self.data.set_index('Timestep')
+        self['DateTime'] = datetime
+        self.set_index('Timestep')
 
-        self.data.rename(columns={'AIR_TEMP' : 'Temperature',
-                                  'PRESSURE' : 'Pressure',
-                                  'RAINFALL' : 'Rainfall',
-                                  'MIXDEPTH' : 'Mixing_Depth',
-                                  'RELHUMID' : 'Relative_Humidity',
-                                  'H2OMIXRA' : 'Mixing_Ratio',
-                                  'SPCHUMID' : 'Specific_Humidity',
-                                  'SUN_FLUX' : 'Solar_Radiation',
-                                  'TERR_MSL' : 'Terrain_Altitude',
-                                  'THETA' : 'Potential_Temperature'})
+        self.rename(columns={'AIR_TEMP' : 'Temperature',
+                             'PRESSURE' : 'Pressure',
+                             'RAINFALL' : 'Rainfall',
+                             'MIXDEPTH' : 'Mixing_Depth',
+                             'RELHUMID' : 'Relative_Humidity',
+                             'H2OMIXRA' : 'Mixing_Ratio',
+                             'SPCHUMID' : 'Specific_Humidity',
+                             'SUN_FLUX' : 'Solar_Radiation',
+                             'TERR_MSL' : 'Terrain_Altitude',
+                             'THETA' : 'Potential_Temperature'})
 
         self.folder = folder
         self.filename = filename
@@ -60,14 +60,9 @@ class Trajectory:
                 self.cfilename = self.filename + 'CLIPPED'
                 self.cfullpath = os.path.join(self.cfolder, self.cfilename)
 
-        self.magl = alt_in_magl
-
-        self.sim_length = self.data.shape[0] - 1
-
-        # self.season_t0 = season_dict[self.DateTime.month[0]]
-
         self.trajcolor = 'black'
         self.linewidth = 2
+        self.name = self.filename + name
 
     def set_rainstatus(self, rainy_criterion='Rainfall', check_steps=1,
                        rh_threshold=0.8):

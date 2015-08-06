@@ -50,21 +50,21 @@ def make_trajectorygroup(signature):
         # Get lists of the datestrings and filenames of the hysplit files
         for hyfile in hyfiles:
 
-            data, header, datetime, multitraj = hh.load_hysplitfile(hyfile)
-            header = header[1:]
+            data, path, head, datetime, multitraj = hh.load_hysplitfile(hyfile)
 
             if multitraj:
                 # Initialize trajectory objects
-                for d in data:
+                for d, p in zip(data, path):
 
-                    # Get rid of parcel number
-                    trajectory = Trajectory(d[:, 1:], datetime, header, folder,
+                    # Get rid of parcel number in d
+                    # Get rid of parcel #, lat, lon, altitude in head
+                    trajectory = Trajectory(d, p, datetime, head, folder,
                                             hyfile, cfolder=clipdir)
 
                     trajectories.append(trajectory)
 
             else:
-                trajectory = Trajectory(data[:, 1:], datetime, header, folder,
+                trajectory = Trajectory(data, path, datetime, head, folder,
                                         hyfile, cfolder=clipdir)
 
                 trajectories.append(trajectory)

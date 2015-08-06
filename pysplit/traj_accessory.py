@@ -569,7 +569,7 @@ def grid_data(x, y, data, cell_value, binsize):
                        'max' : np.max,
                        'min' : np.min,
                        'stdev' : np.std,
-                       'range' : maxmin_diff}
+                       'range' : np.ptp}
 
     # Get extreme longitudes and latitudes
     xmin = x.min()
@@ -633,28 +633,3 @@ def grid_data(x, y, data, cell_value, binsize):
     grid = np.ma.masked_less_equal(grid, -999.0)
 
     return grid, xi, yi, bins, wherebin
-
-
-def maxmin_diff(x):
-    """
-    Calculate difference between the maximum and minimum values of
-    iterable ``x``.
-
-    Parameters
-    ----------
-    x : iterable of scalars
-        The data
-
-    Returns
-    -------
-    diff : the difference between the maximum and minimum values
-        in the iterable ``x``
-
-    """
-
-    xmax = np.max(x)
-    xmin = np.min(x)
-
-    diff = xmax - xmin
-
-    return diff
