@@ -1,9 +1,8 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 import traj_accessory as ta
-from traj import Trajectory
 import mapmaker as mm
 
 
