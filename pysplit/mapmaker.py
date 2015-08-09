@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
 import matplotlib.colors as clr
@@ -67,9 +67,9 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
     msg = ('Use `cbar.ax.set_yticklabels()` ' +
            'or cbar.ax.set_xticklabels()` to change tick labels')
 
-    transform_dict = {'sqrt' : np.sqrt,
-                      'log'  : np.log10,
-                      'ln'   : np.log}
+    transform_dict = {'sqrt': np.sqrt,
+                      'log': np.log10,
+                      'ln': np.log}
 
     if cnormalize is 'boundary':
         if vmin is None:
@@ -84,10 +84,10 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
         norm = clr.LogNorm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'ln':
         data = np.log(data)
-        print msg, '\nnatural log normalization'
+        print(msg, '\nnatural log normalization')
     elif cnormalize is 'sqrt':
         data = np.sqrt(data)
-        print msg, '\nsqrt normalization'
+        print(msg, '\nsqrt normalization')
     else:
         try:
             norm = clr.PowerNorm(cnormalize, vmin=vmin, vmax=vmax)

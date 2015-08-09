@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -42,7 +42,7 @@ class Cluster(TrajectoryGroup):
         try:
             self.set_meanvar()
         except:
-            print 'Unable to initialize mean variables'
+            print('Unable to initialize mean variables')
 
     def __add__(self, other):
         """
@@ -55,7 +55,7 @@ class Cluster(TrajectoryGroup):
 
         """
 
-        print "Basic TrajectoryGroup created, cluster methods unavailable"
+        print("Basic TrajectoryGroup created, cluster methods unavailable")
 
         # Initializes self.trajectories, self.trajcount, and self.directory
         new_tg = TrajectoryGroup.__add__(self, other)
@@ -254,9 +254,9 @@ class ClusterGroup(object):
             The order of ``colors`` relative to ``self``
 
         """
-        transform_dict = {'sqrt' : np.sqrt,
-                          'log'  : np.log10,
-                          'ln'   : np.ln}
+        transform_dict = {'sqrt': np.sqrt,
+                          'log': np.log10,
+                          'ln': np.ln}
 
         if width_var is None:
             wdata = [lw] * self.totalclusters
@@ -286,7 +286,7 @@ class ClusterGroup(object):
                 try:
                     if len(colors) != self.totalclusters:
                         colors = [colors[0]] * self.totalclusters
-                        print 'Number of colors and clusters do not match'
+                        print('Number of colors and clusters do not match')
                 except:
                     colors = [colors[0]] * self.totalclusters
         else:
