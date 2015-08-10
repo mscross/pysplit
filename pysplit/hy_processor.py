@@ -59,13 +59,13 @@ def make_trajectorygroup(signature):
                     # Get rid of parcel number in d
                     # Get rid of parcel #, lat, lon, altitude in head
                     trajectory = Trajectory(d, p, datetime, head, folder,
-                                            hyfile, cfolder=clipdir)
+                                            hyfile, clipdir)
 
                     trajectories.append(trajectory)
 
             else:
                 trajectory = Trajectory(data, path, datetime, head, folder,
-                                        hyfile, cfolder=clipdir)
+                                        hyfile, clipdir)
 
                 trajectories.append(trajectory)
 
