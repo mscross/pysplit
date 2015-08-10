@@ -6,8 +6,7 @@ This package is designed to be used with the desktop version of NOAA Air
 Research Laboratory's HYSPLIT model (https://ready.arl.noaa.gov/HYSPLIT.php).
 PySPLIT contains functions and classes ready to work with HYSPLIT to
 automatically generate trajectories, and to analyze and visualize
-trajectory paths and meteorology.  PySPLIT can also work with grib
-and hdf datasets to visualize gridded meteorological data.
+trajectory paths and meteorology.
 
 """
 
@@ -22,7 +21,8 @@ VERSION             = '0.1'
 PYTHON_VERSION      = (2, 6)
 DEPENDENCIES        = {'numpy': (1, 6),
                        'matplotlib': (1, 2),
-                       'basemap': (1, 0)}
+                       'basemap': (1, 0),
+                       'geopandas': (0, 1)}
 
 
 import os
