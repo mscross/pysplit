@@ -19,7 +19,23 @@ class TrajectoryGroup(HyGroup):
             ``Trajectory`` instances that belong in the group.
 
         """
-        HyGroup.__init__(self.trajectories)
+        HyGroup.__init__(self, trajectories)
+
+    def __getitem__(self, index):
+        """
+        Index or slice ``self.trajectories`` to get a ``Trajectory`` or
+        ``TrajectoryGroup``, respectively
+
+        """
+
+        newthing = self.trajectories[index]
+
+        # TrajectoryGroup requires a list of Trajectory instances,
+        # but won't fail if given a single Trajectory
+        if isinstance(newthing, list):
+            newthing = TrajectoryGroup(newthing)
+
+        return newthing
 
     def addgroups(self, other):
         """
@@ -43,23 +59,6 @@ class TrajectoryGroup(HyGroup):
         new_tg = TrajectoryGroup(HyGroup.addgroups(self, other))
 
         return new_tg
-
-    def __getitem__(self, index):
-        """
-        Index or slice the ``self.trajectories`` to get a ``Trajectory`` or
-        ``TrajectoryGroup``, respectively
-
-        """
-
-        newthing = self.trajectories[index]
-
-        try:
-            # TrajectoryGroup requires a list of trajectories
-            newthing = TrajectoryGroup(newthing)
-        except:
-            pass
-
-        return newthing
 
     def make_infile(self, infile_dir):
         """
