@@ -61,6 +61,9 @@ class Trajectory(HyPath):
 
         self.folder = folder
         self.filename = filename
+        self.fullpath = os.path.join(self.folder, self.filename)
+
+        self.trajid = self.fullpath + str(trajdata[0, 0])
 
         if cfolder is not None:
             self.cfolder = cfolder
@@ -71,6 +74,14 @@ class Trajectory(HyPath):
 
         self.trajcolor = 'black'
         self.linewidth = 2
+
+    def __hash__(self):
+        return hash(self.trajid)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.trajid == other.trajid
+        return NotImplemented
 
     def set_rainstatus(self, rainy_criterion='Rainfall', check_steps=0,
                        threshold=0.0):
