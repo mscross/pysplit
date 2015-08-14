@@ -189,11 +189,11 @@ class Trajectory(HyPath):
             if self.get('Distance') is None:
                 self.calculate_distance()
 
-            self['Moisture_Flux'] = np.empty((self['Distance'].size))
-            self['Moisture_Flux'].iloc[0] = None
-            self['Moisture_Flux'].iloc[1:] = ((self['Distance'] /
-                                               3600).iloc[1:] *
-                                              self.get(humidity).iloc[:-1])
+            self['Moisture_Flux'] = None
+            self.loc[self.index[1]:, 'Moisture_Flux'] = ((self['Distance'] /
+                                                          3600).iloc[1:] *
+                                                         self.get(
+                                                         humidity).iloc[:-1])
 
     def moisture_uptake(self, precipitation, evaporation, interval=6,
                         vlim='pbl', pressure_level=900.0,

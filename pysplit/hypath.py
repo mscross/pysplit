@@ -58,16 +58,16 @@ class HyPath(gp.GeoDataFrame):
         labels = {False: ['bearings', 'bearings_rad', 'circular_mean'],
                   True: ['bearings_r', 'bearings_rad_r', 'circular_mean_r']}
 
-        which_traj = {False: self.path,
-                      True: self.path_r}
+        which_traj = {False: 'path',
+                      True: 'path_r'}
 
-        lat, lon = np.radians(which_traj[reverse].xy)
+        lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
 
         a = np.cos(lat) * np.sin(lon - lon[0])
         b = (math.cos(lat[0]) * np.sin(lat) -
              math.sin(lat[0]) * np.cos(lat) * np.cos(lon - lon[0]))
 
-        bearings_rad = np.atan2(a, b)
+        bearings_rad = np.arctan2(a, b)
         # Set bearings in degrees column
         self[labels[reverse][0]] = np.degrees(bearings_rad)
 
@@ -93,13 +93,13 @@ class HyPath(gp.GeoDataFrame):
 
         """
 
-        which_traj = {False: self.path,
-                      True: self.path_r}
+        which_traj = {False: 'path',
+                      True: 'self.''path_r'}
 
         labels = {False: ['Distance', 'Cumulative_Dist'],
                   True: ['Distance_r', 'Cumulative_Dist_r']}
 
-        lat, lon = np.radians(which_traj[reverse].xy)
+        lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
 
         distance = np.empty((lat.size))
 
