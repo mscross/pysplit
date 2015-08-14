@@ -2,6 +2,7 @@ from __future__ import division, print_function
 import os
 import numpy as np
 import geopandas as gp
+import pandas as pd
 from shapely.geometry import Point, LineString
 import hyfile_handler as hh
 from hypath import HyPath
@@ -238,7 +239,6 @@ class Trajectory(HyPath):
 
         # Gives 164, 158, 152, 146 ... 0 etc
         windows = self.index[::-interval]
-        print('Windows', windows)
 
         self.uptake = gp.GeoDataFrame(data=np.empty((windows.size, 13)),
                                       columns=['DateTime', 'Timestep',
@@ -251,23 +251,28 @@ class Trajectory(HyPath):
 
         # Get all the timesteps, set as index
         self.uptake.loc[:, 'Timestep'] = windows[::-1]
-        print('Timestep\n', self.uptake['Timestep'])
-        self.uptake.loc.set_index('Timestep', inplace=True)
+        # print('Timestep\n', self.uptake['Timestep'])
+        self.uptake.set_index('Timestep', inplace=True, drop=False)
 
         # fill up with NaNs
         self.uptake.loc[:, ['dq_initial', 'dq', 'e', 'f']] = None
 
         # (fake) midpoint
-        mdpt = len(windows) // 2
-        print('Midpoint', mdpt)
+        mdpt = interval // 2
+        # print('Midpoint', mdpt)
 
         # Average over the whole window
         for w in windows:
-            self.uptake.loc[w, ['Avg_Pressure', 'Avg_MixDepth']] = (
-                self.loc[w: w - interval, ['Pressure', 'Mixing_Depth']].mean())
+            # print('interval', self.loc[w: w - (interval - 1), 'Timestep'])
+            (self.uptake.loc[w, 'Avg_Pressure'],
+             self.uptake.loc[w, 'Avg_MixDepth']) = (
+                self.loc[w: w - (interval - 1),
+                         ['Pressure', 'Mixing_Depth']].mean())
 
         # First timestep
-        self.uptake.loc[windows[0], ['DateTime', 'Cumulative_Dist', 'q']] = (
+        (self.uptake.loc[windows[0], 'DateTime'],
+         self.uptake.loc[windows[0], 'Cumulative_Dist'],
+         self.uptake.loc[windows[0], 'q']) = (
             self.loc[windows[0], ['DateTime', 'Cumulative_Dist', humidity]])
 
         self.uptake.loc[windows[0], 'unknown_frac'] = 1.0
@@ -276,10 +281,13 @@ class Trajectory(HyPath):
         points.append(self.loc[windows[0], 'geometry'])
 
         for w in windows[1:]:
-            self.uptake.loc[w, ['DateTime', 'Cumulative_Dist', 'q']] = (
+            (self.uptake.loc[w, 'DateTime'],
+             self.uptake.loc[w, 'Cumulative_Dist'],
+             self.uptake.loc[w, 'q']) = (
                 self.loc[w - mdpt, ['DateTime', 'Cumulative_Dist', humidity]])
 
-            z = np.mean([pt.z for pt in self.loc[w:w - interval, 'geometry']])
+            z = np.mean([pt.z for pt in self.loc[w:w - (interval - 1),
+                                                 'geometry']])
 
             points.append(Point([self.loc[w - mdpt, 'geometry'].x,
                                  self.loc[w - mdpt, 'geometry'].y, z]))
@@ -293,26 +301,33 @@ class Trajectory(HyPath):
         self.uptake['geometry'] = points
 
         # Check that mixing depth data actually exists for this trajectory
-        if self.uptake.loc[:, 'Mixing_Depth'].all(None):
+        if self.loc[:, 'Mixing_Depth'].all(None):
             vlim = 'prs'
         else:
             self.uptake.loc[:, 'Avg_MixDepth'] = (
                 self.uptake.loc[:, 'Avg_MixDepth'] * mixdepth_factor)
 
         for wnum, w in enumerate(windows[1:]):
-            is_e = self.uptake.loc[windows[:wnum + 1], 'e'].notnull()
-            is_f = self.uptake.loc[windows[:wnum + 1], 'f'].notnull()
+            is_e = pd.Series([False] * len(self.uptake),
+                             index=self.uptake.index, dtype=bool)
+            is_e.loc[windows[:wnum + 1]] = (
+                self.uptake.loc[windows[:wnum + 1], 'e'].notnull())
+
+            is_f = pd.Series([False] * len(self.uptake),
+                             index=self.uptake.index, dtype=bool)
+            is_f.loc[windows[:wnum + 1]] = (
+                self.uptake.loc[windows[:wnum + 1], 'f'].notnull())
 
             if self.uptake.loc[w, 'dq_initial'] > evaporation:
                 # set dq
                 self.uptake.loc[w, 'dq'] = self.uptake.loc[w, 'dq_initial']
 
                 # Adjust previous fractions
-                self.uptake[is_e].loc[:, 'e'] = (
-                    self.uptake[is_e].loc[:, 'dq'] / self.uptake.loc[w, 'q'])
+                self.uptake.loc[is_e, 'e'] = (
+                    self.uptake.loc[is_e, 'dq'] / self.uptake.loc[w, 'q'])
 
-                self.uptake[is_f].loc[:, 'f'] = (
-                    self.uptake[is_f].loc[:, 'dq'] / self.uptake.loc[w, 'q'])
+                self.uptake.loc[is_f, 'f'] = (
+                    self.uptake.loc[is_f, 'dq'] / self.uptake.loc[w, 'q'])
 
                 is_surface = False
                 if vlim is 'prs':
@@ -342,11 +357,11 @@ class Trajectory(HyPath):
                                                 self.uptake.loc[w, 'q'])
                 # Set new e_total (is_surface) or f_total
                 self.uptake.loc[w, fracs[1]] = (
-                    self.uptake[fracs[2]].loc[:, 'dq'].sum() /
+                    self.uptake.loc[fracs[2], 'dq'].sum() /
                     self.uptake.loc[w, 'q'])
                 # set new f_total (is_surface) or e_total
                 self.uptake.loc[w, fracs[3]] = (
-                    (self.uptake[fracs[4]].loc[:, 'dq'].sum() +
+                    (self.uptake.loc[fracs[4], 'dq'].sum() +
                      self.uptake.loc[w, 'dq']) / self.uptake.loc[w, 'q'])
                 # Set new unknown fraction
                 self.uptake.loc[w, 'unknown_frac'] = 1.0 - (
@@ -364,12 +379,12 @@ class Trajectory(HyPath):
 
                 if self.uptake.loc[w, 'dq_initial'] < precipitation:
                     # Adjust previous fractions
-                    self.uptake[is_f].loc[:, 'dq'] = (
-                        self.uptake[is_f].loc[:, 'f'] *
+                    self.uptake.loc[is_f, 'dq'] = (
+                        self.uptake.loc[is_f, 'f'] *
                         self.uptake.loc[w, 'q'])
 
-                    self.uptake[is_e].loc[:, 'dq'] = (
-                        self.uptake[is_e].loc[:, 'e'] *
+                    self.uptake.loc[is_e, 'dq'] = (
+                        self.uptake.loc[is_e, 'e'] *
                         self.uptake.loc[w, 'q'])
 
     def load_reversetraj(self, reverse_dir, fname_end='REVERSE'):
