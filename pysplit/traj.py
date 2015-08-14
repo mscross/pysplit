@@ -173,7 +173,7 @@ class Trajectory(HyPath):
     def calculate_moistureflux(self, humidity='Specific_Humidity'):
         """
         Calculate ``Moisture_Flux`` between each timestep using
-        ``Distance`` and the indicated humidity type (``humidity``).
+        ``Distance_ptp`` and the indicated humidity type (``humidity``).
 
         Parameters
         ----------
@@ -186,11 +186,11 @@ class Trajectory(HyPath):
         if self.get(humidity) is None:
             print('Calculate ', humidity, ' first!')
         else:
-            if self.get('Distance') is None:
+            if self.get('Distance_ptp') is None:
                 self.calculate_distance()
 
             self['Moisture_Flux'] = None
-            self.loc[self.index[1]:, 'Moisture_Flux'] = ((self['Distance'] /
+            self.loc[self.index[1]:, 'Moisture_Flux'] = ((self['Distance_ptp']/
                                                           3600).iloc[1:] *
                                                          self.get(
                                                          humidity).iloc[:-1])
@@ -238,6 +238,7 @@ class Trajectory(HyPath):
 
         # Gives 164, 158, 152, 146 ... 0 etc
         windows = self.index[::-interval]
+        print('Windows', windows)
 
         self.uptake = gp.GeoDataFrame(data=np.empty((windows.size, 13)),
                                       columns=['DateTime', 'Timestep',
@@ -250,6 +251,7 @@ class Trajectory(HyPath):
 
         # Get all the timesteps, set as index
         self.uptake.loc[:, 'Timestep'] = windows[::-1]
+        print('Timestep\n', self.uptake['Timestep'])
         self.uptake.loc.set_index('Timestep', inplace=True)
 
         # fill up with NaNs
@@ -257,6 +259,7 @@ class Trajectory(HyPath):
 
         # (fake) midpoint
         mdpt = len(windows) // 2
+        print('Midpoint', mdpt)
 
         # Average over the whole window
         for w in windows:
@@ -409,10 +412,10 @@ class Trajectory(HyPath):
         Estimate integration error.
 
         """
-        if self.get('Distance_r') is None:
+        if self.get('Distance_ptp_r') is None:
             raise AttributeError('Reverse trajectory must be loaded first!')
 
-        if self.get('Distance') is None:
+        if self.get('Distance_ptp') is None:
             self.calculate_distance()
 
         site_distance = self.distance_between2pts(self.path.coords[0],

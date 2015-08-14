@@ -44,8 +44,15 @@ class HyPath(gp.GeoDataFrame):
 
     def calculate_vector(self, reverse=False):
         """
-        Calculates bearings between each timestep, then the circular mean
-        of those bearings.
+        Calculate the following in radians:
+            -The bearings from origin to each timestep
+            -The bearings between timesteps (closer to farther from origin)
+            -The circular mean of the origin-timestep bearings
+
+        Each timestep contains the bearing needed to get to that timestep from
+        the origin (``bearings_from_origin`` or ``bearings_from_origin_r``)
+        or to get to that timestep from the previous timestep (``bearings_ptp``
+        or ``bearings_ptp_r``)
 
         Parameters
         ----------
@@ -55,34 +62,50 @@ class HyPath(gp.GeoDataFrame):
             ``self.load_reversetraj()``
 
         """
-        labels = {False: ['bearings', 'bearings_rad', 'circular_mean'],
-                  True: ['bearings_r', 'bearings_rad_r', 'circular_mean_r']}
+        labels = {False: ['bearings_from_origin', 'bearings_ptp',
+                          'circular_mean'],
+                  True: ['bearings_from_origin_r', 'bearings_ptp_r',
+                         'circular_mean_r']}
 
         which_traj = {False: 'path',
                       True: 'path_r'}
 
-        lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
+        try:
+            lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
+        except:
+            raise AttributeError('Reversed trajectory is not loaded!')
 
         a = np.cos(lat) * np.sin(lon - lon[0])
         b = (math.cos(lat[0]) * np.sin(lat) -
              math.sin(lat[0]) * np.cos(lat) * np.cos(lon - lon[0]))
 
-        bearings_rad = np.arctan2(a, b)
-        # Set bearings in degrees column
-        self[labels[reverse][0]] = np.degrees(bearings_rad)
+        bearings_fo = np.arctan2(a, b)
 
-        x = np.mean(np.cos(bearings_rad))
-        y = np.mean(np.sin(bearings_rad))
+        # Set bearings from origin column
+        self[labels[reverse][0]] = bearings_fo
 
-        # Bearings in radians column
-        self[labels[reverse][1]] = bearings_rad
-        setattr(self, labels[reverse][2], math.degrees(math.atan2(y, x)))
+        x = np.mean(np.cos(bearings_fo))
+        y = np.mean(np.sin(bearings_fo))
+
+        # Calculate circular means
+        setattr(self, labels[reverse][2], math.atan2(y, x))
+
+        a = np.cos(lat[1:]) * np.sin(lon[1:] - lon[:-1])
+        b = (np.cos(lat[:-1]) * np.sin(lat[1:]) -
+             np.sin(lat[:-1]) * np.cos(lat[1:]) * np.cos(lon[1:] - lon[:-1]))
+
+        bearings_ptp = np.arctan2(a, b)
+
+        # point to point bearings column, first entry is 0
+        self[labels[reverse][1]] = 0.0
+        self.loc[self.index[1:], labels[reverse][1]] = bearings_ptp
 
     def calculate_distance(self, reverse=False):
         """
-        Calculate distance in meters between each timepoint and the
-        cumulative along-path distance in meters between each timestep
-        and the launch point.
+        Calculate the following great circle distances in meters:
+            -Between each timepoint
+            -Cumulative along-path travel distance from origin
+            -Distance between origin and point
 
         Parameters
         ----------
@@ -94,10 +117,12 @@ class HyPath(gp.GeoDataFrame):
         """
 
         which_traj = {False: 'path',
-                      True: 'self.''path_r'}
+                      True: 'path_r'}
 
-        labels = {False: ['Distance', 'Cumulative_Dist'],
-                  True: ['Distance_r', 'Cumulative_Dist_r']}
+        labels = {False: ['Distance_ptp', 'Cumulative_Dist',
+                          'Dist_from_origin'],
+                  True: ['Distance_ptp_r', 'Cumulative_Dist_r',
+                         'Dist_from_origin_r']}
 
         lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
 
@@ -107,9 +132,17 @@ class HyPath(gp.GeoDataFrame):
         distance[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[:-1]) +
                                   np.cos(lat[1:]) * np.cos(lat[:-1]) *
                                   np.cos(lon[:-1] - lon[1:])) * 6371) * 1000
+
         self[labels[reverse][0]] = distance
 
         self[labels[reverse][1]] = np.cumsum(distance)
+
+        dist = (np.arccos(np.sin(lat[1:]) * np.sin(lat[0]) +
+                          np.cos(lat[1:]) * np.cos(lat[0]) *
+                          np.cos(lon[0] - lon[1:])) * 6371) * 1000
+
+        self[labels[reverse][2]] = 0.0
+        self.loc[self.index[1:], labels[reverse][2]] = dist
 
     def distance_between2pts(self, coord0, coord1):
         """
