@@ -77,50 +77,50 @@ def make_trajectorygroup(signature):
     return trajectories
 
 
-def spawn_clusters(traj_group, cfile, endpoint_dir):
+def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
     """
-    Acquires the distribution of ``Trajectories`` from ``cfile`` and
-    creates new ``Cluster`` and ``ClusterGroup`` instances based
-    on that information
+    Acquires the distribution of ``Trajectories`` in ``trajgroup``
+    from ``distribution_file`` and creates new ``Cluster`` and ``ClusterGroup``
+    instances based on that information
 
     Parameters
     ----------
-    cfile : string
-        The filename of the 'CLUSLIST_#'' file that indicates
+    distribution_file : string
+        The name of the 'CLUSLIST_#' file that indicates
         ``Trajectory`` distribution among ``Clusters``
 
     Returns
     -------
     clustergroup : `ClusterGroup` instance
         A group of `Clusters` derived from original ``TrajectoryGroup``
-        (``traj_group``).  A ``ClusterGroup`` consists of a list of ``Cluster``
+        (``trajgroup``).  A ``ClusterGroup`` consists of a list of ``Cluster``
         objects, which are specialized ``TrajectoryGroup`` objects.
 
     """
 
-    traj_inds, totalclusters = hh.load_clusterfile(cfile)
+    traj_inds, totalclusters = hh.load_clusteringresults(distribution_file)
 
     all_clusters = []
 
     for i in range(0, totalclusters):
         # Get cluster number and pick out member trajectories
         cluster_num = i + 1
-        trajlist = [traj_group.trajectories[j] for j in traj_inds[i]]
+        trajlist = [trajgroup.trajectories[j] for j in traj_inds[i]]
 
         # Get the cluster path
         endpt_fname = ('C' + str(cluster_num) + '_' +
                        str(totalclusters) + 'mean.tdump')
         endpt_file = os.path.join(endpoint_dir, endpt_fname)
-        data, header, _ = hh.load_hysplitfile(endpt_file)
-
-        latitude = data[0][:, header.index('Latitude')]
-        longitude = data[0][:, header.index('Longitude')]
+        data, pathdata, header, datetime, _ = hh.load_hysplitfile(endpt_file)
 
         # Make sure longitudes are -180 to 180
-        longitude = np.where(longitude > 180.0, longitude - 360.0, longitude)
+        pathdata[:, 1] = np.where(pathdata[:, 1] > 180.0,
+                                  pathdata[:, 1] - 360.0,
+                                  pathdata[:, 1])
 
         # Make cluster
-        clusterobj = Cluster(trajlist, cluster_num, latitude, longitude)
+        clusterobj = Cluster(data, pathdata, datetime, header, trajlist,
+                             cluster_num)
 
         all_clusters.append(clusterobj)
 

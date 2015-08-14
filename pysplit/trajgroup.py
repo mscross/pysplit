@@ -71,14 +71,14 @@ class TrajectoryGroup(HyGroup):
 
         """
 
-        infile = open(os.path.join(infile_dir, 'INFILE'), 'w')
+        with open(os.path.join(infile_dir, 'INFILE'), 'w') as infile:
 
-        for traj in self:
-            try:
-                output = str(traj.cfullpath)
-            except:
-                output = str(traj.fullpath)
+            for traj in self:
+                try:
+                    output = traj.cfullpath
+                except:
+                    output = traj.fullpath
 
-            output = output.replace('\\', '/')
-            infile.writelines(output + '\n')
-            infile.flush()
+                output = output.replace('\\', '/')
+                infile.writelines(output + '\n')
+                infile.flush()

@@ -189,7 +189,7 @@ def trajsplit(hydata, pathdata):
     return split_hydata, split_pathdata
 
 
-def load_clusterfile(clusterfilename):
+def load_clusteringresults(clusterfilename):
     """
     Load a 'CLUSLIST_#' file into an array
 
@@ -213,54 +213,40 @@ def load_clusterfile(clusterfilename):
     """
 
     orig_dir = os.getcwd()
-    clusterfiledata = []
 
     try:
         head, tail = os.path.split(clusterfilename)
 
         os.chdir(head)
 
-        clusterfile = open(tail, 'r')
+        with open(tail, 'r') as clusterfile:
+            contents = clusterfile.readlines()
+            clusterinfo = np.empty((len(contents)))
+            traj_inds = np.empty((len(contents)))
 
-        # Read in clustering information
-        while True:
-            line = clusterfile.readline()
-            if line == '':
-                break
+            for ind, line in enumerate(contents):
 
-            dataline = line.split()
+                data = [int(x) for x in line.split()[:-1]]
+                clusterinfo[ind] = data[0]
+                traj_inds[ind] = data[-1]
 
-            # Collect cluster number and trajectory number
-            dataline = [dataline[0]] + [dataline[-2]]
-            clusterfiledata.append(dataline)
+        uniqueclusters = np.unique(clusterinfo)
+        totalclusters = np.max(clusterinfo)
 
-        # Stack lines into an array
-        filearray = np.vstack(clusterfiledata)
-
-        clusternums = filearray[:, 0].astype(int)
-
-        # Find unique cluster numbers and their total number
-        uniqueclusters = np.unique(clusternums)
-        totalclusters = np.max(clusternums)
+        # Fix off by one in trajectory indicies
+        traj_inds = traj_inds - 1
 
         # Get the indices of the first occurrence of each unique cluster number
         first_occurrence = []
         for u in uniqueclusters:
-            first_occurrence.append(np.nonzero(clusternums == u)[0][0])
+            first_occurrence.append(np.nonzero(clusterinfo == u)[0][0])
 
         # Split into separate arrays at the first occurrences
         # First occurrence of first cluster is not considered,
         # since it is zero and will result in an empty array
-        clusterarray_list = np.vsplit(filearray, first_occurrence[1:])
-
-        # For each cluster, create a list of indices corresponding to the
-        # constituent trajectories
-        traj_inds = []
-        for cluster in clusterarray_list:
-            inds = [int(i) - 1 for i in cluster[:, 1]]
-            traj_inds.append(inds)
+        cluster_trajlist = np.split(traj_inds, first_occurrence[1:])
 
     finally:
         os.chdir(orig_dir)
 
-    return traj_inds, totalclusters
+    return cluster_trajlist, totalclusters
