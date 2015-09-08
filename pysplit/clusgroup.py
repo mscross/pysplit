@@ -61,16 +61,16 @@ class Cluster(HyPath, HyGroup):
 
         """
 
-        HyPath.set_vector(self)
+        HyPath.calculate_vector(self)
 
-    def set_distance(self):
+    def calculate_distance(self):
         """
         Calculate the distance between timesteps fo the ``Cluster`` path and
             the cumulative distance at each time step
 
         """
 
-        HyPath.set_distance(self)
+        HyPath.calculate_distance(self)
 
 
 class ClusterGroup(object):
@@ -92,7 +92,7 @@ class ClusterGroup(object):
 
         self.clustercount = len(clusters)
 
-        self.trajcount = sum([len(c.trajectories) for c in self.clusters])
+        self.trajcount = sum([c.trajcount for c in self.clusters])
 
     def __getitem__(self, index):
         """
