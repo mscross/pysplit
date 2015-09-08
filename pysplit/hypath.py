@@ -23,7 +23,7 @@ class HyPath(gp.GeoDataFrame):
             The data array corresponding to the along-path data of a
             single HYSPLIT trajectory.
         pathdata : (M, 3) ndarray of floats
-            The latitude, longitude, and altitude information corresponding
+            The longitude, latitude, and altitude information corresponding
             to ``alongpath``.
         datetime : (M) pandas.DatetimeIndex
             The dates and times corresponding to each timestep of
@@ -71,7 +71,7 @@ class HyPath(gp.GeoDataFrame):
                       True: 'path_r'}
 
         try:
-            lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
+            lon, lat = np.radians(getattr(self, which_traj[reverse]).xy)
         except:
             raise AttributeError('Reversed trajectory is not loaded!')
 
@@ -124,7 +124,7 @@ class HyPath(gp.GeoDataFrame):
                   True: ['Distance_ptp_r', 'Cumulative_Dist_r',
                          'Dist_from_origin_r']}
 
-        lat, lon = np.radians(getattr(self, which_traj[reverse]).xy)
+        lon, lat = np.radians(getattr(self, which_traj[reverse]).xy)
 
         distance = np.empty((lat.size))
 

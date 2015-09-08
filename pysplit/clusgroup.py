@@ -33,7 +33,7 @@ class Cluster(HyPath, HyGroup):
         # Initializes self.trajectories, self.trajcount, and self.directory
         HyGroup.__init__(self, trajectories)
 
-        self.start_longitude = self.trajectories[0].longitude[0]
+        self.start_longitude = self.trajectories[0].loc[0, 'geometry'].x
         self.clusternumber = cluster_number
 
     def addgroups(self, other):

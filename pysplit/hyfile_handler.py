@@ -89,7 +89,8 @@ def load_hysplitfile(filename):
         skip = False
         atdata = False
 
-        for ind, line in enumerate(contents[:-1]):
+        # Entire contents because otherwise it misses last line
+        for ind, line in enumerate(contents):
             if skip:
                 skip = False
                 continue
@@ -113,11 +114,9 @@ def load_hysplitfile(filename):
                 if 'BACKWARD' in line:
                     freq = '-1H'
                     date0 = contents[ind + 1].split()[:4]
-                    dt_key = 'end'
                 else:
                     freq = 'H'
                     date0 = contents[ind + 1].split()[:4]
-                    dt_key = 'start'
                 continue
 
             # PRESSURE happens second
@@ -144,8 +143,10 @@ def load_hysplitfile(filename):
              "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in date0]) +
              '0000')
 
-    datetime = pd.date_range(**{dt_key: date0,
-                                'freq': freq, 'periods': flen})
+    datetime = pd.date_range(date0, freq=freq, periods=flen)
+    # Get pathdata in x, y, z from lats (y), lons (x), z
+    flip = np.array([1,0,2])
+    pathdata = pathdata[:, flip]
 
     # Split hydata into individual trajectories (in case there are multiple)
     multiple_traj = False
@@ -231,7 +232,7 @@ def load_clusteringresults(clusterfilename):
                 traj_inds[ind] = data[-1]
 
         uniqueclusters = np.unique(clusterinfo)
-        totalclusters = np.max(clusterinfo)
+        totalclusters = int(np.max(clusterinfo))
 
         # Fix off by one in trajectory indicies
         traj_inds = traj_inds - 1

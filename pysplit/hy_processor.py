@@ -105,7 +105,7 @@ def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
     for i in range(0, totalclusters):
         # Get cluster number and pick out member trajectories
         cluster_num = i + 1
-        trajlist = [trajgroup.trajectories[j] for j in traj_inds[i]]
+        trajlist = [trajgroup.trajectories[int(j)] for j in traj_inds[i]]
 
         # Get the cluster path
         endpt_fname = ('C' + str(cluster_num) + '_' +

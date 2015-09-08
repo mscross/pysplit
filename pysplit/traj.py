@@ -26,7 +26,7 @@ class Trajectory(HyPath):
             The data array corresponding to the along-path data of a
             single HYSPLIT trajectory.
         pathdata : (M, 3) ndarray of floats
-            The latitude, longitude, and altitude information corresponding
+            The longitude, latitude, and altitude information corresponding
             to ``trajdata``.
         datetime : (M) pandas.DatetimeIndex
             The dates and times corresponding to each timestep of
