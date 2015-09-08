@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import pandas as pd
 import os
@@ -77,10 +77,7 @@ def load_hysplitfile(filename):
     """
     # Every header- first part
     header = ['Parcel Number',
-              'Time step (hr)',
-              'Latitude',
-              'Longitude',
-              'Altitude']
+              'Timestep']
 
     with open(filename, 'r') as hyfile:
 
@@ -92,7 +89,8 @@ def load_hysplitfile(filename):
         skip = False
         atdata = False
 
-        for ind, line in enumerate(contents[:-1]):
+        # Entire contents because otherwise it misses last line
+        for ind, line in enumerate(contents):
             if skip:
                 skip = False
                 continue
@@ -104,7 +102,8 @@ def load_hysplitfile(filename):
                     skip = True
 
                 del data[1:8]
-                hydata[arr_ind, :] = data
+                hydata[arr_ind, :] = data[:2] + data[5:]
+                pathdata[arr_ind, :] = data[2:5]
                 arr_ind += 1
                 continue
 
@@ -114,12 +113,10 @@ def load_hysplitfile(filename):
                 # print flen
                 if 'BACKWARD' in line:
                     freq = '-1H'
-                    startdate = contents[ind + 1].split()[:4]
-                    dt_key = 'end'
+                    date0 = contents[ind + 1].split()[:4]
                 else:
                     freq = 'H'
-                    startdate = contents[ind + 1].split()[:4]
-                    dt_key = 'start'
+                    date0 = contents[ind + 1].split()[:4]
                 continue
 
             # PRESSURE happens second
@@ -136,26 +133,31 @@ def load_hysplitfile(filename):
                     flen /= 2
 
                 # Initialize empty data array
-                hydata = np.empty((flen, columns - 2))
+                hydata = np.empty((flen, columns - 10))
+                pathdata = np.empty((flen, 3))
                 atdata = True
                 arr_ind = 0
                 continue
 
-    startdate = "20" + "{0:02}{1:02}{2:02}{3:02}".format(*startdate) + '0000'
+    date0 = ("20" +
+             "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in date0]) +
+             '0000')
 
-    datetime = pd.date_range(**{dt_key: startdate,
-                                'freq':freq, 'periods':flen})
+    datetime = pd.date_range(date0, freq=freq, periods=flen)
+    # Get pathdata in x, y, z from lats (y), lons (x), z
+    flip = np.array([1,0,2])
+    pathdata = pathdata[:, flip]
 
     # Split hydata into individual trajectories (in case there are multiple)
     multiple_traj = False
     if 2 in hydata[:, 0]:
-        hydata = trajsplit(hydata)
+        hydata, pathdata = trajsplit(hydata, pathdata)
         multiple_traj = True
 
-    return hydata, header, datetime, multiple_traj
+    return hydata, pathdata, header, datetime, multiple_traj
 
 
-def trajsplit(hydata):
+def trajsplit(hydata, pathdata):
     """
     Splits an array of hysplit data into list of unique trajectory arrays
 
@@ -179,14 +181,16 @@ def trajsplit(hydata):
     traj_id = hydata[:, 0]
     sorted_indices = np.argsort(traj_id, kind='mergesort')
     sorted_hydata = hydata[sorted_indices, :]
+    sorted_pathdata = pathdata[sorted_indices, :]
 
     # Split `hydata` into a list of arrays of three equal sizes
     split_hydata = np.split(sorted_hydata, unique_traj.size)
+    split_pathdata = np.split(sorted_pathdata, unique_traj.size)
 
-    return split_hydata
+    return split_hydata, split_pathdata
 
 
-def load_clusterfile(clusterfilename):
+def load_clusteringresults(clusterfilename):
     """
     Load a 'CLUSLIST_#' file into an array
 
@@ -210,54 +214,40 @@ def load_clusterfile(clusterfilename):
     """
 
     orig_dir = os.getcwd()
-    clusterfiledata = []
 
     try:
         head, tail = os.path.split(clusterfilename)
 
         os.chdir(head)
 
-        clusterfile = open(tail, 'r')
+        with open(tail, 'r') as clusterfile:
+            contents = clusterfile.readlines()
+            clusterinfo = np.empty((len(contents)))
+            traj_inds = np.empty((len(contents)))
 
-        # Read in clustering information
-        while True:
-            line = clusterfile.readline()
-            if line == '':
-                break
+            for ind, line in enumerate(contents):
 
-            dataline = line.split()
+                data = [int(x) for x in line.split()[:-1]]
+                clusterinfo[ind] = data[0]
+                traj_inds[ind] = data[-1]
 
-            # Collect cluster number and trajectory number
-            dataline = [dataline[0]] + [dataline[-2]]
-            clusterfiledata.append(dataline)
+        uniqueclusters = np.unique(clusterinfo)
+        totalclusters = int(np.max(clusterinfo))
 
-        # Stack lines into an array
-        filearray = np.vstack(clusterfiledata)
-
-        clusternums = filearray[:, 0].astype(int)
-
-        # Find unique cluster numbers and their total number
-        uniqueclusters = np.unique(clusternums)
-        totalclusters = np.max(clusternums)
+        # Fix off by one in trajectory indicies
+        traj_inds = traj_inds - 1
 
         # Get the indices of the first occurrence of each unique cluster number
         first_occurrence = []
         for u in uniqueclusters:
-            first_occurrence.append(np.nonzero(clusternums == u)[0][0])
+            first_occurrence.append(np.nonzero(clusterinfo == u)[0][0])
 
         # Split into separate arrays at the first occurrences
         # First occurrence of first cluster is not considered,
         # since it is zero and will result in an empty array
-        clusterarray_list = np.vsplit(filearray, first_occurrence[1:])
-
-        # For each cluster, create a list of indices corresponding to the
-        # constituent trajectories
-        traj_inds = []
-        for cluster in clusterarray_list:
-            inds = [int(i) - 1 for i in cluster[:, 1]]
-            traj_inds.append(inds)
+        cluster_trajlist = np.split(traj_inds, first_occurrence[1:])
 
     finally:
         os.chdir(orig_dir)
 
-    return traj_inds, totalclusters
+    return cluster_trajlist, totalclusters

@@ -1,11 +1,11 @@
-from __future__ import division
+from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
 import matplotlib.colors as clr
 import numpy as np
 
 
-def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
+def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
                  edgecolor='none', size=25, sizedata=None, cnormalize=None,
                  snormalize=None, vmin=None, vmax=None, levels=11, **kwargs):
     """
@@ -19,7 +19,7 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
         X-coordinates of ``data`` in decimal degrees
     lats : 1D ndarray of floats, ints
         Y-coordinates of ``data`` in decimal degrees
-    cavemap : ``Basemap`` instance
+    hymap : ``Basemap`` instance
         Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
         class
     zorder : int
@@ -67,9 +67,9 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
     msg = ('Use `cbar.ax.set_yticklabels()` ' +
            'or cbar.ax.set_xticklabels()` to change tick labels')
 
-    transform_dict = {'sqrt' : np.sqrt,
-                      'log'  : np.log10,
-                      'ln'   : np.log}
+    transform_dict = {'sqrt': np.sqrt,
+                      'log': np.log10,
+                      'ln': np.log}
 
     if cnormalize is 'boundary':
         if vmin is None:
@@ -84,10 +84,10 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
         norm = clr.LogNorm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'ln':
         data = np.log(data)
-        print msg, '\nnatural log normalization'
+        print(msg, '\nnatural log normalization')
     elif cnormalize is 'sqrt':
         data = np.sqrt(data)
-        print msg, '\nsqrt normalization'
+        print(msg, '\nsqrt normalization')
     else:
         try:
             norm = clr.PowerNorm(cnormalize, vmin=vmin, vmax=vmax)
@@ -99,21 +99,21 @@ def traj_scatter(data, lons, lats, cavemap, zorder=19, colormap=plt.cm.Blues,
             sizedata = transform_dict[snormalize](sizedata)
         size = sizedata * size
 
-    cm = cavemap.scatter(lons, lats, c=data, s=size, cmap=colormap,
-                         vmin=vmin, vmax=vmax, zorder=zorder,
-                         edgecolor=edgecolor, norm=norm, latlon=True, **kwargs)
+    cm = hymap.scatter(lons, lats, c=data, s=size, cmap=colormap,
+                       vmin=vmin, vmax=vmax, zorder=zorder,
+                       edgecolor=edgecolor, norm=norm, latlon=True, **kwargs)
 
     return cm
 
 
-def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
+def traj_path(hymap, lons, lats, color, lw, marker=None, linestyle='-',
               markeredgecolor='none', zorder=19, **kwargs):
     """
     Line plot of ``Trajectory`` or ``cluster`` path
 
     Parameters
     ----------
-    cavemap : Basemap instance
+    hymap : Basemap instance
         Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
         class
     lons : 1D ndarray of floats, ints
@@ -138,12 +138,12 @@ def traj_path(cavemap, lons, lats, color, lw, marker=None, linestyle='-',
 
     """
 
-    cavemap.plot(lons, lats, color, linewidth=lw, linestyle=linestyle,
-                 marker=marker, latlon=True, zorder=zorder,
-                 markeredgecolor=markeredgecolor, **kwargs)
+    hymap.plot(lons, lats, color, linewidth=lw, linestyle=linestyle,
+               marker=marker, latlon=True, zorder=zorder,
+               markeredgecolor=markeredgecolor, **kwargs)
 
 
-def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
+def meteo_contouring(hymap, data, longitudes, latitudes, contourf=True,
                      vmin=None, vmax=None, steps=50, levels=None, colors=None,
                      colormap=plt.cm.nipy_spectral, zorder=13, **kwargs):
     """
@@ -151,7 +151,7 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
 
     Parameters
     ----------
-    cavemap : ``Basemap`` instance
+    hymap : ``Basemap`` instance
         Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
         class
     data : (M, N) ndarray of floats
@@ -179,7 +179,7 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
     colormap : ``matplotlib`` colormap
         Default ``plt.cm.Blues``.  Any ``matplotlib`` colormap.
     zorder : int
-        Default 13.  Zorder of ``data`` on ``cavemap``.
+        Default 13.  Zorder of ``data`` on ``hymap``.
     **kwargs
         Passed to ``Basemap.contour()`` then ``Axes.contour()``
         (or ``Axes.contourf()``)
@@ -207,13 +207,13 @@ def meteo_contouring(cavemap, data, longitudes, latitudes, contourf=True,
         longitudes, latitudes = np.meshgrid(longitudes, latitudes)
 
     if contourf:
-        cm = cavemap.contourf(longitudes, latitudes, data, zorder=zorder,
-                              cmap=colormap, levels=levels, latlon=True,
-                              colors=colors, **kwargs)
+        cm = hymap.contourf(longitudes, latitudes, data, zorder=zorder,
+                            cmap=colormap, levels=levels, latlon=True,
+                            colors=colors, **kwargs)
     else:
-        cm = cavemap.contour(longitudes, latitudes, data, zorder=zorder,
-                             levels=levels, colors=colors, latlon=True,
-                             cmap=colormap, **kwargs)
+        cm = hymap.contour(longitudes, latitudes, data, zorder=zorder,
+                           levels=levels, colors=colors, latlon=True,
+                           cmap=colormap, **kwargs)
 
     return cm
 

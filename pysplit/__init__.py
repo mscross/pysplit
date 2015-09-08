@@ -2,9 +2,8 @@
 PySPLIT package containing tools for automatically
 generating trajectories, performing moisture uptake analyses,
 enhancing the HYSPLIT cluster analysis experience,
-and visualizing trajectories, trajectory clusters,
-meteorological data along trajectories, and meteorological
-data from hdf and grib files.
+and visualizing trajectories, trajectory clusters, and
+meteorological data along trajectories.
 
 """
 
@@ -29,41 +28,11 @@ __all__ = ['Trajectory',
            'load_hysplitfile',
            'trajsplit',
            'load_clusterfile',
-           'tracemean_vector',
-           'great_circle_bearing',
-           'circular_means',
-           'distance_overearth',
-           'sum_distance',
-           'find_destination',
-           'convert_mi2km',
-           'convert_km2mi',
-           'convert_w2q',
-           'convert_q2w',
-           'convert_w2rh',
-           'convert_rh2w',
-           'geographic_midpt',
-           'grid_data',
-           'maxmin_diff',
            'generate_trajectories',
            'forwards_and_backwards',
            'clip_traj',
            'try_to_remove',
-           'meteofile_lister',
-           'get_bandnum',
-           'getsurface_getvar',
-           'file_lister',
-           'file_dates',
-           'get_gribdata',
-           'get_hdfdata',
-           'averager',
-           'windcontours',
-           'plot_othervar',
-           'windbarbs',
-           'gridlimit',
-           'oni_file_reader',
-           'oni_file_interrogator',
-           'enso_winddata',
-           'enso_vardata']
+           'meteofile_lister']
 
 
 from .traj import Trajectory
@@ -85,20 +54,6 @@ from .hy_processor import make_trajectorygroup, spawn_clusters
 from .hyfile_handler import (hysplit_filelister, load_hysplitfile, trajsplit,
                              load_clusterfile)
 
-from .traj_accessory import (tracemean_vector, great_circle_bearing,
-                             circular_means, distance_overearth, sum_distance,
-                             find_destination, convert_mi2km, convert_q2w,
-                             convert_km2mi, convert_w2q, convert_w2rh,
-                             convert_rh2w, geographic_midpt, grid_data,
-                             maxmin_diff)
-
 from .trajectory_generator import (generate_trajectories,
                                    forwards_and_backwards, clip_traj,
                                    try_to_remove, meteofile_lister)
-
-from .grib_reader import (get_bandnum, getsurface_getvar, file_lister,
-                          file_dates, get_gribdata, get_hdfdata, averager,
-                          windcontours, plot_othervar, windbarbs, gridlimit)
-
-from .enso import (oni_file_reader, oni_file_interrogator, enso_winddata,
-                   enso_vardata)
