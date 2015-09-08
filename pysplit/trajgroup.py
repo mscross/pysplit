@@ -7,6 +7,8 @@ class TrajectoryGroup(HyGroup):
     """
     Class for processing and plotting multiple ``Trajectory`` instances.
 
+    :subclass: of ``HyGroup``.
+
     """
 
     def __init__(self, trajectories):
@@ -63,11 +65,16 @@ class TrajectoryGroup(HyGroup):
     def make_infile(self, infile_dir):
         """
         Take ``Trajectory`` instances in ``TrajectoryGroup`` and write
-        path to infile
+        path to INFILE, used by ``HYSPLIT`` to perform cluster analysis.
 
         If a specific subset of ``Trajectory`` instances is needed,
         create a new ``TrajectoryGroup`` containing only qualifying
-        ``Trajectory`` instances
+        ``Trajectory`` instances.
+
+        Parameters
+        ----------
+        infile_dir : string
+            The directory in which to create INFILE
 
         """
 

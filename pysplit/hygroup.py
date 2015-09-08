@@ -1,12 +1,12 @@
 class HyGroup(object):
     """
-    Superclass for TrajectoryGroups and ClusterGroups
+    :superclass: for ``TrajectoryGroup`` and ``ClusterGroup``.
 
     """
 
     def __init__(self, trajectories):
         """
-        Initialize ``HyPath``.
+        Initialize ``HyGroup``.
 
         Parameters
         ----------

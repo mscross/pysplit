@@ -11,7 +11,8 @@ from hypath import HyPath
 class Trajectory(HyPath):
     """
     Class for processing individual HYSPLIT back trajectories.
-    Subclass of pandas DataFrame.
+
+    :subclass: of ``HyPath``.
 
     """
 
@@ -146,6 +147,7 @@ class Trajectory(HyPath):
             [``Relative_Humidity``|``Specific_Humidity``]
 
         """
+
         if self.get('Mixing_Ratio') is None:
             if self.get(calc_using) is None:
                 raise KeyError(calc_using, ' does not exist.')
@@ -164,6 +166,7 @@ class Trajectory(HyPath):
         ``Relative_Humidity`` as original along-path output variables.
 
         """
+
         if self.get('Specific_Humidity') is None:
             if self.get('Mixing_Ratio') is None:
                 raise KeyError('Calculate mixing ratio first!')
@@ -179,7 +182,8 @@ class Trajectory(HyPath):
         Parameters
         ----------
         humidity :  string
-            The humidity parameter to use to calculate ``Moisture_Flux``.
+            Default 'Specific_Humidity'. The humidity parameter used to
+            calculate ``Moisture_Flux``.
             [``Relative_Humidity``|``Specific_Humidity``]
 
         """
@@ -393,9 +397,21 @@ class Trajectory(HyPath):
         Loads reverse trajectory as a LineString, then puts distance info
         into geodataframe.
 
-        Multi-trajectory files supported
+        Multi-trajectory files supported.
+
+        Parameters
+        ----------
+        reverse_dir : string
+            The location of the reverse trajectories.  Usually a subfolder
+            in ``self.folder``.
+        fname_end : string
+            Default 'REVERSE'. Reverse trajectory filename is ``self.filename``
+            + fname_end.  This keyword included to grandfather in trajectories
+            calculated with previous ``PySPLIT`` versions
+            (``fname_end`` = 'FORWARD').
 
         """
+
         if not hasattr(self, 'path_r'):
 
             if not os.path.isdir(reverse_dir):
@@ -423,11 +439,14 @@ class Trajectory(HyPath):
             # Calculate distance!
             self.calculate_distance(reverse=True)
 
-    def integration_error(self):
+    def calculate_integrationerr(self):
         """
-        Estimate integration error.
+        Estimate integration error based on distance between origin and
+        reverse trajectory endpoint and the total travel distance.  Error is
+        in percent.
 
         """
+
         if self.get('Distance_ptp_r') is None:
             raise AttributeError('Reverse trajectory must be loaded first!')
 
@@ -435,7 +454,8 @@ class Trajectory(HyPath):
             self.calculate_distance()
 
         site_distance = self.distance_between2pts(self.path.coords[0],
-                                                  self.path.coords[-1])
+                                                  self.path_r.coords[-1],
+                                                  in_xy=True)
 
         travel_distance = self.loc[:, ['Cumulative_Dist',
                                        'Cumulative_Dist_r']].iloc[-1].sum()
@@ -450,6 +470,7 @@ class Trajectory(HyPath):
         Only called by ``self.calculate_w()``.
 
         """
+
         sat_vapor = 6.11 * (10.0 ** ((7.5 * self['Temperature_C']) /
                                      (237.7 + self['Temperature_C'])))
 
@@ -465,6 +486,7 @@ class Trajectory(HyPath):
         Only called by ``self.calculate_w()``.
 
         """
+
         q_kg = self['Specific_Humidity'] / 1000
 
         self['Mixing_Ratio'] = (q_kg / (1 - q_kg)) * 1000

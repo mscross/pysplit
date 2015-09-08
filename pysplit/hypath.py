@@ -8,8 +8,8 @@ class HyPath(gp.GeoDataFrame):
     """
     Class for initializing HySPLIT trajectories and cluster paths.
 
-    Subclass of GeoPandas GeoDataFrame.
-    Superclass of Trajectory and Cluster
+    :subclass: of ``GeoPandas`` ``GeoDataFrame``.
+    :superclass: of ``Trajectory`` and ``Cluster``.
 
     """
 
@@ -30,6 +30,7 @@ class HyPath(gp.GeoDataFrame):
             ``alongpath`` and ``pathdata``.
         header : list of N strings
             The column headers for ``alongpath``.
+
         """
 
         pts = [Point(pathdata[i, :]) for i in range(pathdata.shape[0])]
@@ -144,35 +145,44 @@ class HyPath(gp.GeoDataFrame):
         self[labels[reverse][2]] = 0.0
         self.loc[self.index[1:], labels[reverse][2]] = dist
 
-    def distance_between2pts(self, coord0, coord1):
+    def distance_between2pts(self, coord0, coord1, in_xy=False):
         """
         Calculate distance between two sets of coordinates
 
         Parameters
         ----------
         coord0 : tuple of floats
-            Latitude, longitude coordinate pair in degrees
+            Coordinate pair in degrees
         coord1 : tuple of floats
-            Latitude, longitude coordinate pair in degrees
+            Coordinate pair in degrees
+        in_xy : Boolean
+            Default False.  If True, the pair is in (lon, lat)
+            rather than (lat, lon)
 
         Returns
         -------
-        Distance : float
+        distance : float
             Great circle distance in meters.
 
         """
+
         coord0 = np.radians(coord0)
         coord1 = np.radians(coord1)
 
-        distance = (np.arccos(np.sin(coord1[0]) * np.sin(coord0[0]) +
-                              np.cos(coord1[0]) * np.cos(coord0[0]) *
-                              np.cos(coord0[1] - coord1[1])) * 6371) * 1000
+        coord_order = {False: [0, 1],
+                       True: [1, 0]}
+
+        a, b = coord_order[in_xy]
+
+        distance = (np.arccos(np.sin(coord1[a]) * np.sin(coord0[a]) +
+                              np.cos(coord1[a]) * np.cos(coord0[a]) *
+                              np.cos(coord0[b] - coord1[b])) * 6371) * 1000
 
         return distance
 
     def find_destination(self, lat0, lon0, bearing, distance):
         """
-        Find the destination given a bearing and a set of coordinates.
+        Find the destination given a bearing and latitude and longitude.
 
         Parameters
         ----------
@@ -183,6 +193,8 @@ class HyPath(gp.GeoDataFrame):
         bearing : float
             Direction from starting point in radians (``self.circular_mean``
             is in degrees)
+        distance : float
+            Distance from starting point to destination in meters
 
         Returns
         -------

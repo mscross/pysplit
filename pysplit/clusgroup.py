@@ -3,15 +3,40 @@ from trajgroup import TrajectoryGroup
 from hypath import HyPath
 from hygroup import HyGroup
 
+"""
+Procedure
+---------
+In ``PySPLIT``
+1.  Create ``TrajectoryGroup`` with desired set of trajectories
+2.  ``TrajectoryGroup.make_infile()``
+
+In ``HYSPLIT``
+3.  Trajectory --> Special Runs --> Clustering --> Standard
+4.  Adjust clustering parameters, endpoints (trajectory) folder, and
+    working folder (where output will be stored)
+5.  ``Run cluster analysis`` and determine  and set appropriate
+    number of clusters
+6.  Assign trajectories to clusters (``Run``)
+7.  ``Display Means`` and ``Display Clusters``, ``Quit``
+
+In ``PySPLIT``
+8.  ``spawn_clusters(TrajectoryGroup, distribution_file, endpoint_dir)``
+
+This creates a ``ClusterGroup`` populated by ``Cluster``s.
+
+"""
+
 
 class Cluster(HyPath, HyGroup):
     """
-    A special :subclass: of ``HyGroup`` for trajectories that have been
-    clustered together using HYSPLIT's clustering process.
+    A special :subclass: of both ``HyGroup`` and ``HyPath``.
 
-    Contains ``HyGroup`` attributes and functions, but also has
-    ``Trajectory``-like attributes and functions associated with it, since
-    a ``Cluster`` may be represented as a mean trajectory.
+    Clusters contain both trajectories and mean path information.  The mean
+    path and the trajectory composition is determined by ``HySPLIT``.
+
+    Clusters are not iterable over trajectories in order to avoid
+    conflicts with the path data.
+
     """
 
     def __init__(self, clusterdata, pathdata, datetime, clusterheader,
@@ -75,7 +100,8 @@ class Cluster(HyPath, HyGroup):
 
 class ClusterGroup(object):
     """
-    Class for processing and plotting member ``Cluster`` instances
+    Contains all the ``Cluster``s produced in one ``HYSPLIT`` cluster analysis.
+
     """
 
     def __init__(self, clusters):
