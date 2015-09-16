@@ -287,9 +287,10 @@ class Trajectory(HyPath):
 
         for w in windows[1:]:
             (self.uptake.loc[w, 'DateTime'],
-             self.uptake.loc[w, 'Cumulative_Dist'],
-             self.uptake.loc[w, 'q']) = (
-                self.loc[w - mdpt, ['DateTime', 'Cumulative_Dist', humidity]])
+             self.uptake.loc[w, 'Cumulative_Dist']) = (
+                 self.loc[w - mdpt, ['DateTime', 'Cumulative_Dist']])
+
+            self.uptake.loc[w, 'q'] = self.loc[w, humidity]
 
             z = np.mean([pt.z for pt in self.loc[w:w - (interval - 1),
                                                  'geometry']])
