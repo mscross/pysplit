@@ -56,8 +56,9 @@ def check_requirements():
         else:
             package_version = get_package_version(package, package_name)
 
-        if min_version > package_version:
-            dep_err = True
+        if not dep_err:
+            if min_version > package_version:
+                dep_err = True
 
         if dep_err:
             raise ImportError('`%s` version %d.%d or later required.'
