@@ -36,6 +36,7 @@ try:
 except ImportError:
     from distutils.command.build_py import build_py
 
+
 def check_requirements():
     if sys.version_info < PYTHON_VERSION:
         raise SystemExit('Python version %d.%d required; found %d.%d.'
@@ -50,7 +51,7 @@ def check_requirements():
             try:
                 package_version = tuple(
                     pkg_resources.require(package_name)[0].version)
-            except DistributionNotFound:
+            except pkg_resources.DistributionNotFound:
                 dep_err = True
         else:
             package_version = get_package_version(package, package_name)
@@ -61,6 +62,7 @@ def check_requirements():
         if dep_err:
             raise ImportError('`%s` version %d.%d or later required.'
                               % ((package_name, ) + min_version))
+
 
 def get_package_version(package, package_name):
     version = []
@@ -148,7 +150,7 @@ if __name__ == '__main__':
     )
 
 # Not included as this package has no post-install scripts or build req:
-      # entry_points={
-      #     'console_scripts': ['skivi = skimage.scripts.skivi:main'],
-      # },
-      # cmdclass={'build_py': build_py},
+    # entry_points={
+    #     'console_scripts': ['skivi = skimage.scripts.skivi:main'],
+    # },
+    # cmdclass={'build_py': build_py},
