@@ -27,7 +27,7 @@ __all__ = ['Trajectory',
            'hysplit_filelister',
            'load_hysplitfile',
            'trajsplit',
-           'load_clusterfile',
+           'load_clusteringresults',
            'generate_trajectories',
            'forwards_and_backwards',
            'clip_traj',
@@ -52,7 +52,7 @@ from .maplabeller import map_labeller, labelfile_reader, labelfile_generator
 from .hy_processor import make_trajectorygroup, spawn_clusters
 
 from .hyfile_handler import (hysplit_filelister, load_hysplitfile, trajsplit,
-                             load_clusterfile)
+                             load_clusteringresults)
 
 from .trajectory_generator import (generate_trajectories,
                                    forwards_and_backwards, clip_traj,
