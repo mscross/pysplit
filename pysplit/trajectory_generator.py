@@ -17,17 +17,19 @@ def generate_trajectories(basename, hysplit_working, output_dir, meteo_path,
     desired output variables.  It is also recommended to change TRATIO
     in the SETUP file to 0.25 to limit integration error.
 
-    To estimate integration error for back trajectory calculations, forward
-    trajectories must be generated from the start of back trajectories
-    during calculation of back trajectories.
+    To estimate integration error for trajectory calculations, reverse
+    trajectories (which start from the endpoint of the original trajectory
+    and run in the opposite direction) must also be calculated:
+    ``get_reverse``=``True``.
 
     One trajectory per simulation file is output.  Output may be multiline,
     depending on number of variables selected in SETUP (maximum 7 of 9
     may be selected for single-line output).  Multiline output not
-    supported in some applications (clustering).  To cluster multiline
-    output, set ``get_clippedtraj``=``True``.  Clipped trajectories have all
-    data removed except for their path information, so they are single-line
-    output and supported for clustering operations.
+    supported in some applications (clustering).  To enable clustering
+    of multiline output, set ``get_clippedtraj``=``True``.
+    Clipped trajectories have all data removed except for their path
+    information, so they are single-line output and supported for
+    clustering operations.
 
     Parameters
     ----------

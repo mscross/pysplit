@@ -63,16 +63,20 @@ def load_hysplitfile(filename):
 
     Returns
     -------
-    hydata : list of (M, N) ndarrays of floats
-        List of arrays with M time steps and N variables.  Each array
-        represents one trajectory; typically but not always there is one
-        trajectory per file
+    hydata : (M, N) ndarray of floats or list of ndarrays
+        Ndarray with M time steps and N variables representing one trajectory.
+        If there are multiple trajectories in a file, ``multiple_traj`` will
+        be ``True`` and ``hydata`` will be a list of ndarrays, potentially of
+        different sizes.
+    pathdata : (M, 3) ndarray of floats or list of ndarrays
+        The path information in lon, lat, z.  If there are multiple
+        trajectories in a file, ``multiple_traj`` will
+        be ``True`` and ``pathdata`` will be a list of ndarrays.
     header : list of N strings
         The column headers for ``hydata`` arrays.  Used to parse ``hydata``
         into different trajectory attributes
-    filelist : list of identical strings
-        len(filelist)= len(hydata)
-        The filename.  Eventually becomes attribute in ``Trajectory`` object
+    datetime : DateTime index of length M
+    multiple_traj
 
     """
     # Every header- first part
@@ -101,6 +105,8 @@ def load_hysplitfile(filename):
                     data.extend([float(x) for x in contents[ind + 1].split()])
                     skip = True
 
+                # Don't need date/timestep info in each file line
+                # Got the date, time direction from the OMEGA line
                 del data[1:8]
                 hydata[arr_ind, :] = data[:2] + data[5:]
                 pathdata[arr_ind, :] = data[2:5]
@@ -109,6 +115,7 @@ def load_hysplitfile(filename):
 
             # OMEGA happens first
             if 'OMEGA' in line:
+                # Don't count lines before OMEGA in file length flen
                 flen -= ind
                 # print flen
                 if 'BACKWARD' in line:
@@ -129,10 +136,11 @@ def load_hysplitfile(filename):
                 if columns > 20:
                     multiline = True
 
-                    # print(flen /2.)
+                    # Data file is only half as many lines as it looks
                     flen /= 2
 
                 # Initialize empty data array
+                # 10 dropped columns include date, time step, etc
                 hydata = np.empty((flen, columns - 10))
                 pathdata = np.empty((flen, 3))
                 atdata = True
