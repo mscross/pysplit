@@ -28,11 +28,7 @@ __all__ = ['Trajectory',
            'load_hysplitfile',
            'trajsplit',
            'load_clusteringresults',
-           'generate_trajectories',
-           'forwards_and_backwards',
-           'clip_traj',
-           'try_to_remove',
-           'meteofile_lister']
+           'generate_bulktraj']
 
 
 from .traj import Trajectory
@@ -54,6 +50,4 @@ from .hy_processor import make_trajectorygroup, spawn_clusters
 from .hyfile_handler import (hysplit_filelister, load_hysplitfile, trajsplit,
                              load_clusteringresults)
 
-from .trajectory_generator import (generate_trajectories,
-                                   forwards_and_backwards, clip_traj,
-                                   try_to_remove, meteofile_lister)
+from .trajectory_generator import (generate_bulktraj)
