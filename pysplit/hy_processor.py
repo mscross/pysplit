@@ -2,9 +2,9 @@ from __future__ import division, print_function
 import os
 import numpy as np
 import hyfile_handler as hh
-from traj import Trajectory
-from trajgroup import TrajectoryGroup
-from clusgroup import Cluster, ClusterGroup
+from .traj import Trajectory
+from .trajgroup import TrajectoryGroup
+from .clusgroup import Cluster, ClusterGroup
 
 
 def make_trajectorygroup(signature):
@@ -14,11 +14,13 @@ def make_trajectorygroup(signature):
 
     Parameters
     ----------
-    signature : string
+    signature : string or iterable of strings
         Signature shared by a group of HYSPLIT simulation files from one or
         multiple model runs (if multiple, must contain same output variables).
         This is a Bash-style signature, not a real expression.  The `*` char is
-        a wildcard.  Can include an absolute or relative path, or no path.
+        a wildcard. Can include an absolute or relative path, or no path to
+        target the current directory. If ``signature`` is not a string, it is
+        assumed to be an iterable containing path(s) to specifc HYSPLIT files.
 
     Returns
     -------
@@ -27,15 +29,21 @@ def make_trajectorygroup(signature):
         from all simulation files matching ``signature``.
 
     """
-
     # Get list of hysplit files matching signature
-    hyfiles = hh.hysplit_filelister(signature)
+    if not isinstance(signature, str):
+        hyfiles = signature
+        folder, _ = os.path.split(signature[0])
+        clip = True
+    else:
+        hyfiles = hh.hysplit_filelister(signature)
+        folder, _ = os.path.split(signature)
+        clip = False
+
     orig_dir = os.getcwd()
     trajectories = []
 
+    # Wrap in try .. finally to ensure current working directory restored
     try:
-        folder, _ = os.path.split(signature)
-
         os.chdir(folder)
 
         # Sort list of hysplit files by the datestring at the end
@@ -49,6 +57,9 @@ def make_trajectorygroup(signature):
         # Load in the hysplit file data
         # Get lists of the datestrings and filenames of the hysplit files
         for hyfile in hyfiles:
+
+            if clip:
+                hyfile = os.path.split(hyfile)[-1]
 
             data, path, head, datetime, multitraj = hh.load_hysplitfile(hyfile)
 
@@ -72,6 +83,7 @@ def make_trajectorygroup(signature):
         # initialize trajectory group
         trajectories = TrajectoryGroup(trajectories)
     finally:
+        # Restore current working directory no matter what
         os.chdir(orig_dir)
 
     return trajectories
