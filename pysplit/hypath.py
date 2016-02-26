@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import geopandas as gp
+import pandas as pd
 from shapely.geometry import Point, LineString
 
 
@@ -127,23 +128,27 @@ class HyPath(gp.GeoDataFrame):
 
         lon, lat = np.radians(getattr(self, which_traj[reverse]).xy)
 
-        distance = np.empty((lat.size))
+        dist_ptp = np.empty((lat.size))
 
-        distance[0] = 0.0
-        distance[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[:-1]) +
+        dist_ptp[0] = 0.0
+        dist_ptp[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[:-1]) +
                                   np.cos(lat[1:]) * np.cos(lat[:-1]) *
                                   np.cos(lon[:-1] - lon[1:])) * 6371) * 1000
 
-        self[labels[reverse][0]] = distance
+        self[labels[reverse][0]] = pd.Series(dist_ptp,
+            index=np.arange((dist_ptp.size-1)*-1, 1)[::-1])
 
-        self[labels[reverse][1]] = np.cumsum(distance)
+        self[labels[reverse][1]] = np.cumsum(self[labels[reverse][0]])
 
-        dist = (np.arccos(np.sin(lat[1:]) * np.sin(lat[0]) +
-                          np.cos(lat[1:]) * np.cos(lat[0]) *
-                          np.cos(lon[0] - lon[1:])) * 6371) * 1000
+        dist_to0 = np.empty((lat.size))
 
-        self[labels[reverse][2]] = 0.0
-        self.loc[self.index[1:], labels[reverse][2]] = dist
+        dist_to0[0] = 0.0
+        dist_to0[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[0]) +
+                                  np.cos(lat[1:]) * np.cos(lat[0]) *
+                                  np.cos(lon[0] - lon[1:])) * 6371) * 1000
+
+        self[labels[reverse][2]] = pd.Series(dist_to0,
+            index=np.arange((dist_to0.size-1)*-1, 1)[::-1])
 
     def distance_between2pts(self, coord0, coord1, in_xy=False):
         """

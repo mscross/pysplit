@@ -194,7 +194,7 @@ class Trajectory(HyPath):
             if self.get('Distance_ptp') is None:
                 self.calculate_distance()
 
-            self['Moisture_Flux'] = None
+            self['Moisture_Flux'] = pd.Series()
             self.loc[self.index[1]:, 'Moisture_Flux'] = ((self['Distance_ptp']/
                                                           3600).iloc[1:] *
                                                          self.get(

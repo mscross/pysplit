@@ -7,7 +7,8 @@ import numpy as np
 
 def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
                  edgecolor='none', size=25, sizedata=None, cnormalize=None,
-                 snormalize=None, vmin=None, vmax=None, levels=11, **kwargs):
+                 snormalize=None, vmin=None, vmax=None, levels=11,
+                 suppres_printmsg=False, **kwargs):
     """
     Scatter-plot of ``Trajectory``, ``TrajectoryGroup``, or ``Cluster`` data.
 
@@ -61,7 +62,6 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
         in ``PySPLIT`` using ``make_cbar()`` or ``make_cax_cbar()``
 
     """
-
     # cnormalize = str.lower(cnormalize)
     norm = None
     msg = ('Use `cbar.ax.set_yticklabels()` ' +
@@ -84,10 +84,12 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
         norm = clr.LogNorm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'ln':
         data = np.log(data)
-        print(msg, '\nnatural log normalization')
+        if not suppres_printmsg:
+            print(msg, '\nnatural log normalization')
     elif cnormalize is 'sqrt':
         data = np.sqrt(data)
-        print(msg, '\nsqrt normalization')
+        if not suppres_printmsg:
+            print(msg, '\nsqrt normalization')
     else:
         try:
             norm = clr.PowerNorm(cnormalize, vmin=vmin, vmax=vmax)
@@ -109,7 +111,7 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
 def traj_path(hymap, lons, lats, color, lw, marker=None, linestyle='-',
               markeredgecolor='none', zorder=19, **kwargs):
     """
-    Line plot of ``Trajectory`` or ``cluster`` path
+    Line plot of ``Trajectory`` or ``cluster`` path.
 
     Parameters
     ----------
@@ -137,7 +139,6 @@ def traj_path(hymap, lons, lats, color, lw, marker=None, linestyle='-',
         Passed to ``Basemap.plot()`` and ``Axes.plot()``
 
     """
-
     hymap.plot(lons, lats, color, linewidth=lw, linestyle=linestyle,
                marker=marker, latlon=True, zorder=zorder,
                markeredgecolor=markeredgecolor, **kwargs)
@@ -191,7 +192,6 @@ def meteo_contouring(hymap, data, longitudes, latitudes, contourf=True,
         in ``PySPLIT`` using ``make_cbar()`` or ``make_cax_cbar()``
 
     """
-
     if vmin is None:
         vmin = data.min()
     if vmax is None:
@@ -221,6 +221,8 @@ def meteo_contouring(hymap, data, longitudes, latitudes, contourf=True,
 def adjust_contourparams(cm, contours, colors=[None],
                          othercontours_visible=True, **kwargs):
     """
+    Adjust contour parameters.
+
     Shortcut for recoloring particular contours and/or rendering other
     contours invisible.  Can also pass other kwargs to chosen contours.
 
@@ -239,7 +241,6 @@ def adjust_contourparams(cm, contours, colors=[None],
         Collection of keywords for ``contours``.
 
     """
-
     if len(contours) != len(colors):
         colors = [colors[0]] * len(contours)
 
@@ -283,7 +284,6 @@ def make_cbar(data, ax, orientation='horizontal', cbar_size=(20, 1.0),
         The new colorbar
 
     """
-
     # Initialize colorbar
     cbar = plt.colorbar(data, ax=ax, orientation=orientation,
                         aspect=cbar_size[0], shrink=cbar_size[1])
@@ -337,7 +337,6 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal',
         The new colorbar
 
     """
-
     # Initialize cax and colorbar on cax
     cax = fig.add_axes(rect)
     cbar = fig.colorbar(data, cax=cax, orientation=orientation,
@@ -358,8 +357,9 @@ def make_cax_cbar(fig, rect, data, orientation='horizontal',
 def edit_cbar(cbar, divisions=5, cbar_label=None, tick_fs=16, label_fs=18,
               labelpad=24, rotation=0, tick_dir='out', tick_dim=(4, 2)):
     """
-    Make the colorbar pretty.  Adjust fontsizes, add label, get a reasonable
-    number of nice ticks, etc.
+    Make the colorbar pretty.
+
+    Adjust fontsizes, add label, get a reasonable number of nice ticks, etc.
 
     Parameters
     ----------
@@ -384,7 +384,6 @@ def edit_cbar(cbar, divisions=5, cbar_label=None, tick_fs=16, label_fs=18,
         Default (4, 2).  The (length, width) of ``cbar`` ticks
 
     """
-
     # Adjust ticks and tick labels
     if divisions is not None:
         cbar.locator = tk.MaxNLocator(divisions, integer=False)
@@ -405,7 +404,7 @@ def edit_cbar(cbar, divisions=5, cbar_label=None, tick_fs=16, label_fs=18,
 
 def random_colors(number_ofcolors):
     """
-    Generate random RGB tuples
+    Generate random RGB tuples.
 
     Parameters
     ----------
@@ -417,7 +416,6 @@ def random_colors(number_ofcolors):
     colors : list of tuples of floats
         List of ``len(number_ofcolors)``, the requested random colors
     """
-
     color_tmp = np.random.rand(number_ofcolors, 3)
     color_tmp = np.vsplit(color_tmp, number_ofcolors)
     colors = []
