@@ -62,30 +62,35 @@ class TrajectoryGroup(HyGroup):
 
         return new_tg
 
-    def make_infile(self, infile_dir):
+    def pop(self, ind=-1, trajid=None):
         """
-        Take ``Trajectory`` instances in ``TrajectoryGroup`` and write
-        path to INFILE, used by ``HYSPLIT`` to perform cluster analysis.
+        Intercept ``HyGroup.pop()``.
 
-        If a specific subset of ``Trajectory`` instances is needed,
-        create a new ``TrajectoryGroup`` containing only qualifying
-        ``Trajectory`` instances.
+        If a list of ``Trajectory`` instances is returned from
+        ``HyGroup.pop()``, return a new ``TrajectoryGroup``.
 
         Parameters
         ----------
-        infile_dir : string
-            The directory in which to create INFILE
+        ind : int
+            Default -1.  The positional argument of the ``Trajectory``
+            to remove.
+        trajid : string
+            Default None.  The named argument of the ``Trajectory``
+            to remove.  Overrides ``ind`` if not None.
+
+        Returns
+        -------
+        popped : ``Trajectory`` instance or ``TrajectoryGroup``
+            The indicated ``Trajectory`` or a ``TrajectoryGroup`` if multiple
+            trajectories were popped out.  May also be a ``None``
+            if no matching ``Trajectory`` instances were found.
 
         """
+        popped = HyGroup.pop(self, ind, trajid)
 
-        with open(os.path.join(infile_dir, 'INFILE'), 'w') as infile:
+        try:
+            popped = TrajectoryGroup(popped)
+        except:
+            pass
 
-            for traj in self:
-                try:
-                    output = traj.cfullpath
-                except:
-                    output = traj.fullpath
-
-                output = output.replace('\\', '/')
-                infile.writelines(output + '\n')
-                infile.flush()
+        return popped

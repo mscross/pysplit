@@ -97,6 +97,40 @@ class Cluster(HyPath, HyGroup):
 
         HyPath.calculate_distance(self)
 
+    def pop(self, ind=-1, trajid=None):
+        """
+        Intercept ``HyGroup.pop()``.
+
+        If a list of ``Trajectory`` instances is returned from
+        ``HyGroup.pop()``, return a new ``TrajectoryGroup``,
+        NOT a new ``Cluster``.
+
+        Parameters
+        ----------
+        ind : int
+            Default -1.  The positional argument of the ``Trajectory``
+            to remove.
+        trajid : string
+            Default None.  The named argument of the ``Trajectory``
+            to remove.  Overrides ``ind`` if not None.
+
+        Returns
+        -------
+        popped : ``Trajectory`` instance or ``TrajectoryGroup``
+            The indicated ``Trajectory`` or a ``TrajectoryGroup`` if multiple
+            trajectories were popped out.  May also be a ``None``
+            if no matching ``Trajectory`` instances were found.
+
+        """
+        popped = HyGroup.pop(self, ind, trajid)
+
+        try:
+            popped = TrajectoryGroup(popped)
+        except:
+            pass
+
+        return popped
+
 
 class ClusterGroup(object):
     """
