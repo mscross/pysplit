@@ -46,15 +46,11 @@ def check_requirements():
     for package_name, min_version in DEPENDENCIES.items():
         dep_err = False
         try:
-            package = __import__(package_name)
-        except ImportError:
-            try:
-                package_version = tuple(
-                    pkg_resources.require(package_name)[0].version)
-            except pkg_resources.DistributionNotFound:
-                dep_err = True
+            package_version = pkg_resources.require(package_name)[0].version
+        except pkg_resources.DistributionNotFound:
+            dep_err = True
         else:
-            package_version = get_package_version(package, package_name)
+            package_version = get_package_version(package_version)
 
         if not dep_err:
             if min_version > package_version:
@@ -65,20 +61,14 @@ def check_requirements():
                               % ((package_name, ) + min_version))
 
 
-def get_package_version(package, package_name):
+def get_package_version(package_version):
     version = []
-    try:
-        return tuple(pkg_resources.require(package_name)[0].version)
-    except:
-        for version_attr in ('version', 'VERSION', '__version__'):
-            if hasattr(package, version_attr) \
-                    and isinstance(getattr(package, version_attr), str):
-                version_info = getattr(package, version_attr, '')
-                for part in re.split('\D+', version_info):
-                    try:
-                        version.append(int(part))
-                    except ValueError:
-                        pass
+
+    for part in re.split('\D+', package_version):
+        try:
+            version.append(int(part))
+        except ValueError:
+            pass
 
     return tuple(version)
 
