@@ -17,31 +17,59 @@ class HyGroup(object):
             ``Trajectory`` instances that belong to the group
 
         """
-
         self.trajectories = trajectories
         self.trajcount = len(trajectories)
         self.trajids = [traj.trajid for traj in self.trajectories]
 
-    def addgroups(self, other):
+    def __add__(self, other):
         """
-        Create new group from the set of ``Trajectory`` instances
-        in two groups.
+        Add ``HyGroup`` instances.
+
+        Create ``HyGroup`` from the union of two sets of ``Trajectory``
+        instances.
 
         Parameters
         ----------
-        other : ``HyGroup`` or ``HyGroup`` subclass instance
+        other : ``HyGroup`` subclass instance
 
         Returns
         -------
         newgroup : list
-            A list of the unique trajectories from the two groups
+            A list of the unique trajectories from the two groups.
+            Used to make new ``TrajectoryGroup`` instance.
 
         """
-
         set0 = set(self.trajectories)
         set1 = set(other.trajectories)
 
         newgroup = list(set0 | set1)
+
+        return newgroup
+
+    def __sub__(self, other):
+        """
+        Subtract ``HyGroup`` instances.
+
+        Create new ``HyGroup`` from the set difference of two
+        sets of ``Trajectory`` instances.
+
+        Parameters
+        ----------
+        other : ``HyGroup`` subclass instance
+
+        Returns
+        -------
+        newgroup : list
+            A list of the set difference of the trajectories.
+            Has has all the elements of ``self`` with the
+            trajectories of ``other`` removed.  Used to
+            make new ``TrajectoryGroup`` instance.
+
+        """
+        set0 = set(self.trajectories)
+        set1 = set(other.trajectories)
+
+        newgroup = list(set0 - set1)
 
         return newgroup
 
@@ -102,12 +130,12 @@ class HyGroup(object):
         ----------
         infile_dir : string
             The directory in which to create INFILE
+
         use_clippedpath : Boolean
             Default True. Write out path of clipped trajectory
             rather than original trajectory.
 
         """
-
         with open(os.path.join(infile_dir, 'INFILE'), 'w') as infile:
 
             for traj in self:

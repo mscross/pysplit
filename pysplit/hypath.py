@@ -5,11 +5,10 @@ import pandas as pd
 from shapely.geometry import Point, LineString
 
 
-class HyPath(gp.GeoDataFrame):
+class HyPath(object):
     """
     Class for initializing HySPLIT trajectories and cluster paths.
 
-    :subclass: of ``GeoPandas`` ``GeoDataFrame``.
     :superclass: of ``Trajectory`` and ``Cluster``.
 
     """
@@ -33,20 +32,21 @@ class HyPath(gp.GeoDataFrame):
             The column headers for ``alongpath``.
 
         """
-
         pts = [Point(pathdata[i, :]) for i in range(pathdata.shape[0])]
 
-        gp.GeoDataFrame.__init__(self, data=alongpath[:, 1:],
-                                 columns=header[1:], geometry=pts)
+        self.data = gp.GeoDataFrame(data=alongpath[:, 1:],
+                                    columns=header[1:], geometry=pts)
 
         self.path = LineString(pts)
 
-        self['DateTime'] = datetime
-        self.set_index('Timestep', inplace=True, drop=False)
+        self.data['DateTime'] = datetime
+        self.data.set_index('Timestep', inplace=True, drop=False)
 
     def calculate_vector(self, reverse=False):
         """
-        Calculate the following in radians:
+        Calculate vectors in radians.
+
+        Calculates:
             -The bearings from origin to each timestep
             -The bearings between timesteps (closer to farther from origin)
             -The circular mean of the origin-timestep bearings
@@ -84,7 +84,7 @@ class HyPath(gp.GeoDataFrame):
         bearings_fo = np.arctan2(a, b)
 
         # Set bearings from origin column
-        self[labels[reverse][0]] = bearings_fo
+        self.data[labels[reverse][0]] = bearings_fo
 
         x = np.mean(np.cos(bearings_fo))
         y = np.mean(np.sin(bearings_fo))
@@ -99,12 +99,14 @@ class HyPath(gp.GeoDataFrame):
         bearings_ptp = np.arctan2(a, b)
 
         # point to point bearings column, first entry is 0
-        self[labels[reverse][1]] = 0.0
-        self.loc[self.index[1:], labels[reverse][1]] = bearings_ptp
+        self.data[labels[reverse][1]] = 0.0
+        self.data.loc[self.data.index[1:], labels[reverse][1]] = bearings_ptp
 
     def calculate_distance(self, reverse=False):
         """
-        Calculate the following great circle distances in meters:
+        Calculate great circle distances in meters.
+
+        Calculate great circle distances:
             -Between each timepoint
             -Cumulative along-path travel distance from origin
             -Distance between origin and point
@@ -117,7 +119,6 @@ class HyPath(gp.GeoDataFrame):
             ``self.load_reversetraj()``.
 
         """
-
         which_traj = {False: 'path',
                       True: 'path_r'}
 
@@ -135,24 +136,18 @@ class HyPath(gp.GeoDataFrame):
                                   np.cos(lat[1:]) * np.cos(lat[:-1]) *
                                   np.cos(lon[:-1] - lon[1:])) * 6371) * 1000
 
-        self[labels[reverse][0]] = pd.Series(dist_ptp,
-            index=np.arange((dist_ptp.size-1)*-1, 1)[::-1])
+        self.data[labels[reverse][0]] = distance
 
-        self[labels[reverse][1]] = np.cumsum(self[labels[reverse][0]])
+        self.data[labels[reverse][1]] = np.cumsum(distance)
 
         dist_to0 = np.empty((lat.size))
 
-        dist_to0[0] = 0.0
-        dist_to0[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[0]) +
-                                  np.cos(lat[1:]) * np.cos(lat[0]) *
-                                  np.cos(lon[0] - lon[1:])) * 6371) * 1000
-
-        self[labels[reverse][2]] = pd.Series(dist_to0,
-            index=np.arange((dist_to0.size-1)*-1, 1)[::-1])
+        self.data[labels[reverse][2]] = 0.0
+        self.data.loc[self.index[1:], labels[reverse][2]] = dist
 
     def distance_between2pts(self, coord0, coord1, in_xy=False):
         """
-        Calculate distance between two sets of coordinates
+        Calculate distance between two sets of coordinates.
 
         Parameters
         ----------
@@ -170,7 +165,6 @@ class HyPath(gp.GeoDataFrame):
             Great circle distance in meters.
 
         """
-
         coord0 = np.radians(coord0)
         coord1 = np.radians(coord1)
 
@@ -187,7 +181,7 @@ class HyPath(gp.GeoDataFrame):
 
     def find_destination(self, lat0, lon0, bearing, distance):
         """
-        Find the destination given a bearing and latitude and longitude.
+        Find the destination given bearing, latitude, and longitude.
 
         Parameters
         ----------
@@ -209,7 +203,6 @@ class HyPath(gp.GeoDataFrame):
             Longitude of destination in degrees
 
         """
-
         d2r = distance / 6371000
 
         latr = math.radians(lat0)

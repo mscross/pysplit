@@ -42,24 +42,23 @@ class Trajectory(HyPath):
             Location of corresponding clipped HYSPLIT file, if it exists.
 
         """
-
         HyPath.__init__(self, trajdata, pathdata, datetime, trajheader)
 
-        self.rename(columns={'AIR_TEMP': 'Temperature',
-                             'PRESSURE': 'Pressure',
-                             'RAINFALL': 'Rainfall',
-                             'MIXDEPTH': 'Mixing_Depth',
-                             'RELHUMID': 'Relative_Humidity',
-                             'H2OMIXRA': 'Mixing_Ratio',
-                             'SPCHUMID': 'Specific_Humidity',
-                             'SUN_FLUX': 'Solar_Radiation',
-                             'TERR_MSL': 'Terrain_Altitude',
-                             'THETA': 'Potential_Temperature'},
-                    inplace=True)
+        self.data.rename(columns={'AIR_TEMP': 'Temperature',
+                                  'PRESSURE': 'Pressure',
+                                  'RAINFALL': 'Rainfall',
+                                  'MIXDEPTH': 'Mixing_Depth',
+                                  'RELHUMID': 'Relative_Humidity',
+                                  'H2OMIXRA': 'Mixing_Ratio',
+                                  'SPCHUMID': 'Specific_Humidity',
+                                  'SUN_FLUX': 'Solar_Radiation',
+                                  'TERR_MSL': 'Terrain_Altitude',
+                                  'THETA': 'Potential_Temperature'},
+                         inplace=True)
 
-        self['Temperature_C'] = self['Temperature'] - 273.15
-        if self.get('Mixing_Depth') is None:
-            self['Mixing_Depth'] = None
+        self.data['Temperature_C'] = self.data['Temperature'] - 273.15
+        if self.data.get('Mixing_Depth') is None:
+            self.data['Mixing_Depth'] = None
 
         self.folder = folder
         self.filename = filename
@@ -88,7 +87,8 @@ class Trajectory(HyPath):
     def set_rainstatus(self, rainy_criterion='Rainfall', check_steps=0,
                        threshold=0.0):
         """
-        Determines if ``Trajectory`` produced rain during indicated timesteps.
+        Determine if ``Trajectory`` produced rain during indicated timesteps.
+
         Doesn't look at change in specific humidity.
 
         Parameters
@@ -103,41 +103,43 @@ class Trajectory(HyPath):
             ``Relative_Humidity``.
 
         """
-        if self.get(rainy_criterion) is None:
-            raise KeyError(rainy_criterion, " is not in Trajectory.columns")
+        if self.data.get(rainy_criterion) is None:
+            raise KeyError(rainy_criterion, " not in Trajectory.data.columns")
 
         self.rainy = False
 
-        if np.any(self.loc[check_steps, rainy_criterion] > threshold):
+        if np.any(self.data.loc[check_steps, rainy_criterion] > threshold):
             self.rainy = True
 
     def calculate_rh(self):
         """
         Calculate ``Relative_Humidity`` from ``Mixing_Ratio``.
-        Will not execute if ``Relative_Humidity`` is already present.
 
+        Will not execute if ``Relative_Humidity`` is already present.
         Calculation ultimately requires either ``Mixing_Ratio`` or
         ``Specific_Humidity`` as original along-path output variables.
 
         """
         # Check for existence of relative humidity and mixing ratio
-        if self.get('Relative_Humidity') is None:
-            if self.get('Mixing_Ratio') is None:
+        if self.data.get('Relative_Humidity') is None:
+            if self.data.get('Mixing_Ratio') is None:
                 raise KeyError('Calculate mixing ratio first!')
             else:
                 # Convert mixing ratio to relative humidity
-                sat_vapor = 6.11 * (10.0 ** ((7.5 * self['Temperature_C']) /
-                                    (237.7 + self['Temperature_C'])))
+                sat_vapor = 6.11*(10.0**((7.5*self.data['Temperature_C']) /
+                                         (237.7 + self.data['Temperature_C'])))
 
-                sat_w = 621.97 * (sat_vapor / (self['Pressure'] - sat_vapor))
+                sat_w = 621.97 * (sat_vapor / (self.data['Pressure'] -
+                                               sat_vapor))
 
-                self['Relative_Humidity'] = ((self['Mixing_Ratio'] /
-                                              sat_w) * 100.0)
+                self.data['Relative_Humidity'] = ((self.data['Mixing_Ratio'] /
+                                                   sat_w) * 100.0)
 
     def calculate_w(self, calc_using):
         """
-        Calculate ``Mixing_Ratio`` using ``Relative_Humidity`` or
-        ``Specific_Humidity``.
+        Calculate ``Mixing_Ratio``.
+
+        Use either ``Relative_Humidity`` or ``Specific_Humidity``.
         Will not execute if ``Mixing_Ratio`` is already present.
 
         Parameters
@@ -147,9 +149,8 @@ class Trajectory(HyPath):
             [``Relative_Humidity``|``Specific_Humidity``]
 
         """
-
-        if self.get('Mixing_Ratio') is None:
-            if self.get(calc_using) is None:
+        if self.data.get('Mixing_Ratio') is None:
+            if self.data.get(calc_using) is None:
                 raise KeyError(calc_using, ' does not exist.')
             else:
                 func_dict = {'Relative_Humidity': self._convert_rh2w,
@@ -160,24 +161,25 @@ class Trajectory(HyPath):
     def calculate_sh(self):
         """
         Calculate ``Specific_Humidity`` from ``Mixing_Ratio``.
-        Will not execute if ``Specific_Humidity`` is already present.
 
+        Will not execute if ``Specific_Humidity`` is already present.
         Calculation ultimately requires either ``Mixing_Ratio`` or
         ``Relative_Humidity`` as original along-path output variables.
 
         """
-
-        if self.get('Specific_Humidity') is None:
-            if self.get('Mixing_Ratio') is None:
+        if self.data.get('Specific_Humidity') is None:
+            if self.data.get('Mixing_Ratio') is None:
                 raise KeyError('Calculate mixing ratio first!')
             else:
-                w_kg = self['Mixing_Ratio'] / 1000
-                self['Specific_Humidity'] = (w_kg / (w_kg + 1)) * 1000
+                w_kg = self.data['Mixing_Ratio'] / 1000
+                self.data['Specific_Humidity'] = (w_kg / (w_kg + 1)) * 1000
 
     def calculate_moistureflux(self, humidity='Specific_Humidity'):
         """
-        Calculate ``Moisture_Flux`` between each timestep using
-        ``Distance_ptp`` and the indicated humidity type (``humidity``).
+        Calculate ``Moisture_Flux``.
+
+        Moisture flux between each timestep, uses ``Distance_ptp``
+        and the indicated humidity type (``humidity``).
 
         Parameters
         ----------
@@ -187,18 +189,17 @@ class Trajectory(HyPath):
             [``Relative_Humidity``|``Specific_Humidity``]
 
         """
-
-        if self.get(humidity) is None:
+        if self.data.get(humidity) is None:
             print('Calculate ', humidity, ' first!')
         else:
-            if self.get('Distance_ptp') is None:
-                self.calculate_distance()
+            if self.data.get('Distance_ptp') is None:
+                self.data.calculate_distance()
 
-            self['Moisture_Flux'] = pd.Series()
-            self.loc[self.index[1]:, 'Moisture_Flux'] = ((self['Distance_ptp']/
-                                                          3600).iloc[1:] *
-                                                         self.get(
-                                                         humidity).iloc[:-1])
+            self.data['Moisture_Flux'] = None
+            self.data.loc[self.index[1]:, 'Moisture_Flux'] = (
+                (self.data['Distance_ptp'] / 3600).iloc[1:] *
+                self.data.get(humidity).iloc[:-1])
+
 
     def moisture_uptake(self, precipitation, evaporation, interval=6,
                         vlim='pbl', pressure_level=900.0,
@@ -242,7 +243,7 @@ class Trajectory(HyPath):
         points = []
 
         # Gives 164, 158, 152, 146 ... 0 etc
-        windows = self.index[::-interval]
+        windows = self.data.index[::-interval]
 
         self.uptake = gp.GeoDataFrame(data=np.empty((windows.size, 13)),
                                       columns=['DateTime', 'Timestep',
@@ -271,32 +272,33 @@ class Trajectory(HyPath):
             # print('interval', self.loc[w: w - (interval - 1), 'Timestep'])
             (self.uptake.loc[w, 'Avg_Pressure'],
              self.uptake.loc[w, 'Avg_MixDepth']) = (
-                self.loc[w: w - (interval - 1),
-                         ['Pressure', 'Mixing_Depth']].mean())
+                self.data.loc[w: w - (interval - 1),
+                              ['Pressure', 'Mixing_Depth']].mean())
 
         # First timestep
         (self.uptake.loc[windows[0], 'DateTime'],
          self.uptake.loc[windows[0], 'Cumulative_Dist'],
          self.uptake.loc[windows[0], 'q']) = (
-            self.loc[windows[0], ['DateTime', 'Cumulative_Dist', humidity]])
+            self.data.loc[windows[0], ['DateTime', 'Cumulative_Dist',
+                                       humidity]])
 
         self.uptake.loc[windows[0], 'unknown_total'] = 1.0
         self.uptake.loc[windows[0], ['above_total', 'below_total']] = 0.0
 
-        points.append(self.loc[windows[0], 'geometry'])
+        points.append(self.data.loc[windows[0], 'geometry'])
 
         for w in windows[1:]:
             (self.uptake.loc[w, 'DateTime'],
              self.uptake.loc[w, 'Cumulative_Dist']) = (
-                 self.loc[w - mdpt, ['DateTime', 'Cumulative_Dist']])
+                 self.data.loc[w - mdpt, ['DateTime', 'Cumulative_Dist']])
 
-            self.uptake.loc[w, 'q'] = self.loc[w, humidity]
+            self.uptake.loc[w, 'q'] = self.data.loc[w, humidity]
 
-            z = np.mean([pt.z for pt in self.loc[w:w - (interval - 1),
-                                                 'geometry']])
+            z = np.mean([pt.z for pt in self.data.loc[w:w - (interval - 1),
+                                                      'geometry']])
 
-            points.append(Point([self.loc[w - mdpt, 'geometry'].x,
-                                 self.loc[w - mdpt, 'geometry'].y, z]))
+            points.append(Point([self.data.loc[w - mdpt, 'geometry'].x,
+                                 self.data.loc[w - mdpt, 'geometry'].y, z]))
 
             # set dq initial for timepoints after the earliest:
             self.uptake.loc[w, 'dq_initial'] = (
@@ -307,7 +309,7 @@ class Trajectory(HyPath):
         self.uptake['geometry'] = points
 
         # Check that mixing depth data actually exists for this trajectory
-        if self.loc[:, 'Mixing_Depth'].all(None):
+        if self.data.loc[:, 'Mixing_Depth'].all(None):
             vlim = 'prs'
         else:
             self.uptake.loc[:, 'Avg_MixDepth'] = (
@@ -393,18 +395,18 @@ class Trajectory(HyPath):
                         self.uptake.loc[is_above, 'above'] *
                         self.uptake.loc[w, 'q'])
 
-    def load_reversetraj(self, reverse_dir, fname_end='REVERSE'):
+    def load_reversetraj(self, reverse_dir='default', fname_end='REVERSE'):
         """
-        Loads reverse trajectory as a LineString, then puts distance info
-        into geodataframe.
+        Load reverse trajectory.
 
-        Multi-trajectory files supported.
+        Load as a LineString, then put distance info into ``self.data``.
+        Multi-trajectory files supported (maybe).
 
         Parameters
         ----------
         reverse_dir : string
-            The location of the reverse trajectories.  Usually a subfolder
-            in ``self.folder``.
+            The location of the reverse trajectories.  Default is a subfolder
+            in ``self.folder`` named 'reversetraj'.
         fname_end : string
             Default 'REVERSE'. Reverse trajectory filename is ``self.filename``
             + fname_end.  This keyword included to grandfather in trajectories
@@ -412,8 +414,10 @@ class Trajectory(HyPath):
             (``fname_end`` = 'FORWARD').
 
         """
-
         if not hasattr(self, 'path_r'):
+
+            if reverse_dir is 'default':
+                reverse_dir = os.path.join(self.folder, 'reversetraj')
 
             if not os.path.isdir(reverse_dir):
                 raise OSError('Reverse trajectory directory does not exist!')
@@ -442,52 +446,50 @@ class Trajectory(HyPath):
 
     def calculate_integrationerr(self):
         """
-        Estimate integration error based on distance between origin and
-        reverse trajectory endpoint and the total travel distance.  Error is
-        in percent.
+        Estimate integration error.
+
+        Integration error based on distance between origin and
+        reverse trajectory endpoint and the total travel distance.
+        Error is in percent.
 
         """
-
-        if self.get('Distance_ptp_r') is None:
+        if self.data.get('Distance_ptp_r') is None:
             raise AttributeError('Reverse trajectory must be loaded first!')
 
-        if self.get('Distance_ptp') is None:
+        if self.data.get('Distance_ptp') is None:
             self.calculate_distance()
 
         site_distance = self.distance_between2pts(self.path.coords[0],
                                                   self.path_r.coords[-1],
                                                   in_xy=True)
 
-        travel_distance = self.loc[:, ['Cumulative_Dist',
-                                       'Cumulative_Dist_r']].iloc[-1].sum()
+        travel_distance = self.data.loc[:,['Cumulative_Dist',
+                                           'Cumulative_Dist_r']].iloc[-1].sum()
 
         self.integration_error = ((site_distance / travel_distance) * 100) / 2
 
     def _convert_rh2w(self):
         """
-        Private function for converting ``Relative_Humidity`` to
-        ``Mixing_Ratio``.
+        Convert ``Relative_Humidity`` to ``Mixing_Ratio``.
 
-        Only called by ``self.calculate_w()``.
+        Only called by ``self.calculate_w()``, private.
 
         """
+        sat_vapor = 6.11 * (10.0 ** ((7.5 * self.data['Temperature_C']) /
+                                     (237.7 + self.data['Temperature_C'])))
 
-        sat_vapor = 6.11 * (10.0 ** ((7.5 * self['Temperature_C']) /
-                                     (237.7 + self['Temperature_C'])))
+        sat_w = 621.97 * (sat_vapor / (self.data['Pressure'] - sat_vapor))
 
-        sat_w = 621.97 * (sat_vapor / (self['Pressure'] - sat_vapor))
-
-        self['Mixing_Ratio'] = (self['Relative_Humidity'] / 100.0) * sat_w
+        self.data['Mixing_Ratio'] = (
+            self.data['Relative_Humidity'] / 100.0) * sat_w
 
     def _convert_q2w(self):
         """
-        Private function for converting ``Specific_Humidity`` to
-        ``Mixing_Ratio``.
+        Convert ``Specific_Humidity`` to ``Mixing_Ratio``.
 
-        Only called by ``self.calculate_w()``.
+        Only called by ``self.calculate_w()``, private.
 
         """
+        q_kg = self.data['Specific_Humidity'] / 1000
 
-        q_kg = self['Specific_Humidity'] / 1000
-
-        self['Mixing_Ratio'] = (q_kg / (1 - q_kg)) * 1000
+        self.data['Mixing_Ratio'] = (q_kg / (1 - q_kg)) * 1000

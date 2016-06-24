@@ -6,11 +6,12 @@ A package for generating [HYSPLIT] (http://ready.arl.noaa.gov/HYSPLIT.php) air p
 
 * PySPLIT now uses the power of GeoPandas rather than pure NumPy
 * Faster trajectory file loading/``Trajectory`` object initialization
+* Need help clustering?  ``pysplit.print_clusteringprocedure()``.
 * The class structure of PySPLIT has been rewritten:
-  * ``Trajectory`` and ``Cluster`` objects are now subclasses of ``HyPath`` class, which in turn is a [GeoPandas] (http://geopandas.org/) ``GeoDataFrame`` subclass.
-  * ``TrajectoryGroup`` and ``Cluster`` classes are now subclasses of the ``HyGroup`` class.
+  * ``Trajectory`` and ``Cluster`` objects are now subclasses of ``HyPath`` class.
+  * Along-trajectory data for ``HyPath`` classes lives in the ``data`` attribute, a [GeoPandas] (http://geopandas.org/) ``GeoDataFrame``.
+  * ``TrajectoryGroup`` and ``Cluster`` classes are now subclasses of the ``HyGroup`` class.  They are both iterable; they can also be added together or subtracted.
   * ``HyPath`` and ``HyGroup`` are only used internally, so the API remains essentially the same.
-* ``Cluster`` objects are no longer iterable over their member ``Trajectory`` objects (instead iterate over ``Cluster.trajectories``)
 * Trajectory generator updates:
   * Improved efficiency
   * Improved API

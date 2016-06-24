@@ -28,7 +28,6 @@ def hysplit_filelister(signature):
         The file search is non-recursive.
 
     """
-
     # Initialize
     orig_dir = os.getcwd()
     matching_files = []
@@ -53,8 +52,7 @@ def hysplit_filelister(signature):
 
 def load_hysplitfile(filename):
     """
-    Load data from each trajectory (a single hysplit file) into a
-    ``NumPy ndarray``.
+    Load data from each trajectory into a ``NumPy ndarray``.
 
     Parameters
     ----------
@@ -76,7 +74,7 @@ def load_hysplitfile(filename):
         The column headers for ``hydata`` arrays.  Used to parse ``hydata``
         into different trajectory attributes
     datetime : DateTime index of length M
-    multiple_traj
+    multiple_traj : Boolean
 
     """
     # Every header- first part

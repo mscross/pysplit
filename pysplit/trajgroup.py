@@ -1,5 +1,4 @@
 from __future__ import division, print_function
-import os
 from hygroup import HyGroup
 
 
@@ -25,42 +24,60 @@ class TrajectoryGroup(HyGroup):
 
     def __getitem__(self, index):
         """
-        Index or slice ``self.trajectories`` to get a ``Trajectory`` or
-        ``TrajectoryGroup``, respectively
+        Get ``Trajectory`` or ``TrajectoryGroup``.
+
+        Parameters
+        ----------
+        index : int or slice
+
+        Returns
+        -------
+        ``Trajectory`` or ``TrajectoryGroup`` depending if indexed
+        or sliced.  Won't return a ``Cluster`` because those are
+        specially defined.
 
         """
-
         newthing = self.trajectories[index]
 
-        # TrajectoryGroup requires a list of Trajectory instances,
-        # but won't fail if given a single Trajectory
         if isinstance(newthing, list):
             newthing = TrajectoryGroup(newthing)
 
         return newthing
 
-    def addgroups(self, other):
+    def __add__(self, other):
         """
-        Create new ``TrajectoryGroup`` from two ``TrajectoryGroup`` instances.
-        Checks for duplicate ``Trajectory`` instances.
+        Add a ``HyGroup`` to this ``TrajectoryGroup`` instance.
 
         Parameters
         ----------
-        other : ``TrajectoryGroup`` or ``Cluster``
-            A different ``TrajectoryGroup`` or ``Cluster`` that may or may not
+        other : ``HyGroup``
+            Another ``TrajectoryGroup`` or ``Cluster``.  May or may not
             contain some of the same ``Trajectory`` instances
 
         Returns
         -------
-        new_self : ``TrajectoryGroup``
-            A new ``TrajectoryGroup`` from the combination of
-            ``self`` and ``other``
+        A new ``TrajectoryGroup`` containing the union of the sets
+        of ``Trajectory`` instances.
 
         """
+        return TrajectoryGroup(HyGroup.__add__(self, other))
 
-        new_tg = TrajectoryGroup(HyGroup.addgroups(self, other))
+    def __sub__(self, other):
+        """
+        Subtract a ``HyGroup`` from this ``TrajectoryGroup`` instance.
 
-        return new_tg
+        Parameters
+        ----------
+        other : ``HyGroup``
+            Another ``TrajectoryGroup`` or ``Cluster``
+
+        Returns
+        -------
+        A new ``TrajectoryGroup`` containing the set difference between
+        the sets of ``Trajectory`` instances.
+
+        """
+        return TrajectoryGroup(HyGroup.__sub__(self, other))
 
     def pop(self, ind=-1, trajid=None):
         """

@@ -9,6 +9,7 @@ meteorological data along trajectories.
 
 __all__ = ['Trajectory',
            'TrajectoryGroup',
+           'print_clusterprocedure',
            'Cluster',
            'ClusterGroup',
            'MapDesign',
@@ -35,7 +36,7 @@ from .traj import Trajectory
 
 from .trajgroup import TrajectoryGroup
 
-from .clusgroup import Cluster, ClusterGroup
+from .clusgroup import print_clusterprocedure, Cluster, ClusterGroup
 
 from .mapdesigner import MapDesign
 
