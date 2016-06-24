@@ -17,13 +17,33 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 
 install:
-  - wget https://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
-  - tar -xzvf basemap-1.0.7.tar.gz
-  - export GEOS_DIR=$HOME/.libgeos/3.5.0/
-  - pushd basemap-1.0.7/geos-3.3.3 && ./configure --prefix=$GEOS_DIR && make && sudo make install && popd
-  - pushd basemap-1.0.7 && python setup.py install && popd
-  - pip install nose coveralls numpy matplotlib flake8 pandas
+  - sudo apt-get update
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no --add channels ioos
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  # Replace dep1 dep2 ... with your dependencies
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose coveralls flake8 numpy matplotlib pandas basemap fiona six shapely pyproj geopandas
+  - source activate test-environment
   - python setup.py install
+  # - wget https://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
+  # - tar -xzvf basemap-1.0.7.tar.gz
+  # - export GEOS_DIR=$HOME/.libgeos/3.5.0/
+  # - pushd basemap-1.0.7/geos-3.3.3 && ./configure --prefix=$GEOS_DIR && make && sudo make install && popd
+  # - pushd basemap-1.0.7 && python setup.py install && popd
+  # - pip install nose coveralls numpy matplotlib flake8 pandas
+  # - python setup.py install
 
 script:
   - python run_tests.py
