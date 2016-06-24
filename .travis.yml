@@ -21,7 +21,7 @@ install:
   - tar -xzvf basemap-1.0.7.tar.gz
   - export GEOS_DIR=$HOME/.libgeos/3.5.0/
   - pushd basemap-1.0.7/geos-3.3.3 && ./configure --prefix=$GEOS_DIR && make && sudo make install && popd
-  - pushd basemap-1.0.7 && make && sudo make install && popd
+  - pushd basemap-1.0.7 && python setup.py install && popd
   - pip install nose coveralls numpy matplotlib flake8 geopandas
   - python setup.py install
 
