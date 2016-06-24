@@ -6,6 +6,7 @@ matrix:
     - python: 2.7
     - python: 3.3
     - python: 3.4
+    - python: 3.5
     - python: "nightly"
       env: PRE=--pre
   allow_failures:
@@ -16,7 +17,7 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 
 install:
-  - pip install nose coveralls matplotlib flake8
+  - pip install nose coveralls numpy matplotlib flake8 basemap geopandas
   - python setup.py install
 
 script:
