@@ -17,7 +17,10 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 
 install:
-  - pip install nose coveralls numpy matplotlib flake8 basemap geopandas
+  - wget https://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
+  - tar -xzvf basemap-1.0.7.tar.gz
+  - pushd basemap-1.0.7 && ./configure --prefix=/usr && make && sudo make install && popd
+  - pip install nose coveralls numpy matplotlib flake8 geopandas
   - python setup.py install
 
 script:
