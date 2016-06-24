@@ -19,6 +19,7 @@ class HyGroup(object):
         """
         self.trajectories = trajectories
         self.trajcount = len(trajectories)
+        self.trajids = [traj.trajid for traj in self.trajectories]
 
     def __add__(self, other):
         """
@@ -72,27 +73,78 @@ class HyGroup(object):
 
         return newgroup
 
-    def make_infile(self, infile_dir):
+    def pop(self, ind, trajid):
         """
-        Write ``Trajectory`` paths to a file (INFILE).
+        Remove Trajectory object from self.
 
-        Take the member ``Trajectory`` instances and write
+        Shortcut to self.trajectories.pop() that updates the
+        self.trajcount and the list of trajids.
+
+        Parameters
+        ----------
+        ind : int
+            The positional argument of the ``Trajectory``
+            to remove.
+        trajid : string
+            The named argument of the ``Trajectory``
+            to remove.  Overrides ``ind`` if not None.
+
+        Returns
+        -------
+        popped : ``Trajectory`` instance or list of
+            The indicated ``Trajectory`` or a list if multiple
+            trajectories were popped out.  May also be a ``None``
+            if no matching ``Trajectory`` instances were found.
+
+        """
+        if trajid is not None:
+            popped = []
+            to_pop = [self.trajids.index(s) for s in
+                      self.trajids if trajid in self.trajids]
+            for p in to_pop[::-1]:
+                popped.append(self.trajectories.pop(p))
+                self.trajids.pop(p)
+            self.trajcount = len(self.trajectories)
+            if len(popped) == 0:
+                popped = None
+                print('No trajectories found matching ', trajid)
+            elif len(popped) == 1:
+                popped = popped[0]
+        else:
+            popped = self.trajectories.pop(ind)
+            self.trajids.pop(ind)
+            self.trajcount = len(self.trajectories)
+
+        return popped
+
+    def make_infile(self, infile_dir, use_clippedpath=True):
+        """
+        Take ``Trajectory`` instances in ``HyGroup`` and write
         path to INFILE, used by ``HYSPLIT`` to perform cluster analysis.
-        Can also use this list of files to reinitialize
-        ``TrajectoryGroup``.
+
+        If a specific subset of ``Trajectory`` instances is needed,
+        create a new ``HyGroup`` containing only qualifying
+        ``Trajectory`` instances.
 
         Parameters
         ----------
         infile_dir : string
             The directory in which to create INFILE
 
+        use_clippedpath : Boolean
+            Default True. Write out path of clipped trajectory
+            rather than original trajectory.
+
         """
         with open(os.path.join(infile_dir, 'INFILE'), 'w') as infile:
 
             for traj in self:
-                try:
-                    output = traj.cfullpath
-                except:
+                if use_clippedpath:
+                    try:
+                        output = traj.cfullpath
+                    except:
+                        output = traj.fullpath
+                else:
                     output = traj.fullpath
 
                 output = output.replace('\\', '/')

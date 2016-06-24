@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import geopandas as gp
+import pandas as pd
 from shapely.geometry import Point, LineString
 
 
@@ -128,10 +129,10 @@ class HyPath(object):
 
         lon, lat = np.radians(getattr(self, which_traj[reverse]).xy)
 
-        distance = np.empty((lat.size))
+        dist_ptp = np.empty((lat.size))
 
-        distance[0] = 0.0
-        distance[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[:-1]) +
+        dist_ptp[0] = 0.0
+        dist_ptp[1:] = (np.arccos(np.sin(lat[1:]) * np.sin(lat[:-1]) +
                                   np.cos(lat[1:]) * np.cos(lat[:-1]) *
                                   np.cos(lon[:-1] - lon[1:])) * 6371) * 1000
 
@@ -139,9 +140,7 @@ class HyPath(object):
 
         self.data[labels[reverse][1]] = np.cumsum(distance)
 
-        dist = (np.arccos(np.sin(lat[1:]) * np.sin(lat[0]) +
-                          np.cos(lat[1:]) * np.cos(lat[0]) *
-                          np.cos(lon[0] - lon[1:])) * 6371) * 1000
+        dist_to0 = np.empty((lat.size))
 
         self.data[labels[reverse][2]] = 0.0
         self.data.loc[self.index[1:], labels[reverse][2]] = dist

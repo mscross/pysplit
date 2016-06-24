@@ -53,8 +53,8 @@ class MapDesign(object):
         maplabels : tuple of strings
             Default ``None``.
             (Label group, label file full/relative path, optional: zorder).
-            Determines what label groups are applied, if any:
-            [all_1'|'all_2'|important'|'justplace'|'place']
+            Label group is a list of any or all of:
+            ['sea', 'city', 'country','ocean','place']
             Label zorder defaults to 15.
         area_threshold : int
             Default 10000.  The minimum surface area a feature must have to
@@ -300,9 +300,9 @@ class MapDesign(object):
 
         # Draw labels
         if self.labels is not None:
-                basemap = ml.map_labeller(basemap, ax, self.labelgroup,
-                                          self.labels, self.label_zorder,
-                                          self.labelstyle)
+                basemap = ml.map_labeller(basemap, self.labelgroup,
+                                          self.labels, self.labelstyle,
+                                          self.label_zorder)
 
         # Draw countries, states, coastlines, and map boundary
         if self.drawstates:

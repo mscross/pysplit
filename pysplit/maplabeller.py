@@ -4,7 +4,7 @@ import os
 
 def map_labeller(basemap, which, labels, labelstyle, labelzorder):
     """
-    Writes labels on ``basemap``.
+    Write labels on ``basemap``.
 
     Use ``labelfile_generator()`` and ``labelfile_reader()`` to get
     ``labels`` and ``labelstyle`` in the appropriate order and format.
@@ -30,7 +30,6 @@ def map_labeller(basemap, which, labels, labelstyle, labelzorder):
         Labelled instance of ``Basemap``
 
     """
-
     # Initialize lists of labels and coordinates
     sea_labels = labels[0]
     sea_coords = labels[1]
@@ -135,7 +134,7 @@ def map_labeller(basemap, which, labels, labelstyle, labelzorder):
 
 def labelfile_reader(labelfile):
     """
-    Opens and reads a text file with label information.
+    Open and read a text file with label information.
 
     Parameters
     ----------
@@ -150,7 +149,6 @@ def labelfile_reader(labelfile):
         List of dictonaries that contain label formatting parameters
 
     """
-
     labels = []
     labelstyle = []
     labeltypes = ['SEA', 'CITY', 'COUNTRY', 'PLACE', 'OCEAN']
@@ -222,7 +220,7 @@ def labelfile_reader(labelfile):
 
 def labelfile_generator(labelfile):
     """
-    Generates a label file template.
+    Generate a label file template.
 
     Parameters
     ----------
@@ -230,29 +228,29 @@ def labelfile_generator(labelfile):
         Full or relative path to template location
 
     """
-
     # Open new file
     with open(labelfile, 'w') as labelfile:
 
-        labels = ['SEA\n',
-                  '  fontstyle=italic   weight=normal   fontsize=16\n'
+        labels = ['File header\n',
+                  'SEA\n',
+                  '  fontstyle=italic   weight=normal   fontsize=16\n',
                   '  16.00    88.50     Bay of\\nBengal\n',
                   ' -15.05   115.00     South\\nChina\\nSea\n',
                   '  27.00   125.00     East\\nChina\\nSea\n',
                   'CITY\n',
-                  '  fontstyle=normal   weight=normal   fontsize=15\n'
+                  '  fontstyle=normal   weight=normal   fontsize=15\n',
                   '  39.91   116.39     Beijing\n',
                   '  32.05   118.77     Nanjing\n',
                   '  25.27   110.28     Guilin\n',
                   'COUNTRY\n',
-                  '  fontstyle=normal   weight=bold     fontsize=20\n'
+                  '  fontstyle=normal   weight=bold     fontsize=20\n',
                   '  35.00   100.00     CHINA\n',
                   'OCEAN\n',
-                  '  fontstyle=italic   weight=bold     fontsize=20\n'
+                  '  fontstyle=italic   weight=bold     fontsize=20\n',
                   '  27.00   150.00     Pacific\\n\\nOcean\n',
                   '  -5.00    70.00     Indian Ocean\n',
                   'PLACE\n',
-                  '  fontstyle=normal   weight=normal   fontsize=15\n'
+                  '  fontstyle=normal   weight=normal   fontsize=15\n',
                   '  32.29   119.05     Hulu\n',
                   '  25.28   108.08     Dongge\n',
                   '  39.41   115.39     Kulishu\n']
