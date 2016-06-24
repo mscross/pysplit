@@ -19,7 +19,7 @@ before_install:
 install:
   - wget https://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
   - tar -xzvf basemap-1.0.7.tar.gz
-  - pushd geos-3.3.3 && ./configure --prefix=/usr/geos && make && sudo make install && popd
+  - pushd basemap-1.0.7/geos-3.3.3 && ./configure --prefix=/usr/geos && make && sudo make install && popd
   - pushd basemap-1.0.7 && ./configure --prefix=/usr && make && sudo make install && popd
   - pip install nose coveralls numpy matplotlib flake8 geopandas
   - python setup.py install
