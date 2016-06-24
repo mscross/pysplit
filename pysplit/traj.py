@@ -315,16 +315,18 @@ class Trajectory(HyPath):
             self.uptake.loc[:, 'Avg_MixDepth'] = (
                 self.uptake.loc[:, 'Avg_MixDepth'] * mixdepth_factor)
 
-        for wnum, w in enumerate(windows[1:]):
-            is_above = pd.Series([False] * len(self.uptake),
-                                 index=self.uptake.index, dtype=bool)
-            is_above.loc[windows[:wnum + 1]] = (
-                self.uptake.loc[windows[:wnum + 1], 'above'].notnull())
+        # Save these results rather than build anew each loop
+        is_above = pd.Series([False] * len(self.uptake),
+                             index=self.uptake.index, dtype=bool)
+        is_below = pd.Series([False] * len(self.uptake),
+                             index=self.uptake.index, dtype=bool)
 
-            is_below = pd.Series([False] * len(self.uptake),
-                                 index=self.uptake.index, dtype=bool)
-            is_below.loc[windows[:wnum + 1]] = (
-                self.uptake.loc[windows[:wnum + 1], 'below'].notnull())
+        for wnum, w in enumerate(windows[1:]):
+            # wnum is actually the ind of the previous window
+            is_above.loc[windows[wnum]] = (
+                self.uptake.loc[windows[wnum], 'above'].notnull())
+            is_below.loc[windows[wnum]] = (
+                self.uptake.loc[windows[wnum], 'below'].notnull())
 
             if self.uptake.loc[w, 'dq_initial'] > evaporation:
                 # set dq
