@@ -1,3 +1,6 @@
+import os
+
+
 class HyGroup(object):
     """
     :superclass: for ``TrajectoryGroup`` and ``ClusterGroup``.
