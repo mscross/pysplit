@@ -47,9 +47,9 @@ install:
   # - python setup.py install
 
 script:
-  - python run_tests.py
+  # - python run_tests.py
 
   - flake8 --exit-zero pysplit
 
-after_success:
-  coveralls
+# after_success:
+#   coveralls
