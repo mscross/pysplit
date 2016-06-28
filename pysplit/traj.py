@@ -1,11 +1,15 @@
 from __future__ import division, print_function
+
+# External imports
 import os
 import numpy as np
-import geopandas as gp
 import pandas as pd
+import geopandas as gp
 from shapely.geometry import Point, LineString
-import hyfile_handler as hh
-from hypath import HyPath
+
+# Relative imports within the package
+from .hyfile_handler import load_hysplitfile
+from .hypath import HyPath
 
 
 class Trajectory(HyPath):
@@ -433,7 +437,7 @@ class Trajectory(HyPath):
                 raise OSError('File ', self.filename,
                               fname_end, ' not found.')
 
-            _, path, _, _, multitraj = hh.load_hysplitfile(self.rfullpath)
+            _, path, _, _, multitraj = load_hysplitfile(self.rfullpath)
 
             if multitraj:
                 self.path_r = LineString(

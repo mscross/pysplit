@@ -1,7 +1,8 @@
 from __future__ import division, print_function
-from trajgroup import TrajectoryGroup
-from hypath import HyPath
-from hygroup import HyGroup
+
+from .trajgroup import TrajectoryGroup
+from .hypath import HyPath
+from .hygroup import HyGroup
 
 
 def print_clusterprocedure():
