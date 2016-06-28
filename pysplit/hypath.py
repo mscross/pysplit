@@ -1,7 +1,6 @@
 import math
 import numpy as np
 import geopandas as gp
-import pandas as pd
 from shapely.geometry import Point, LineString
 
 
@@ -136,14 +135,14 @@ class HyPath(object):
                                   np.cos(lat[1:]) * np.cos(lat[:-1]) *
                                   np.cos(lon[:-1] - lon[1:])) * 6371) * 1000
 
-        self.data[labels[reverse][0]] = distance
+        self.data[labels[reverse][0]] = dist_ptp
 
-        self.data[labels[reverse][1]] = np.cumsum(distance)
+        self.data[labels[reverse][1]] = np.cumsum(dist_ptp)
 
         dist_to0 = np.empty((lat.size))
 
         self.data[labels[reverse][2]] = 0.0
-        self.data.loc[self.index[1:], labels[reverse][2]] = dist
+        self.data.loc[self.data.index[1:], labels[reverse][2]] = dist_to0
 
     def distance_between2pts(self, coord0, coord1, in_xy=False):
         """
