@@ -38,7 +38,7 @@ def make_trajectorygroup(signature):
         folder, _ = os.path.split(signature[0])
         clip = True
     else:
-        hyfiles = hh.hysplit_filelister(signature)
+        hyfiles = hysplit_filelister(signature)
         folder, _ = os.path.split(signature)
         clip = False
 
@@ -64,7 +64,7 @@ def make_trajectorygroup(signature):
             if clip:
                 hyfile = os.path.split(hyfile)[-1]
 
-            data, path, head, datetime, multitraj = hh.load_hysplitfile(hyfile)
+            data, path, head, datetime, multitraj = load_hysplitfile(hyfile)
 
             if multitraj:
                 # Initialize trajectory objects
@@ -113,7 +113,7 @@ def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
 
     """
 
-    traj_inds, totalclusters = hh.load_clusteringresults(distribution_file)
+    traj_inds, totalclusters = load_clusteringresults(distribution_file)
 
     all_clusters = []
 
@@ -126,7 +126,7 @@ def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
         endpt_fname = ('C' + str(cluster_num) + '_' +
                        str(totalclusters) + 'mean.tdump')
         endpt_file = os.path.join(endpoint_dir, endpt_fname)
-        data, pathdata, header, datetime, _ = hh.load_hysplitfile(endpt_file)
+        data, pathdata, header, datetime, _ = load_hysplitfile(endpt_file)
 
         # Make sure longitudes are -180 to 180
         pathdata[:, 1] = np.where(pathdata[:, 1] > 180.0,
