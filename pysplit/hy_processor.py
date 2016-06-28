@@ -1,7 +1,10 @@
 from __future__ import division, print_function
+
 import os
 import numpy as np
-import hyfile_handler as hh
+
+from .hyfile_handler import (load_hysplitfile, load_clusteringresults,
+                             hysplit_filelister)
 from .traj import Trajectory
 from .trajgroup import TrajectoryGroup
 from .clusgroup import Cluster, ClusterGroup

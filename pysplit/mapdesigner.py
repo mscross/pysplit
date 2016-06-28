@@ -1,8 +1,10 @@
 from __future__ import division, print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-import maplabeller as ml
+
+from .maplabeller import map_labeller, labelfile_reader
 
 
 class MapDesign(object):
@@ -121,7 +123,7 @@ class MapDesign(object):
         # Try to set label attributes
         if maplabels is not None:
 
-            self.labels, self.labelstyle = ml.labelfile_reader(maplabels[1])
+            self.labels, self.labelstyle = labelfile_reader(maplabels[1])
             self.labelgroup = maplabels[0]
 
             # Label zorder optional, default 15 if none given.
@@ -300,9 +302,9 @@ class MapDesign(object):
 
         # Draw labels
         if self.labels is not None:
-                basemap = ml.map_labeller(basemap, self.labelgroup,
-                                          self.labels, self.labelstyle,
-                                          self.label_zorder)
+                basemap = map_labeller(basemap, self.labelgroup,
+                                       self.labels, self.labelstyle,
+                                       self.label_zorder)
 
         # Draw countries, states, coastlines, and map boundary
         if self.drawstates:

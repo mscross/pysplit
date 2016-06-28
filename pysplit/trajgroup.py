@@ -1,5 +1,6 @@
 from __future__ import division, print_function
-from hygroup import HyGroup
+
+from .hygroup import HyGroup
 
 
 class TrajectoryGroup(HyGroup):
