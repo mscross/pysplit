@@ -197,13 +197,12 @@ class Trajectory(HyPath):
             print('Calculate ', humidity, ' first!')
         else:
             if self.data.get('Distance_ptp') is None:
-                self.data.calculate_distance()
+                self.calculate_distance()
 
             self.data['Moisture_Flux'] = None
-            self.data.loc[self.index[1]:, 'Moisture_Flux'] = (
+            self.data.loc[self.data.index[1]:, 'Moisture_Flux'] = (
                 (self.data['Distance_ptp'] / 3600).iloc[1:] *
                 self.data.get(humidity).iloc[:-1])
-
 
     def moisture_uptake(self, precipitation, evaporation, interval=6,
                         vlim='pbl', pressure_level=900.0,
@@ -327,10 +326,10 @@ class Trajectory(HyPath):
 
         for wnum, w in enumerate(windows[1:]):
             # wnum is actually the ind of the previous window
-            is_above.loc[windows[wnum]] = (
-                self.uptake.loc[windows[wnum], 'above'].notnull())
-            is_below.loc[windows[wnum]] = (
-                self.uptake.loc[windows[wnum], 'below'].notnull())
+            is_above.loc[windows[:wnum + 1]] = (
+                self.uptake.loc[windows[:wnum + 1], 'above'].notnull())
+            is_below.loc[windows[:wnum + 1]] = (
+                self.uptake.loc[windows[:wnum + 1], 'below'].notnull())
 
             if self.uptake.loc[w, 'dq_initial'] > evaporation:
                 # set dq
