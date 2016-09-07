@@ -60,7 +60,13 @@ class Trajectory(HyPath):
                                   'THETA': 'Potential_Temperature'},
                          inplace=True)
 
-        self.data['Temperature_C'] = self.data['Temperature'] - 273.15
+        # Not everyone has Temperature output
+        try:
+            self.data['Temperature_C'] = self.data['Temperature'] - 273.15
+        except:
+            self.data['Temperature_C'] = None
+            self.data['Temperature'] = None
+
         if self.data.get('Mixing_Depth') is None:
             self.data['Mixing_Depth'] = None
 
