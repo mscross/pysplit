@@ -63,7 +63,7 @@ class Trajectory(HyPath):
         # Not everyone has Temperature output
         try:
             self.data['Temperature_C'] = self.data['Temperature'] - 273.15
-        except:
+        except KeyError:
             self.data['Temperature_C'] = None
             self.data['Temperature'] = None
 
