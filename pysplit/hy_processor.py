@@ -12,8 +12,7 @@ from .clusgroup import Cluster, ClusterGroup
 
 def make_trajectorygroup(signature):
     """
-    Initialize ``Trajectory`` instances from HYSPLIT back trajectory
-    data files.
+    Initialize ``Trajectory`` instances from HYSPLIT trajectory data files.
 
     Parameters
     ----------
@@ -34,13 +33,11 @@ def make_trajectorygroup(signature):
     """
     # Get list of hysplit files matching signature
     if not isinstance(signature, str):
-        hyfiles = signature
+        hyfiles = [os.path.split(hyfile)[-1] for hyfile in signature]
         folder, _ = os.path.split(signature[0])
-        clip = True
     else:
         hyfiles = hysplit_filelister(signature)
         folder, _ = os.path.split(signature)
-        clip = False
 
     orig_dir = os.getcwd()
     trajectories = []
@@ -61,9 +58,6 @@ def make_trajectorygroup(signature):
         # Get lists of the datestrings and filenames of the hysplit files
         for hyfile in hyfiles:
 
-            if clip:
-                hyfile = os.path.split(hyfile)[-1]
-
             data, path, head, datetime, multitraj = load_hysplitfile(hyfile)
 
             if multitraj:
@@ -72,16 +66,12 @@ def make_trajectorygroup(signature):
 
                     # Get rid of parcel number in d
                     # Get rid of parcel #, lat, lon, altitude in head
-                    trajectory = Trajectory(d, p, datetime, head, folder,
-                                            hyfile, clipdir)
-
-                    trajectories.append(trajectory)
+                    trajectories.append(Trajectory(d, p, datetime, head,
+                                                   folder, hyfile, clipdir))
 
             else:
-                trajectory = Trajectory(data, path, datetime, head, folder,
-                                        hyfile, clipdir)
-
-                trajectories.append(trajectory)
+                trajectories.append(Trajectory(data, path, datetime, head,
+                                               folder, hyfile, clipdir))
 
         # initialize trajectory group
         trajectories = TrajectoryGroup(trajectories)
@@ -94,6 +84,8 @@ def make_trajectorygroup(signature):
 
 def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
     """
+    Make ``ClusterGroup`` from ``trajgroup``.
+
     Acquires the distribution of ``Trajectories`` in ``trajgroup``
     from ``distribution_file`` and creates new ``Cluster`` and ``ClusterGroup``
     instances based on that information
@@ -112,7 +104,6 @@ def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
         objects, which are specialized ``TrajectoryGroup`` objects.
 
     """
-
     traj_inds, totalclusters = load_clusteringresults(distribution_file)
 
     all_clusters = []
