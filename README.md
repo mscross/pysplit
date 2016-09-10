@@ -18,6 +18,60 @@ A package for generating [HYSPLIT] (http://ready.arl.noaa.gov/HYSPLIT.php) air p
   * Use *any* weekly or semi-monthly meteorology data (see docs for required filename format), not just gdas1
   * Generate trajectories for every day in each month *OR* for particular slice of days in each month
   
+## Installing PySPLIT
+
+PySPLIT is compatible with Python 2.7 and 3.5.  It depends on:
+* NumPy >= 1.6
+* matplotlib >= 1.2
+* Basemap >= 1.0
+* GeoPandas >= 0.1
+
+and is available on PyPi.  You can install the latest stable release by running:
+
+```
+$ pip install pysplit
+```
+
+To install from source or create a development installation, clone and fork PySPLIT then install by running:
+
+```
+$ python setup.py install
+```
+
+or develop locally by running:
+
+```
+$ python setup.py develop
+```
+
+### Installing in a conda virtual environment:
+
+Installation difficulties with PySPLIT are typically related to GeoPandas dependencies.  An easy work-around is installing PySPLIT in a new conda virtual environment.  First, add the conda-forge channel:
+```
+$ conda config --add channels conda-forge
+```
+
+Next, create the conda environment.  For a Python 3.5 environment named `pysplitenv`, run:
+```
+$ conda create --name pysplitenv python=3.5 numpy matplotlib pandas basemap six fiona shapely geopandas
+```
+
+Or, to create a Python 2.7 environment named `pysplitenv`, run:
+```
+$ conda create --name pysplitenv python=2.7 numpy matplotlib pandas basemap six fiona=1.5.1 shapely geopandas
+```
+
+Activate `pysplitenv` by running the following on Windows:
+```
+$ activate pysplitenv
+```
+If you are on Linux or OSX, instead run:
+```
+$ source activate pysplitenv
+```
+
+Within your virtual environment, install PySPLIT as above.
+
 ## Using PySPLIT
 
 Coming soon.  Example code snippets are available in the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  Much of the work done to PySPLIT since has been under the hood, so these snippets are still a good place to start.  Please cite the proceedings if you use PySPLIT in your work!
