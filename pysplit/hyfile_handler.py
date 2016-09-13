@@ -150,9 +150,9 @@ def load_hysplitfile(filename):
              '0000')
 
     datetime = pd.date_range(date0, freq=freq, periods=flen)
+
     # Get pathdata in x, y, z from lats (y), lons (x), z
-    flip = np.array([1,0,2])
-    pathdata = pathdata[:, flip]
+    pathdata = pathdata[:, np.array([1, 0, 2])]
 
     # Split hydata into individual trajectories (in case there are multiple)
     multiple_traj = False
@@ -165,7 +165,7 @@ def load_hysplitfile(filename):
 
 def trajsplit(hydata, pathdata):
     """
-    Splits an array of hysplit data into list of unique trajectory arrays
+    Split an array of hysplit data into list of unique trajectory arrays.
 
     Parameters
     ----------
@@ -179,26 +179,31 @@ def trajsplit(hydata, pathdata):
         ``hydata`` split into individual trajectories
 
     """
-
     # Find number of unique trajectories within `hydata`
     unique_traj = np.unique(hydata[:, 0])
 
     # Sort the array row-wise by the first column
-    traj_id = hydata[:, 0]
-    sorted_indices = np.argsort(traj_id, kind='mergesort')
+    # Timepoints from same traj now grouped together
+    sorted_indices = np.argsort(hydata[:, 0], kind='mergesort')
     sorted_hydata = hydata[sorted_indices, :]
     sorted_pathdata = pathdata[sorted_indices, :]
 
-    # Split `hydata` into a list of arrays of three equal sizes
-    split_hydata = np.split(sorted_hydata, unique_traj.size)
-    split_pathdata = np.split(sorted_pathdata, unique_traj.size)
+    # Find first occurrence of each traj, except for the first
+    # which is obviously 0
+    first_occurrence = [np.nonzero(sorted_indices == u)[0][0]
+                        for u in unique_traj[1:]]
+
+    # Split `hydata` and `pathdata` into list of arrays, one
+    # array per traj.  May or may not be equal sizes
+    split_hydata = np.split(sorted_hydata, first_occurrence)
+    split_pathdata = np.split(sorted_pathdata, first_occurrence)
 
     return split_hydata, split_pathdata
 
 
 def load_clusteringresults(clusterfilename):
     """
-    Load a 'CLUSLIST_#' file into an array
+    Load a 'CLUSLIST_#' file into an array.
 
     The 'CLUSLIST_#' file contains the information on how trajectories
     within a trajectory group are distributed among clusters.  Called by
@@ -218,7 +223,6 @@ def load_clusteringresults(clusterfilename):
         ``clusterarray_list``, number of sublists in ``traj_inds``.
 
     """
-
     orig_dir = os.getcwd()
 
     try:
@@ -244,14 +248,11 @@ def load_clusteringresults(clusterfilename):
         traj_inds = traj_inds - 1
 
         # Get the indices of the first occurrence of each unique cluster number
-        first_occurrence = []
-        for u in uniqueclusters:
-            first_occurrence.append(np.nonzero(clusterinfo == u)[0][0])
+        first_occurrence = [np.nonzero(clusterinfo == u)[0][0]
+                            for u in uniqueclusters[1:]]
 
         # Split into separate arrays at the first occurrences
-        # First occurrence of first cluster is not considered,
-        # since it is zero and will result in an empty array
-        cluster_trajlist = np.split(traj_inds, first_occurrence[1:])
+        cluster_trajlist = np.split(traj_inds, first_occurrence)
 
     finally:
         os.chdir(orig_dir)
