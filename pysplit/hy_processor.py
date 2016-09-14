@@ -62,11 +62,11 @@ def make_trajectorygroup(signature):
 
             if multitraj:
                 # Initialize trajectory objects
-                for d, p in zip(data, path):
+                for d, p, dt in zip(data, path, datetime):
 
                     # Get rid of parcel number in d
                     # Get rid of parcel #, lat, lon, altitude in head
-                    trajectories.append(Trajectory(d, p, datetime, head,
+                    trajectories.append(Trajectory(d, p, dt, head,
                                                    folder, hyfile, clipdir))
 
             else:

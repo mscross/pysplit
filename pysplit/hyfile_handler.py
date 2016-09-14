@@ -85,9 +85,6 @@ def load_hysplitfile(filename):
 
         contents = hyfile.readlines()
 
-        # Three lines from OMEGA to data
-        flen = len(contents) - 3
-        # print(flen)
         skip = False
         atdata = False
 
@@ -113,15 +110,26 @@ def load_hysplitfile(filename):
 
             # OMEGA happens first
             if 'OMEGA' in line:
-                # Don't count lines before OMEGA in file length flen
-                flen -= ind
-                # print flen
+                num_parcels = contents[ind].split()[0]
+
+                multiple_traj = False
+                if int(num_parcels) > 1:
+                    multiple_traj = True
+
+                # Number of data rows = length of contents minus the number of
+                # lines before OMEGA, OMEGA, andbetween OMEGA and first time pt
+                flen = len(contents) - (2 + num_parcels) - ind
+
+                # Determine timepoint freq, get all the initialization dates
+                date0 = []
+                freq = 'H'
+
                 if 'BACKWARD' in line:
                     freq = '-1H'
-                    date0 = contents[ind + 1].split()[:4]
-                else:
-                    freq = 'H'
-                    date0 = contents[ind + 1].split()[:4]
+
+                for i in range(1, num_parcels + 1):
+                    date0.append(contents[ind + i].split()[:4])
+
                 continue
 
             # PRESSURE happens second
@@ -145,25 +153,27 @@ def load_hysplitfile(filename):
                 arr_ind = 0
                 continue
 
-    date0 = ("20" +
-             "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in date0]) +
-             '0000')
-
-    datetime = pd.date_range(date0, freq=freq, periods=flen)
+    datestrings = []
+    for d in date0:
+        datestrings.append("20" +
+            "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in d]) +
+            '0000')
 
     # Get pathdata in x, y, z from lats (y), lons (x), z
     pathdata = pathdata[:, np.array([1, 0, 2])]
 
     # Split hydata into individual trajectories (in case there are multiple)
-    multiple_traj = False
-    if 2 in hydata[:, 0]:
-        hydata, pathdata = trajsplit(hydata, pathdata)
-        multiple_traj = True
+    if multiple_traj:
+        hydata, pathdata, datetime = trajsplit(hydata, pathdata, datestrings,
+                                               freq)
+    else:
+        datetime = pd.date_range(datestrings[0], freq=freq,
+                                 periods=pathdata.shape[0])
 
     return hydata, pathdata, header, datetime, multiple_traj
 
 
-def trajsplit(hydata, pathdata):
+def trajsplit(hydata, pathdata, datestrings, freq):
     """
     Split an array of hysplit data into list of unique trajectory arrays.
 
@@ -172,12 +182,22 @@ def trajsplit(hydata, pathdata):
     hydata : (L, N) ndarray of floats
         Array with L rows and N variables, introspected from a hysplit
         data file.
+    pathdata : (L, 3) ndarray of floats
+        Array with L rows and x, y z (lons, lats, altitude) columns
+    datestrings : list of strings
+        String representations of trajectory initialization date and time
+    freq : string
+        Either 'H' or '-1H', indicating a forwards or backwards trajectory
 
     Returns
     -------
-    split_hydata : list of (M, N) ndarrays of floats
+    split_hydata : list of (?, N) ndarrays of floats
         ``hydata`` split into individual trajectories
-
+    split_pathdata : list of (?, 3) ndarrays of floats
+        ``pathdata split into individual trajectories
+    datetime : list of pandas date ranges
+        List of ranges of DateTime objects for each array within
+        ``split_hydata`` and ``split_pathdata``
     """
     # Find number of unique trajectories within `hydata`
     unique_traj = np.unique(hydata[:, 0])
@@ -198,7 +218,11 @@ def trajsplit(hydata, pathdata):
     split_hydata = np.split(sorted_hydata, first_occurrence)
     split_pathdata = np.split(sorted_pathdata, first_occurrence)
 
-    return split_hydata, split_pathdata
+    datetime = []
+    for p, d in zip(split_pathdata, datestrings):
+        datetime.append(pd.date_range(d, freq=freq, periods=p.shape[0]))
+
+    return split_hydata, split_pathdata, datetime
 
 
 def load_clusteringresults(clusterfilename):
