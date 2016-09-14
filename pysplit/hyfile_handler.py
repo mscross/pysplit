@@ -85,9 +85,6 @@ def load_hysplitfile(filename):
 
         contents = hyfile.readlines()
 
-        # Three lines from OMEGA to data
-        flen = len(contents) - 3
-        # print(flen)
         skip = False
         atdata = False
 
@@ -113,15 +110,26 @@ def load_hysplitfile(filename):
 
             # OMEGA happens first
             if 'OMEGA' in line:
-                # Don't count lines before OMEGA in file length flen
-                flen -= ind
-                # print flen
+                num_parcels = contents[ind].split()[0]
+
+                multiple_traj = False
+                if int(num_parcels) > 1:
+                    multiple_traj = True
+
+                # Number of data rows = length of contents minus the number of
+                # lines before OMEGA, OMEGA, andbetween OMEGA and first time pt
+                flen = len(contents) - (2 + num_parcels) - ind
+
+                # Determine timepoint freq, get all the initialization dates
+                date0 = []
+                freq = 'H'
+
                 if 'BACKWARD' in line:
                     freq = '-1H'
-                    date0 = contents[ind + 1].split()[:4]
-                else:
-                    freq = 'H'
-                    date0 = contents[ind + 1].split()[:4]
+
+                for i in range(1, num_parcels + 1):
+                    date0.append(contents[ind + i].split()[:4])
+
                 continue
 
             # PRESSURE happens second
@@ -145,60 +153,81 @@ def load_hysplitfile(filename):
                 arr_ind = 0
                 continue
 
-    date0 = ("20" +
-             "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in date0]) +
-             '0000')
+    datestrings = []
+    for d in date0:
+        datestrings.append("20" +
+            "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in d]) +
+            '0000')
 
-    datetime = pd.date_range(date0, freq=freq, periods=flen)
     # Get pathdata in x, y, z from lats (y), lons (x), z
-    flip = np.array([1,0,2])
-    pathdata = pathdata[:, flip]
+    pathdata = pathdata[:, np.array([1, 0, 2])]
 
     # Split hydata into individual trajectories (in case there are multiple)
-    multiple_traj = False
-    if 2 in hydata[:, 0]:
-        hydata, pathdata = trajsplit(hydata, pathdata)
-        multiple_traj = True
+    if multiple_traj:
+        hydata, pathdata, datetime = trajsplit(hydata, pathdata, datestrings,
+                                               freq)
+    else:
+        datetime = pd.date_range(datestrings[0], freq=freq,
+                                 periods=pathdata.shape[0])
 
     return hydata, pathdata, header, datetime, multiple_traj
 
 
-def trajsplit(hydata, pathdata):
+def trajsplit(hydata, pathdata, datestrings, freq):
     """
-    Splits an array of hysplit data into list of unique trajectory arrays
+    Split an array of hysplit data into list of unique trajectory arrays.
 
     Parameters
     ----------
     hydata : (L, N) ndarray of floats
         Array with L rows and N variables, introspected from a hysplit
         data file.
+    pathdata : (L, 3) ndarray of floats
+        Array with L rows and x, y z (lons, lats, altitude) columns
+    datestrings : list of strings
+        String representations of trajectory initialization date and time
+    freq : string
+        Either 'H' or '-1H', indicating a forwards or backwards trajectory
 
     Returns
     -------
-    split_hydata : list of (M, N) ndarrays of floats
+    split_hydata : list of (?, N) ndarrays of floats
         ``hydata`` split into individual trajectories
-
+    split_pathdata : list of (?, 3) ndarrays of floats
+        ``pathdata split into individual trajectories
+    datetime : list of pandas date ranges
+        List of ranges of DateTime objects for each array within
+        ``split_hydata`` and ``split_pathdata``
     """
-
     # Find number of unique trajectories within `hydata`
     unique_traj = np.unique(hydata[:, 0])
 
     # Sort the array row-wise by the first column
-    traj_id = hydata[:, 0]
-    sorted_indices = np.argsort(traj_id, kind='mergesort')
+    # Timepoints from same traj now grouped together
+    sorted_indices = np.argsort(hydata[:, 0], kind='mergesort')
     sorted_hydata = hydata[sorted_indices, :]
     sorted_pathdata = pathdata[sorted_indices, :]
 
-    # Split `hydata` into a list of arrays of three equal sizes
-    split_hydata = np.split(sorted_hydata, unique_traj.size)
-    split_pathdata = np.split(sorted_pathdata, unique_traj.size)
+    # Find first occurrence of each traj, except for the first
+    # which is obviously 0
+    first_occurrence = [np.nonzero(sorted_indices == u)[0][0]
+                        for u in unique_traj[1:]]
 
-    return split_hydata, split_pathdata
+    # Split `hydata` and `pathdata` into list of arrays, one
+    # array per traj.  May or may not be equal sizes
+    split_hydata = np.split(sorted_hydata, first_occurrence)
+    split_pathdata = np.split(sorted_pathdata, first_occurrence)
+
+    datetime = []
+    for p, d in zip(split_pathdata, datestrings):
+        datetime.append(pd.date_range(d, freq=freq, periods=p.shape[0]))
+
+    return split_hydata, split_pathdata, datetime
 
 
 def load_clusteringresults(clusterfilename):
     """
-    Load a 'CLUSLIST_#' file into an array
+    Load a 'CLUSLIST_#' file into an array.
 
     The 'CLUSLIST_#' file contains the information on how trajectories
     within a trajectory group are distributed among clusters.  Called by
@@ -218,7 +247,6 @@ def load_clusteringresults(clusterfilename):
         ``clusterarray_list``, number of sublists in ``traj_inds``.
 
     """
-
     orig_dir = os.getcwd()
 
     try:
@@ -244,14 +272,11 @@ def load_clusteringresults(clusterfilename):
         traj_inds = traj_inds - 1
 
         # Get the indices of the first occurrence of each unique cluster number
-        first_occurrence = []
-        for u in uniqueclusters:
-            first_occurrence.append(np.nonzero(clusterinfo == u)[0][0])
+        first_occurrence = [np.nonzero(clusterinfo == u)[0][0]
+                            for u in uniqueclusters[1:]]
 
         # Split into separate arrays at the first occurrences
-        # First occurrence of first cluster is not considered,
-        # since it is zero and will result in an empty array
-        cluster_trajlist = np.split(traj_inds, first_occurrence[1:])
+        cluster_trajlist = np.split(traj_inds, first_occurrence)
 
     finally:
         os.chdir(orig_dir)

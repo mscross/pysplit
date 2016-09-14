@@ -55,6 +55,7 @@ class Cluster(HyPath, HyGroup):
 
         self.start_longitude = self.trajectories[0].data.loc[0, 'geometry'].x
         self.clusternumber = cluster_number
+        self.multitraj = False
 
     def __getitem__(self, index):
         """
