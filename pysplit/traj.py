@@ -450,7 +450,7 @@ class Trajectory(HyPath):
             if multitraj:
                 self.path_r = LineString(
                     [Point(path[self.parcel_num - 1][i, :]) for i in
-                     range(path[self.parcel_ind - 1].shape[0])])
+                     range(path[self.parcel_num - 1].shape[0])])
             else:
                 self.path_r = LineString(
                     [Point(path[i, :]) for i in range(path.shape[0])])
