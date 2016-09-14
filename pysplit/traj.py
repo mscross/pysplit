@@ -21,7 +21,7 @@ class Trajectory(HyPath):
     """
 
     def __init__(self, trajdata, pathdata, datetime, trajheader, folder,
-                 filename, cfolder):
+                 filename, cfolder, multitraj):
         """
         Initialize ``Trajectory``.
 
@@ -44,7 +44,8 @@ class Trajectory(HyPath):
             Path information of HYSPLIT file.
         cfolder : string
             Location of corresponding clipped HYSPLIT file, if it exists.
-
+        multitraj : Boolean
+            If True, is from a file containing multiple trajectories
         """
         HyPath.__init__(self, trajdata, pathdata, datetime, trajheader)
 
@@ -85,6 +86,8 @@ class Trajectory(HyPath):
 
         self.trajcolor = 'black'
         self.linewidth = 2
+        self.multitraj = multitraj
+        self.parcel_num = trajdata[0, 0]
 
     def __hash__(self):
         return hash(self.trajid)
@@ -446,8 +449,8 @@ class Trajectory(HyPath):
 
             if multitraj:
                 self.path_r = LineString(
-                    [Point(path[self.parcel_ind][i, :]) for i in
-                     range(path[self.parcel_ind].shape[0])])
+                    [Point(path[self.parcel_num - 1][i, :]) for i in
+                     range(path[self.parcel_ind - 1].shape[0])])
             else:
                 self.path_r = LineString(
                     [Point(path[i, :]) for i in range(path.shape[0])])

@@ -41,8 +41,6 @@ class HyPath(object):
         self.data['DateTime'] = datetime
         self.data.set_index('Timestep', inplace=True, drop=False)
 
-        self.parcel_ind = alongpath[0, 0]
-
     def calculate_vector(self, reverse=False):
         """
         Calculate vectors in radians.

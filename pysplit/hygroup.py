@@ -1,8 +1,12 @@
+from __future__ import division, print_function
+
 import os
 
 
 class HyGroup(object):
     """
+    Class for initializing ``HyPath`` container object.
+
     :superclass: for ``TrajectoryGroup`` and ``ClusterGroup``.
 
     """
@@ -119,12 +123,12 @@ class HyGroup(object):
 
     def make_infile(self, infile_dir, use_clippedpath=True):
         """
-        Take ``Trajectory`` instances in ``HyGroup`` and write
-        path to INFILE, used by ``HYSPLIT`` to perform cluster analysis.
+        Write member ``HyPath`` file paths to INFILE.
 
-        If a specific subset of ``Trajectory`` instances is needed,
+        INFILE is used by ``HYSPLIT`` to perform cluster analysis.
+        If a specific subset of ``HyPath`` instances is needed,
         create a new ``HyGroup`` containing only qualifying
-        ``Trajectory`` instances.
+        ``HyPath`` instances.
 
         Parameters
         ----------
@@ -139,14 +143,23 @@ class HyGroup(object):
         with open(os.path.join(infile_dir, 'INFILE'), 'w') as infile:
 
             for traj in self:
-                if use_clippedpath:
+                skip_output = False
+                if traj.multitraj:
                     try:
                         output = traj.cfullpath
-                    except:
-                        output = traj.fullpath
+                    except AttributeError:
+                        print(traj.trajid, " missing clusterable file")
+                        skip_output = True
                 else:
-                    output = traj.fullpath
+                    if use_clippedpath:
+                        try:
+                            output = traj.cfullpath
+                        except AttributeError:
+                            output = traj.fullpath
+                    else:
+                        output = traj.fullpath
 
-                output = output.replace('\\', '/')
-                infile.writelines(output + '\n')
-                infile.flush()
+                if not skip_output:
+                    output = output.replace('\\', '/')
+                    infile.writelines(output + '\n')
+                    infile.flush()
