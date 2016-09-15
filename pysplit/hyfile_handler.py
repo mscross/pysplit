@@ -110,7 +110,7 @@ def load_hysplitfile(filename):
 
             # OMEGA happens first
             if 'OMEGA' in line:
-                num_parcels = contents[ind].split()[0]
+                num_parcels = line.split()[0]
 
                 multiple_traj = False
                 if int(num_parcels) > 1:

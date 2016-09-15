@@ -10,6 +10,7 @@ from shapely.geometry import Point, LineString
 # Relative imports within the package
 from .hyfile_handler import load_hysplitfile
 from .hypath import HyPath
+from .trajectory_generator import _populate_control, _try_to_remove
 
 
 class Trajectory(HyPath):
@@ -409,7 +410,38 @@ class Trajectory(HyPath):
                         self.uptake.loc[is_above, 'above'] *
                         self.uptake.loc[w, 'q'])
 
-    def load_reversetraj(self, reverse_dir='default', fname_end='REVERSE'):
+    def load_clippedtraj_data(self, clipped_dir='default',
+                              fname_end='CLIPPED'):
+        """
+        Load folder, filename of clipped version of trajectory.
+
+        Parameters
+        ----------
+        clipped_dir : string
+            The location of the clipped trajectories.  Default is a subfolder
+            in ``self.folder`` named 'clippedtraj'
+        fname_end : string
+            Default 'CLIPPED'. Clipped trajectory filename is ``self.filename``
+            + fname_end
+
+        """
+        if clipped_dir is 'default':
+            clipped_dir = os.path.join(self.folder, 'clippedtraj')
+
+        if not os.path.isdir(clipped_dir):
+            raise OSError('Clipped trajectory directory does not exist!')
+
+        self.cfolder = clipped_dir
+        cfullpath = os.path.join(self.cfolder,
+                                 self.filename + fname_end)
+        if os.path.exists(cfullpath):
+            self.cfilename = self.filename + fname_end
+            self.cfullpath = cfullpath
+        else:
+            raise OSError(cfullpath, ' not found.')
+
+    def load_reversetraj(self, reverse_dir='default', fname_end='REVERSE',
+                         reload_rtraj=False):
         """
         Load reverse trajectory.
 
@@ -426,9 +458,11 @@ class Trajectory(HyPath):
             + fname_end.  This keyword included to grandfather in trajectories
             calculated with previous ``PySPLIT`` versions
             (``fname_end`` = 'FORWARD').
+        reload_rtraj : Boolean
+            Default False.  If True, will reload the reverse trajectory.
 
         """
-        if not hasattr(self, 'path_r'):
+        if reload_rtraj or not hasattr(self, 'path_r'):
 
             if reverse_dir is 'default':
                 reverse_dir = os.path.join(self.folder, 'reversetraj')
@@ -437,13 +471,13 @@ class Trajectory(HyPath):
                 raise OSError('Reverse trajectory directory does not exist!')
 
             self.rfolder = reverse_dir
-            if os.path.exists(os.path.join(self.rfolder,
-                                           self.filename + fname_end)):
+            rfullpath = os.path.join(self.rfolder,
+                                     self.filename + fname_end)
+            if os.path.exists(rfullpath):
                 self.rfilename = self.filename + fname_end
-                self.rfullpath = os.path.join(self.rfolder, self.rfilename)
+                self.rfullpath = rfullpath
             else:
-                raise OSError('File ', self.filename,
-                              fname_end, ' not found.')
+                raise OSError(rfullpath, ' not found.')
 
             _, path, _, _, multitraj = load_hysplitfile(self.rfullpath)
 
@@ -457,6 +491,88 @@ class Trajectory(HyPath):
 
             # Calculate distance!
             self.calculate_distance(reverse=True)
+
+    def generate_reversetraj(self, reverse_dir, hysplit_working, meteo_dir,
+                             hysplit="C:\\hysplit4\\exec\\hyts_std",
+                             day_to_fnum=None):
+        """
+        Generate the reverse trajectory.  Requires HYSPLIT installation.
+
+        Parameters
+        ----------
+        reverse_dir : string
+            Full or relative path to the reverse trajectory directory.
+            Usually ``self.folder`` + 'reversetraj'
+        hysplit_working : string
+            Full or relative path to the HYSPLIT working directory.
+        meteo_dir : string
+            Full or relative path to the location of the meteorology files.
+        hysplit : string
+            Default "C:\\hysplit4\\exec\\hyts_std".  The location of the
+            "hyts_std" executable that generates trajectories.  This is the
+            default location for a typical PC installation of HYSPLIT.
+        day_to_fnum : dict
+            Default None.  Custom dictionary for translating start day of
+            meteorology file to number of meteorology file.  For example, GDAS
+            meteorology week 1 file starts on day 1, week 2 file on day 8, etc.
+
+            For example, for GDAS the dict would be:
+                day_to_fnum = {1 : 1,
+                               2 : 8,
+                               3 : 15,
+                               4 : 22,
+                               5 : 29}
+            However, if ``None`` provided, then PySPLIT will attempt to do the
+            translation itself based on the introspected meteorology type-
+            GDAS, EDAS, etc.
+
+        """
+        reversetrajname = self.filename + 'REVERSE'
+        final_rtrajpath = os.path.join(reverse_dir, reversetrajname)
+
+        y = self.data.DateTime.dt.year[-1]
+        m = self.data.DateTime.dt.month[-1]
+        d = self.data.DateTime.dt.day[-1]
+        h = self.data.DateTime.dt.hour[-1]
+
+        lat = self.data.geometry.iloc[-1].y
+        lon = self.data.geometry.iloc[-1].x
+        alt = self.data.geometry.iloc[-1].z
+
+        if alt >= 10000.0:
+            alt = 9999
+
+        with open(self.filename, 'r') as trajfile:
+            contents = trajfile.readlines()
+
+            at_meteo = False
+            ftype = []
+            yr = []
+            mon = []
+            day = []
+
+            for ind, line in enumerate(contents):
+                if 'OMEGA' in line:
+                    break
+                # This happens second
+                if at_meteo:
+                    
+                    continue
+                # This happens first
+                if not at_meteo:
+                    at_meteo = True
+                    continue
+
+        # Read file to get names of meteorology
+        # get runtime from last timepoint #
+
+        # format year to be 2 digit
+
+        # try to remove control, reversetrajname, final_rtrajpath
+        # populate control
+        # call hysplit
+        # move trajectory
+
 
     def calculate_integrationerr(self):
         """
