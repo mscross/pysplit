@@ -493,8 +493,8 @@ class Trajectory(HyPath):
             self.calculate_distance(reverse=True)
 
     def generate_reversetraj(self, reverse_dir, hysplit_working, meteo_dir,
-                             hysplit="C:\\hysplit4\\exec\\hyts_std",
-                             day_to_fnum=None):
+                             meteo_interval='weekly',
+                             hysplit="C:\\hysplit4\\exec\\hyts_std"):
         """
         Generate the reverse trajectory.  Requires HYSPLIT installation.
 
@@ -507,26 +507,21 @@ class Trajectory(HyPath):
             Full or relative path to the HYSPLIT working directory.
         meteo_dir : string
             Full or relative path to the location of the meteorology files.
+        meteo_interval : string
+            Default 'weekly'.  ['semimonthly'|'daily'|'weekly'].  Whether the
+            meteorlogy files used to calculate trajectory are semi-monthly,
+            weekly, or daily files.
         hysplit : string
             Default "C:\\hysplit4\\exec\\hyts_std".  The location of the
             "hyts_std" executable that generates trajectories.  This is the
             default location for a typical PC installation of HYSPLIT.
-        day_to_fnum : dict
-            Default None.  Custom dictionary for translating start day of
-            meteorology file to number of meteorology file.  For example, GDAS
-            meteorology week 1 file starts on day 1, week 2 file on day 8, etc.
-
-            For example, for GDAS the dict would be:
-                day_to_fnum = {1 : 1,
-                               2 : 8,
-                               3 : 15,
-                               4 : 22,
-                               5 : 29}
-            However, if ``None`` provided, then PySPLIT will attempt to do the
-            translation itself based on the introspected meteorology type-
-            GDAS, EDAS, etc.
-
         """
+        mon_dict = {'1' : 'jan', '2' : 'feb', '3' : 'mar', '4' : 'apr',
+                    '5' : 'may', '6' : 'jun', '7' : 'jul', '8' : 'aug',
+                    '9' : 'sep', '10' : 'oct', '11' : 'nov', '12' : 'dec'}
+        weekly = {'1' : '1', '8' : '2', '15' : 3, '22' : '4', '29' :'5'}
+        semimonthly = {'1':'1', '16':'2'}
+
         reversetrajname = self.filename + 'REVERSE'
         final_rtrajpath = os.path.join(reverse_dir, reversetrajname)
 
@@ -542,26 +537,29 @@ class Trajectory(HyPath):
         if alt >= 10000.0:
             alt = 9999
 
+        year_str = '{:02}'.format(int(y[-2:]))
+        year_prefix = y[:2]
+
         with open(self.filename, 'r') as trajfile:
             contents = trajfile.readlines()
+            # ftype = []
+            # yr = []
+            # mon = []
+            # day = []
+            meteodata = []
 
-            at_meteo = False
-            ftype = []
-            yr = []
-            mon = []
-            day = []
-
-            for ind, line in enumerate(contents):
+            for line in contents[1:]:
                 if 'OMEGA' in line:
                     break
-                # This happens second
-                if at_meteo:
-                    
-                    continue
-                # This happens first
-                if not at_meteo:
-                    at_meteo = True
-                    continue
+
+                ftype, yr, mon, day = line.split()[:4]
+
+                mon_str = mon_dict[mon]
+
+                meteodata.append(line)
+
+            for line in meteodata:
+
 
         # Read file to get names of meteorology
         # get runtime from last timepoint #
@@ -572,7 +570,6 @@ class Trajectory(HyPath):
         # populate control
         # call hysplit
         # move trajectory
-
 
     def calculate_integrationerr(self):
         """
