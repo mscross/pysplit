@@ -110,10 +110,10 @@ def load_hysplitfile(filename):
 
             # OMEGA happens first
             if 'OMEGA' in line:
-                num_parcels = line.split()[0]
+                num_parcels = int(line.split()[0])
 
                 multiple_traj = False
-                if int(num_parcels) > 1:
+                if num_parcels > 1:
                     multiple_traj = True
 
                 # Number of data rows = length of contents minus the number of

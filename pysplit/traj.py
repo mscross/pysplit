@@ -10,7 +10,7 @@ from shapely.geometry import Point, LineString
 # Relative imports within the package
 from .hyfile_handler import load_hysplitfile
 from .hypath import HyPath
-from .trajectory_generator import _populate_control, _try_to_remove
+from .trajectory_generator import _populate_control, _try_to_remove, _day2filenum
 
 
 class Trajectory(HyPath):
@@ -519,8 +519,10 @@ class Trajectory(HyPath):
         mon_dict = {'1' : 'jan', '2' : 'feb', '3' : 'mar', '4' : 'apr',
                     '5' : 'may', '6' : 'jun', '7' : 'jul', '8' : 'aug',
                     '9' : 'sep', '10' : 'oct', '11' : 'nov', '12' : 'dec'}
-        weekly = {'1' : '1', '8' : '2', '15' : 3, '22' : '4', '29' :'5'}
-        semimonthly = {'1':'1', '16':'2'}
+
+        meteo_interval = meteo_interval[0].lower()
+
+        orig_dir = os.getcwd()
 
         reversetrajname = self.filename + 'REVERSE'
         final_rtrajpath = os.path.join(reverse_dir, reversetrajname)
@@ -530,46 +532,73 @@ class Trajectory(HyPath):
         d = self.data.DateTime.dt.day[-1]
         h = self.data.DateTime.dt.hour[-1]
 
-        lat = self.data.geometry.iloc[-1].y
-        lon = self.data.geometry.iloc[-1].x
+        coordinates = (self.data.geometry.iloc[-1].y,
+                       self.data.geometry.iloc[-1].x)
         alt = self.data.geometry.iloc[-1].z
 
         if alt >= 10000.0:
             alt = 9999
+        runtime = self.data.index[-1] * -1
 
         year_str = '{:02}'.format(int(y[-2:]))
-        year_prefix = y[:2]
 
         with open(self.filename, 'r') as trajfile:
             contents = trajfile.readlines()
-            # ftype = []
-            # yr = []
-            # mon = []
-            # day = []
-            meteodata = []
+            meteopatterns = []
 
             for line in contents[1:]:
                 if 'OMEGA' in line:
                     break
 
-                ftype, yr, mon, day = line.split()[:4]
+                parts = line.split()[1:4]
 
-                mon_str = mon_dict[mon]
+                yy = "{:02}".format(int(parts[0]))
+                mon = mon_dict[parts[1]]
+                day = _day2filenum(meteo_interval, parts[2])
+                filestring = '*' + mon + '*' + yy + '*' + day
 
-                meteodata.append(line)
+                meteopatterns.append(filestring)
 
-            for line in meteodata:
+        meteofiles = []
+
+        try:
+            os.chdir(meteo_dir)
+
+            _, _, files = next(os.walk('.'))
+
+            for pattern in meteopatterns:
+                for each_file in files:
+                    if fnmatch.fnmatch(each_file, pattern):
+                        meteofiles.append(each_file)
+                        break
+
+        finally:
+            os.chdir(orig_dir)
+
+        if len(meteofiles) == 0:
+            raise OSError('No meteorology files found.')
+
+        try:
+            os.chdir(hysplit_working)
+
+            _try_to_remove('CONTROL')
+            _try_to_remove(reversetrajname)
+            _try_to_remove(final_rtrajpath)
+
+            _populate_control(coordinates, year_str, m, d, h, alt)
 
 
-        # Read file to get names of meteorology
-        # get runtime from last timepoint #
+        #     for line in meteodata:
 
-        # format year to be 2 digit
+        # # Read file to get names of meteorology
+        # # get runtime from last timepoint #
 
-        # try to remove control, reversetrajname, final_rtrajpath
-        # populate control
-        # call hysplit
-        # move trajectory
+        # # format year to be 2 digit
+
+        # # try to remove control, reversetrajname, final_rtrajpath
+        # # populate control
+        # # call hysplit
+        # # move trajectory
 
     def calculate_integrationerr(self):
         """

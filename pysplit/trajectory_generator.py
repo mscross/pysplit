@@ -12,9 +12,11 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
                       get_reverse=False, get_clipped=True,
                       hysplit="C:\\hysplit4\\exec\\hyts_std"):
     """
+    Generate sequence of trajectories within given time frame(s).
+
     Run bulk sequence of HYSPLIT simulations over a given time and at different
     altitudes (likely in meters above ground level).  Uses either weekly or
-    semi-monthly data with the filename format of *monYY*#.
+    semi-monthly data with the filename format of *mon*YY*#.
     Results are written to ``output_dir``.
 
     This does not set along-trajectory meteorological output- edit SETUP.CFG
@@ -73,7 +75,6 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
         for a typical PC installation of HYSPLIT
 
     """
-
     controlfname = 'CONTROL'
 
     # Get directory information, make directories if necessary
@@ -156,6 +157,8 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
 def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
                           meteofiles, controlfname):
     """
+    Calculate reverse trajectory during main trajectory generation.
+
     Calculates a new trajectory ('reverse trajectory') from the endpoint of the
     trajectory just calculated in the main generation sequence and running
     in the opposite direction.
@@ -180,7 +183,6 @@ def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
         The name of the control file, which should be 'CONTROL'
 
     """
-
     # Initialize name, path
     reversetrajname = trajname + 'REVERSE'
     final_rtrajpath = os.path.join(output_rdir, reversetrajname)
@@ -243,6 +245,8 @@ def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
 
 def _cliptraj_whilegen(output_cdir, trajname):
     """
+    Create clipped trajectory file from original file.
+
     Creates a new trajectory file containing only header and path information
     from a newly generated trajectory.  Only necessary if files are multiline.
 
@@ -255,7 +259,6 @@ def _cliptraj_whilegen(output_cdir, trajname):
         'CLIPPED'
 
     """
-
     # Initialize name, path, data list
     clippedtrajname = trajname + 'CLIPPED'
     final_ctrajpath = os.path.join(output_cdir, clippedtrajname)
@@ -312,6 +315,8 @@ def _cliptraj_whilegen(output_cdir, trajname):
 
 def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
     """
+    Get list of meteorology files.
+
     Creates list of files in storage location ``meteo_dir`` that belong
     to the given month and year, plus the necessary files from previous
     and the next months (``meteo_bookends``).
@@ -348,7 +353,6 @@ def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
         meteorology files
 
     """
-
     # Current working directory set in generate_bulktraj() environment
     orig_dir = os.getcwd()
 
@@ -390,7 +394,7 @@ def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
 def _populate_control(coords, year, month, day, hour, alt,
                       meteo_dir, meteofiles, run, controlfname, trajname):
     """
-    Initialize and write CONTROL text to file (called CONTROL)
+    Initialize and write CONTROL text to file (called CONTROL).
 
     Parameters
     ----------
@@ -418,7 +422,6 @@ def _populate_control(coords, year, month, day, hour, alt,
         The intended name of the trajectory file
 
     """
-
     controltext = [year + " {0:02} {1:02} {2:02}\n".format(month, day, hour),
                    "1\n",
                    "{0!s} {1!s} {2!s}\n".format(coords[0], coords[1], alt),
@@ -441,7 +444,7 @@ def _populate_control(coords, year, month, day, hour, alt,
 
 def _year2string(year):
     """
-    Helper function, takes a four digit integer year, makes a length-2 string
+    Helper function, takes a four digit integer year, makes a length-2 string.
 
     Parameters
     ----------
@@ -453,14 +456,14 @@ def _year2string(year):
     Length-2 string representation of ``year``
 
     """
-
     return '{0:02}'.format(year % 100)
 
 
 def _monyearstrings(mon, year, mon_dict):
     """
     Increment the months and potentially the years.
-    Assemble the strings that will allow ``_meteofinder`` to get correct files
+
+    Assemble the strings that will allow ``_meteofinder`` to get correct files.
 
     Parameters
     ----------
@@ -481,7 +484,6 @@ def _monyearstrings(mon, year, mon_dict):
         Signature for gathering the meteorology files for the current month
 
     """
-
     next_year = year
     prev_year = year
 
@@ -506,7 +508,7 @@ def _monyearstrings(mon, year, mon_dict):
 
 def _mondict(n_hem=True):
     """
-    Get a dictionary of season and month string
+    Get a dictionary of season and month string.
 
     Parameters
     ----------
@@ -520,7 +522,6 @@ def _mondict(n_hem=True):
         Dictionary keyed by month integer, with lists of [season, mon]
 
     """
-
     if n_hem:
         season_month_dict = {12: ['winter', 'dec'],
                              1 : ['winter', 'jan'],
@@ -561,8 +562,38 @@ def _try_to_remove(string):
         Name of file to attempt to remove
 
     """
-
     try:
         os.remove(string)
     except OSError:
         pass
+
+
+def _day2filenum(interval, day):
+    """
+    Convert a date to corresponding file number.
+
+    Results depend on file interval- weekly, daily, semi-monthly.
+
+    Parameters
+    ----------
+    interval : string
+        The file interval.  Daily, weekly, or semi-monthly accepted,
+        represented by lower case first letter.
+    day : string
+        A number indicating the date.
+
+    Returns
+    -------
+    filenum : string
+        The number of the file within the month of meteorology.
+    """
+    if interval is 'w':
+        filenum = str(((int(day) - 1) // 7) + 1)
+    elif interval is 's':
+        filenum = str(((int(day) - 1) // 15) + 1)
+    elif interval is 'd':
+        filenum = day
+    else:
+        raise ValueError('Meteorology interval not recognized')
+
+    return filenum
