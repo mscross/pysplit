@@ -144,7 +144,7 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
                                           meteo_dir, meteofiles, controlfname)
 
                 if get_clipped:
-                    _cliptraj_whilegen(output_cdir, trajname)
+                    _cliptraj(output_cdir, trajname)
 
                 # Move the trajectory file to output directory
                 os.rename(trajname, final_trajpath)
@@ -243,7 +243,7 @@ def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
     os.rename(reversetrajname, final_rtrajpath)
 
 
-def _cliptraj_whilegen(output_cdir, trajname):
+def _cliptraj(output_cdir, trajname):
     """
     Create clipped trajectory file from original file.
 
