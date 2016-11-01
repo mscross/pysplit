@@ -139,6 +139,6 @@ pysplit.generate_bulktraj(basename, working_dir, storage_dir, meteo_dir,
                           monthslice=slice(0, 32, 2), get_reverse=True)
 
 """
-When complete, ``storage_dir``, will contain 578 trajectory files, as well as two
-folders, 'reversetraj' and 'clippedtraj', each containing 578 files.
+When complete, ``storage_dir``, will contain 576 trajectory files, as well as two
+folders, 'reversetraj' and 'clippedtraj', each containing 576 files.
 """
