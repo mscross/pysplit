@@ -6,10 +6,14 @@ import numpy as np
 import pandas as pd
 import geopandas as gp
 from shapely.geometry import Point, LineString
+from subprocess import call
+import fnmatch
 
 # Relative imports within the package
 from .hyfile_handler import load_hysplitfile
 from .hypath import HyPath
+from .trajectory_generator import (_populate_control, _try_to_remove,
+                                   _day2filenum, _cliptraj)
 
 
 class Trajectory(HyPath):
@@ -409,7 +413,65 @@ class Trajectory(HyPath):
                         self.uptake.loc[is_above, 'above'] *
                         self.uptake.loc[w, 'q'])
 
-    def load_reversetraj(self, reverse_dir='default', fname_end='REVERSE'):
+    def load_clippedtraj_data(self, clipped_dir='default',
+                              fname_end='CLIPPED'):
+        """
+        Load folder, filename of clipped version of trajectory.
+
+        Parameters
+        ----------
+        clipped_dir : string
+            The location of the clipped trajectories.  Default is a subfolder
+            in ``self.folder`` named 'clippedtraj'
+        fname_end : string
+            Default 'CLIPPED'. Clipped trajectory filename is ``self.filename``
+            + fname_end
+
+        """
+        if clipped_dir is 'default':
+            clipped_dir = os.path.join(self.folder, 'clippedtraj')
+
+        if not os.path.isdir(clipped_dir):
+            raise OSError('Clipped trajectory directory does not exist!')
+
+        self.cfolder = clipped_dir
+        cfullpath = os.path.join(self.cfolder,
+                                 self.filename + fname_end)
+        if os.path.exists(cfullpath):
+            self.cfilename = self.filename + fname_end
+            self.cfullpath = cfullpath
+        else:
+            raise OSError(cfullpath, ' not found.')
+
+    def generate_clippedtraj(self, clipped_dir):
+        """
+        Generate the clipped version of the original trajectory file.
+
+        The clipped trajectory file contains only path and time information.
+        Does not require a HYSPLIT installation to create, only the original
+        trajectory file.
+
+        Parameters
+        ----------
+        clipped_dir : string
+            Full or relative path to the reverse trajectory directory.
+            Usually ``self.folder`` + 'clippedtraj'
+
+        """
+        orig_dir = os.getcwd()
+        if not os.path.isdir(clipped_dir):
+            os.mkdir(os.path.join(clipped_dir))
+
+        try:
+            os.chdir(self.folder)
+
+            _cliptraj(clipped_dir, self.filename)
+
+        finally:
+            os.chdir(orig_dir)
+
+    def load_reversetraj(self, reverse_dir='default', fname_end='REVERSE',
+                         reload_rtraj=False):
         """
         Load reverse trajectory.
 
@@ -426,9 +488,11 @@ class Trajectory(HyPath):
             + fname_end.  This keyword included to grandfather in trajectories
             calculated with previous ``PySPLIT`` versions
             (``fname_end`` = 'FORWARD').
+        reload_rtraj : Boolean
+            Default False.  If True, will reload the reverse trajectory.
 
         """
-        if not hasattr(self, 'path_r'):
+        if reload_rtraj or not hasattr(self, 'path_r'):
 
             if reverse_dir is 'default':
                 reverse_dir = os.path.join(self.folder, 'reversetraj')
@@ -437,13 +501,13 @@ class Trajectory(HyPath):
                 raise OSError('Reverse trajectory directory does not exist!')
 
             self.rfolder = reverse_dir
-            if os.path.exists(os.path.join(self.rfolder,
-                                           self.filename + fname_end)):
+            rfullpath = os.path.join(self.rfolder,
+                                     self.filename + fname_end)
+            if os.path.exists(rfullpath):
                 self.rfilename = self.filename + fname_end
-                self.rfullpath = os.path.join(self.rfolder, self.rfilename)
+                self.rfullpath = rfullpath
             else:
-                raise OSError('File ', self.filename,
-                              fname_end, ' not found.')
+                raise OSError(rfullpath, ' not found.')
 
             _, path, _, _, multitraj = load_hysplitfile(self.rfullpath)
 
@@ -457,6 +521,142 @@ class Trajectory(HyPath):
 
             # Calculate distance!
             self.calculate_distance(reverse=True)
+
+    def generate_reversetraj(self, reverse_dir, hysplit_working, meteo_dir,
+                             meteo_interval='weekly',
+                             hysplit="C:\\hysplit4\\exec\\hyts_std"):
+        """
+        Generate the reverse trajectory.  Requires HYSPLIT installation.
+
+        The reverse trajectory begins at the endpoint of the original
+        trajectory, and runs the opposite direction in time.  The two paths
+        are ideally indistinguishable when plotted.
+
+        Parameters
+        ----------
+        reverse_dir : string
+            Full or relative path to the reverse trajectory directory.
+            Usually ``self.folder`` + 'reversetraj'
+        hysplit_working : string
+            Full or relative path to the HYSPLIT working directory.
+        meteo_dir : string
+            Full or relative path to the location of the meteorology files.
+        meteo_interval : string
+            Default 'weekly'.  ['monthly'|semimonthly'|'daily'|'weekly'].
+            Whether the meteorlogy files used to calculate trajectory are
+            monthly, semi-monthly, weekly, or daily files.
+        hysplit : string
+            Default "C:\\hysplit4\\exec\\hyts_std".  The location of the
+            "hyts_std" executable that generates trajectories.  This is the
+            default location for a typical PC installation of HYSPLIT.
+
+        """
+        orig_dir = os.getcwd()
+
+        if not os.path.isdir(reverse_dir):
+            os.mkdir(os.path.join(reverse_dir))
+
+        reversetrajname = self.filename + 'REVERSE'
+        final_rtrajpath = os.path.join(reverse_dir, reversetrajname)
+
+        y = self.data.DateTime.dt.year.iloc[-1]
+        m = self.data.DateTime.dt.month.iloc[-1]
+        d = self.data.DateTime.dt.day.iloc[-1]
+        h = self.data.DateTime.dt.hour.iloc[-1]
+
+        coordinates = (self.data.geometry.iloc[-1].y,
+                       self.data.geometry.iloc[-1].x)
+        alt = self.data.geometry.iloc[-1].z
+
+        if alt >= 10000.0:
+            alt = 9999
+        run = self.data.index[-1] * -1
+
+        year_str = '{:02}'.format(int(str(y)[-2:]))
+
+        # Introspect meteorology files
+        if not hasattr(self, 'meteorology_files'):
+            self.get_meteo_files(meteo_dir, meteo_interval)
+
+        try:
+            os.chdir(hysplit_working)
+
+            _try_to_remove('CONTROL')
+            _try_to_remove(reversetrajname)
+            _try_to_remove(final_rtrajpath)
+
+            _populate_control(coordinates, year_str, m, d, h, alt, meteo_dir,
+                              self.meteorology_files, run, 'CONTROL',
+                              reversetrajname)
+
+            call(hysplit)
+
+            os.rename(reversetrajname, final_rtrajpath)
+
+        finally:
+            os.chdir(orig_dir)
+
+    def get_meteo_files(self, meteo_dir, meteo_interval):
+        """
+        Get a list of the meteorology files used to calculate ``Trajectory``.
+
+        Results stored as ``self.meteorology_files``
+
+        Parameters
+        ----------
+        meteo_dir : string
+            Full or relative Path to the location of the meteorology files.
+        meteo_interval : string
+            The time coverage of the meteorological files.
+            ['semimonthly'|'daily'|'weekly']
+
+        """
+        meteopatterns = []
+        meteofiles = []
+
+        orig_dir = os.getcwd()
+        meteo_interval = meteo_interval[0].lower()
+
+        mon_dict = {'1' : 'jan', '2' : 'feb', '3' : 'mar', '4' : 'apr',
+                    '5' : 'may', '6' : 'jun', '7' : 'jul', '8' : 'aug',
+                    '9' : 'sep', '10' : 'oct', '11' : 'nov', '12' : 'dec'}
+
+        with open(self.fullpath, 'r') as trajfile:
+            contents = trajfile.readlines()
+
+            for line in contents[1:]:
+                if 'OMEGA' in line:
+                    break
+
+                parts = line.split()[1:4]
+
+                year = "{:02}".format(int(parts[0]))
+                month = mon_dict[parts[1]]
+                day = _day2filenum(meteo_interval, parts[2])
+
+                filestring = '*' + month + '*' + year + '*' + day
+
+                meteopatterns.append(filestring)
+
+        try:
+            os.chdir(meteo_dir)
+
+            _, _, files = next(os.walk('.'))
+
+            for pattern in meteopatterns:
+                for each_file in files:
+                    if fnmatch.fnmatch(each_file, pattern):
+                        meteofiles.append(each_file)
+                        break
+
+        finally:
+            os.chdir(orig_dir)
+
+        if len(meteofiles) == 0:
+            raise OSError('No meteorology files found.')
+        print(len(meteofiles))
+
+        self.meteorology_files = meteofiles
 
     def calculate_integrationerr(self):
         """
