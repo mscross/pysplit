@@ -587,11 +587,11 @@ def _day2filenum(interval, day):
     filenum : string
         The number of the file within the month of meteorology.
     """
-    if interval is 'w':
+    if interval == 'w':
         filenum = str(((int(day) - 1) // 7) + 1)
-    elif interval is 's':
+    elif interval == 's':
         filenum = str(((int(day) - 1) // 15) + 1)
-    elif interval is 'd':
+    elif interval == 'd' or interval == 'm':
         filenum = day
     else:
         raise ValueError('Meteorology interval not recognized')

@@ -459,6 +459,8 @@ class Trajectory(HyPath):
 
         """
         orig_dir = os.getcwd()
+        if not os.path.isdir(clipped_dir):
+            os.mkdir(os.path.join(clipped_dir))
 
         try:
             os.chdir(self.folder)
@@ -540,9 +542,9 @@ class Trajectory(HyPath):
         meteo_dir : string
             Full or relative path to the location of the meteorology files.
         meteo_interval : string
-            Default 'weekly'.  ['semimonthly'|'daily'|'weekly'].  Whether the
-            meteorlogy files used to calculate trajectory are semi-monthly,
-            weekly, or daily files.
+            Default 'weekly'.  ['monthly'|semimonthly'|'daily'|'weekly'].
+            Whether the meteorlogy files used to calculate trajectory are
+            monthly, semi-monthly, weekly, or daily files.
         hysplit : string
             Default "C:\\hysplit4\\exec\\hyts_std".  The location of the
             "hyts_std" executable that generates trajectories.  This is the
@@ -551,13 +553,16 @@ class Trajectory(HyPath):
         """
         orig_dir = os.getcwd()
 
+        if not os.path.isdir(reverse_dir):
+            os.mkdir(os.path.join(reverse_dir))
+
         reversetrajname = self.filename + 'REVERSE'
         final_rtrajpath = os.path.join(reverse_dir, reversetrajname)
 
-        y = self.data.DateTime.dt.year[-1]
-        m = self.data.DateTime.dt.month[-1]
-        d = self.data.DateTime.dt.day[-1]
-        h = self.data.DateTime.dt.hour[-1]
+        y = self.data.DateTime.dt.year.iloc[-1]
+        m = self.data.DateTime.dt.month.iloc[-1]
+        d = self.data.DateTime.dt.day.iloc[-1]
+        h = self.data.DateTime.dt.hour.iloc[-1]
 
         coordinates = (self.data.geometry.iloc[-1].y,
                        self.data.geometry.iloc[-1].x)
@@ -567,11 +572,11 @@ class Trajectory(HyPath):
             alt = 9999
         run = self.data.index[-1] * -1
 
-        year_str = '{:02}'.format(int(y[-2:]))
+        year_str = '{:02}'.format(int(str(y)[-2:]))
 
         # Introspect meteorology files
         if not hasattr(self, 'meteorology_files'):
-            meteofiles = self.get_meteo_files(meteo_dir, meteo_interval)
+            self.get_meteo_files(meteo_dir, meteo_interval)
 
         try:
             os.chdir(hysplit_working)
@@ -581,7 +586,8 @@ class Trajectory(HyPath):
             _try_to_remove(final_rtrajpath)
 
             _populate_control(coordinates, year_str, m, d, h, alt, meteo_dir,
-                              meteofiles, run, 'CONTROL', reversetrajname)
+                              self.meteorology_files, run, 'CONTROL',
+                              reversetrajname)
 
             call(hysplit)
 
@@ -615,7 +621,7 @@ class Trajectory(HyPath):
                     '5' : 'may', '6' : 'jun', '7' : 'jul', '8' : 'aug',
                     '9' : 'sep', '10' : 'oct', '11' : 'nov', '12' : 'dec'}
 
-        with open(self.filename, 'r') as trajfile:
+        with open(self.fullpath, 'r') as trajfile:
             contents = trajfile.readlines()
 
             for line in contents[1:]:
@@ -648,6 +654,7 @@ class Trajectory(HyPath):
 
         if len(meteofiles) == 0:
             raise OSError('No meteorology files found.')
+        print(len(meteofiles))
 
         self.meteorology_files = meteofiles
 
