@@ -662,9 +662,12 @@ class Trajectory(HyPath):
         """
         Estimate integration error.
 
-        Integration error based on distance between origin and
-        reverse trajectory endpoint and the total travel distance.
-        Error is in percent.
+        Absolute integration error (``self.integration_error_abs``)
+        is half the loop closure distance, which is the distance between
+        ``Trajectory`` (``self``) origin and reverse trajectory endpoint.
+        Relative integration error is the loop closure distance divided by the
+        total distance traveled by reverse and original trajectories, divided
+        by 2 and reported as a percentage.
 
         """
         if self.data.get('Distance_ptp_r') is None:
@@ -681,6 +684,7 @@ class Trajectory(HyPath):
                                            'Cumulative_Dist_r']].iloc[-1].sum()
 
         self.integration_error = ((site_distance / travel_distance) * 100) / 2
+        self.integration_error_abs = site_distance / 2
 
     def _convert_rh2w(self):
         """
