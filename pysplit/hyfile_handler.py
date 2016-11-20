@@ -147,8 +147,8 @@ def load_hysplitfile(filename):
 
                 # Initialize empty data array
                 # 10 dropped columns include date, time step, etc
-                hydata = np.empty((flen, columns - 10))
-                pathdata = np.empty((flen, 3))
+                hydata = np.empty((int(flen), columns - 10))
+                pathdata = np.empty((int(flen), 3))
                 atdata = True
                 arr_ind = 0
                 continue
