@@ -82,33 +82,65 @@ class TrajectoryGroup(HyGroup):
 
     def pop(self, ind=-1, trajid=None):
         """
-        Intercept ``HyGroup.pop()``.
+        Remove Trajectory object(s) from self.
 
-        If a list of ``Trajectory`` instances is returned from
-        ``HyGroup.pop()``, return a new ``TrajectoryGroup``.
+        Shortcut to self.trajectories.pop() that updates the
+        self.trajcount and the list of trajids.
 
         Parameters
         ----------
         ind : int
-            Default -1.  The positional argument of the ``Trajectory``
+            The positional argument of the ``Trajectory``
             to remove.
-        trajid : string
-            Default None.  The named argument of the ``Trajectory``
-            to remove.  Overrides ``ind`` if not None.
+        trajid : string or list of strings
+            The identifier(s) of the ``Trajectory`` object(s)
+            to remove from ``self``.  Overrides ``ind`` if not None.
 
         Returns
         -------
-        popped : ``Trajectory`` instance or ``TrajectoryGroup``
-            The indicated ``Trajectory`` or a ``TrajectoryGroup`` if multiple
-            trajectories were popped out.  May also be a ``None``
-            if no matching ``Trajectory`` instances were found.
+        popped : ``Trajectory`` or ``TrajectoryGroup``
+            A``Trajectory`` or ``TrajectoryGroup`` consisting of the
+            trajectory or trajectories indicated by ``ind`` or ``trajid``.
 
         """
-        popped = HyGroup.pop(self, ind, trajid)
+        if trajid is not None:
+            try:
+                to_pop = [self.trajids.index(trajid)]
+            except ValueError:
+                to_pop = [self.trajids.index(t) for t in trajid
+                          if t in self.trajids]
+                if len(to_pop) == 0:
+                    raise ValueError('TrajIDs not in list of self.trajids')
 
-        try:
-            popped = TrajectoryGroup(popped)
-        except:
-            pass
+            to_pop.sort()
+            popped = []
+            for p in to_pop[::-1]:
+                popped.append(self.trajectories.pop(p))
+                self.trajids.pop(p)
+            self.trajcount = len(self.trajectories)
+
+            if len(popped) == 1:
+                popped = popped[0]
+            else:
+                popped = TrajectoryGroup(popped)
+        else:
+            popped = self.trajectories.pop(ind)
+            self.trajids.pop(ind)
+            self.trajcount = len(self.trajectories)
 
         return popped
+
+    def append(self, traj):
+        """
+        Add a ``Trajectory`` to the ``self``.
+
+        Parameters
+        ----------
+        traj : ``Trajectory`` instance
+            The ``Trajectory`` to add to the end of ``self``.
+
+        """
+        if hasattr(traj, 'trajid'):
+            self.trajectories.append(traj)
+            self.trajids.append(traj.trajid)
+            self.trajcount = len(self.trajectories)
