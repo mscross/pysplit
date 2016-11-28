@@ -84,19 +84,19 @@ def make_trajectorygroup(signature):
     return trajectories
 
 
-def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
+def spawn_clusters(trajgroup, assignment_file, cluspath_dir):
     """
     Make ``ClusterGroup`` from ``trajgroup``.
 
     Acquires the distribution of ``Trajectories`` in ``trajgroup``
-    from ``distribution_file`` and creates new ``Cluster`` and ``ClusterGroup``
+    from ``assignment_file`` and creates new ``Cluster`` and ``ClusterGroup``
     instances based on that information
 
     Parameters
     ----------
-    distribution_file : string
-        The name of the 'CLUSLIST_#' file that indicates
-        ``Trajectory`` distribution among ``Clusters``
+    assignment_file : string
+        The name of the 'CLUSLIST_#' file that indicates the assignment of each
+        ``Trajectory``  to a ``Cluster``
 
     Returns
     -------
@@ -106,7 +106,7 @@ def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
         objects, which are specialized ``TrajectoryGroup`` objects.
 
     """
-    traj_inds, totalclusters = load_clusteringresults(distribution_file)
+    traj_inds, totalclusters = load_clusteringresults(assignment_file)
 
     all_clusters = []
 
@@ -116,10 +116,10 @@ def spawn_clusters(trajgroup, distribution_file, endpoint_dir):
         trajlist = [trajgroup.trajectories[int(j)] for j in traj_inds[i]]
 
         # Get the cluster path
-        endpt_fname = ('C' + str(cluster_num) + '_' +
-                       str(totalclusters) + 'mean.tdump')
-        endpt_file = os.path.join(endpoint_dir, endpt_fname)
-        data, pathdata, header, datetime, _ = load_hysplitfile(endpt_file)
+        cluspath_fname = ('C' + str(cluster_num) + '_' +
+                          str(totalclusters) + 'mean.tdump')
+        cluspath_file = os.path.join(cluspath_dir, cluspath_fname)
+        data, pathdata, header, datetime, _ = load_hysplitfile(cluspath_file)
 
         # Make sure longitudes are -180 to 180
         pathdata[:, 1] = np.where(pathdata[:, 1] > 180.0,

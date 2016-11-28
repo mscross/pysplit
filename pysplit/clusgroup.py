@@ -14,12 +14,12 @@ def print_clusterprocedure():
 
           In ``HYSPLIT``
           3. Trajectory --> Special Runs --> Clustering --> Standard
-          4. Adjust clustering parameters, endpoints (trajectory) folder, and
-             working folder (where output will be stored, where INFILE lives)
+          4. Adjust clustering parameters and working folder
+             (where output will be stored, where INFILE lives)
           5. ``Run cluster analysis``
           6. Determine and set appropriate number of clusters
           7. Assign trajectories to clusters (``Run``)
-          8. ``Display Means``, ``Display Clusters``, ``Quit``
+          8. ``Display Means``, ``Quit``
 
           In ``PySPLIT``
           9. ``spawn_clusters()``""")
