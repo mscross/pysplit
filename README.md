@@ -74,4 +74,4 @@ Within your virtual environment, install PySPLIT as above.
 
 ## Using PySPLIT
 
-Coming soon.  Example code snippets are available in the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  Much of the work done to PySPLIT since has been under the hood, so these snippets are still a good place to start.  Please cite the proceedings if you use PySPLIT in your work!
+Updated examples can be found in docs/examples, and an updated technical paper is in the works.  For now, if you use PySPLIT in your work, please cite the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  Many thanks are due to the NOAA Air Research Laboratory for providing the HYSPLIT model.
