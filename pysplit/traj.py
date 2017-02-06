@@ -443,7 +443,7 @@ class Trajectory(HyPath):
         else:
             raise OSError(cfullpath, ' not found.')
 
-    def generate_clippedtraj(self, clipped_dir):
+    def generate_clippedtraj(self, clipped_dir='default'):
         """
         Generate the clipped version of the original trajectory file.
 
@@ -455,10 +455,14 @@ class Trajectory(HyPath):
         ----------
         clipped_dir : string
             Full or relative path to the reverse trajectory directory.
-            Usually ``self.folder`` + 'clippedtraj'
+            'default' refers to ``self.folder`` + 'clippedtraj'
 
         """
         orig_dir = os.getcwd()
+
+        if clipped_dir is 'default':
+            clipped_dir = os.path.join(self.folder, 'clippedtraj')
+
         if not os.path.isdir(clipped_dir):
             os.mkdir(os.path.join(clipped_dir))
 
@@ -522,7 +526,8 @@ class Trajectory(HyPath):
             # Calculate distance!
             self.calculate_distance(reverse=True)
 
-    def generate_reversetraj(self, reverse_dir, hysplit_working, meteo_dir,
+    def generate_reversetraj(self, hysplit_working, meteo_dir,
+                             reverse_dir='default',
                              meteo_interval='weekly',
                              hysplit="C:\\hysplit4\\exec\\hyts_std"):
         """
@@ -534,13 +539,13 @@ class Trajectory(HyPath):
 
         Parameters
         ----------
-        reverse_dir : string
-            Full or relative path to the reverse trajectory directory.
-            Usually ``self.folder`` + 'reversetraj'
         hysplit_working : string
             Full or relative path to the HYSPLIT working directory.
         meteo_dir : string
             Full or relative path to the location of the meteorology files.
+        reverse_dir : string
+            Full or relative path to the reverse trajectory directory.
+            Default refers to ``self.folder`` + 'reversetraj'
         meteo_interval : string
             Default 'weekly'.  ['monthly'|semimonthly'|'daily'|'weekly'].
             Whether the meteorlogy files used to calculate trajectory are
@@ -552,6 +557,9 @@ class Trajectory(HyPath):
 
         """
         orig_dir = os.getcwd()
+
+        if reverse_dir is 'default':
+            reverse_dir = os.path.join(self.folder, 'reversetraj')
 
         if not os.path.isdir(reverse_dir):
             os.mkdir(os.path.join(reverse_dir))

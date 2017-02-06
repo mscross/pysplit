@@ -114,26 +114,6 @@ class Cluster(HyPath, HyGroup):
         """
         return TrajectoryGroup(HyGroup.__sub__(self, other))
 
-    def calculate_vector(self):
-        """
-        Calculate bearings.
-
-        Find mean bearing of ``Cluster`` path and bearings between
-            timesteps.
-
-        """
-        HyPath.calculate_vector(self)
-
-    def calculate_distance(self):
-        """
-        Calculate distances.
-
-        Find the distance between timesteps of the ``Cluster`` path and
-            the cumulative distance at each time step.
-
-        """
-        HyPath.calculate_distance(self)
-
 
 class ClusterGroup(object):
     """
