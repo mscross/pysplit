@@ -92,6 +92,7 @@ class Trajectory(HyPath):
         self.linewidth = 2
         self.multitraj = multitraj
         self.parcel_num = trajdata[0, 0]
+        # False until proven otherwise
 
     def __hash__(self):
         return hash(self.trajid)
@@ -143,7 +144,7 @@ class Trajectory(HyPath):
                 raise KeyError('Calculate mixing ratio first!')
             else:
                 # Convert mixing ratio to relative humidity
-                sat_vapor = 6.11*(10.0**((7.5*self.data['Temperature_C']) /
+                sat_vapor = 6.11 * (10.0**((7.5 * self.data['Temperature_C']) /
                                          (237.7 + self.data['Temperature_C'])))
 
                 sat_w = 621.97 * (sat_vapor / (self.data['Pressure'] -
@@ -515,16 +516,48 @@ class Trajectory(HyPath):
 
             _, path, _, _, multitraj = load_hysplitfile(self.rfullpath)
 
+            badtraj = False
+
             if multitraj:
-                self.path_r = LineString(
+                badlens = []
+                badinds = []
+                path_r = LineString(
                     [Point(path[self.parcel_num - 1][i, :]) for i in
                      range(path[self.parcel_num - 1].shape[0])])
+                for pnum, pr in enumerate(path_r):
+                    if len(pr.xy[0]) != len(self.data.index):
+                        badtraj = True
+                        badlens.append(len(pr.xy[0]) - 1)
+                        badinds.append(pnum)
+
+                if badtraj:
+                    verb = 'are'
+                    if len(badlens) == 1:
+                        verb = 'is'
+                    args = (self.trajid, badinds, verb, badlens,
+                            len(self.data.index) - 1)
+                    print('''Trajectory {} has bad reverse trajectories: \n\t
+                          {} {} {} hours instead of {} hours'''.format(*args))
+
             else:
-                self.path_r = LineString(
+                path_r = LineString(
                     [Point(path[i, :]) for i in range(path.shape[0])])
 
+                if len(path_r.xy[0]) != len(self.data.index):
+                    badtraj = True
+
+                    args = (self.trajid, len(path_r.xy[0]) - 1,
+                            len(self.data.index) - 1)
+                    print('''Trajectory {} has a bad reverse trajectory: \n\t
+                          {} hours instead of {} hours'''.format(*args))
+
             # Calculate distance!
-            self.calculate_distance(reverse=True)
+            if badtraj:
+                self.rtraj_ok = False
+            else:
+                self.rtraj_ok = True
+                self.path_r = path_r
+                self.calculate_distance(reverse=True)
 
     def generate_reversetraj(self, hysplit_working, meteo_dir,
                              reverse_dir='default',
@@ -625,9 +658,9 @@ class Trajectory(HyPath):
         orig_dir = os.getcwd()
         meteo_interval = meteo_interval[0].lower()
 
-        mon_dict = {'1' : 'jan', '2' : 'feb', '3' : 'mar', '4' : 'apr',
-                    '5' : 'may', '6' : 'jun', '7' : 'jul', '8' : 'aug',
-                    '9' : 'sep', '10' : 'oct', '11' : 'nov', '12' : 'dec'}
+        mon_dict = {'1': 'jan', '2': 'feb', '3': 'mar', '4': 'apr',
+                    '5': 'may', '6': 'jun', '7': 'jul', '8': 'aug',
+                    '9': 'sep', '10': 'oct', '11': 'nov', '12': 'dec'}
 
         with open(self.fullpath, 'r') as trajfile:
             contents = trajfile.readlines()
@@ -678,21 +711,28 @@ class Trajectory(HyPath):
         by 2 and reported as a percentage.
 
         """
-        if self.data.get('Distance_ptp_r') is None:
+        if not hasattr(self, 'rtraj_ok'):
             raise AttributeError('Reverse trajectory must be loaded first!')
 
-        if self.data.get('Distance_ptp') is None:
-            self.calculate_distance()
+        if self.rtraj_ok:
 
-        site_distance = self.distance_between2pts(self.path.coords[0],
-                                                  self.path_r.coords[-1],
-                                                  in_xy=True)
+            if self.data.get('Distance_ptp') is None:
+                self.calculate_distance()
 
-        travel_distance = self.data.loc[:,['Cumulative_Dist',
-                                           'Cumulative_Dist_r']].iloc[-1].sum()
+            site_distance = self.distance_between2pts(self.path.coords[0],
+                                                      self.path_r.coords[-1],
+                                                      in_xy=True)
 
-        self.integration_error = ((site_distance / travel_distance) * 100) / 2
-        self.integration_error_abs = site_distance / 2
+            travel_distance = self.data.loc[:, ['Cumulative_Dist',
+                'Cumulative_Dist_r']].iloc[-1].sum()
+
+            self.integration_error = ((site_distance / travel_distance) *
+                                      100) / 2
+            self.integration_error_abs = site_distance / 2
+
+        else:
+            print('''Integration error calculation skipped for
+                  Trajectory {}'''.format(self.trajid))
 
     def _convert_rh2w(self):
         """
