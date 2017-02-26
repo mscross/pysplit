@@ -219,7 +219,7 @@ class Trajectory(HyPath):
                 self.data.get(humidity).iloc[:-1])
 
     def moisture_uptake(self, precipitation, evaporation, interval=6,
-                        vlim='pbl', pressure_level=900.0,
+                        vlim='prs', pressure_level=900.0,
                         mixdepth_factor=1, humidity='Specific_Humidity'):
         """
         Moisture uptakes for back trajectories.
