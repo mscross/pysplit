@@ -5,10 +5,10 @@ import matplotlib.colors as clr
 import numpy as np
 
 
-def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
+def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.viridis,
                  edgecolor='none', size=25, sizedata=None, cnormalize=None,
                  snormalize=None, vmin=None, vmax=None, levels=11,
-                 suppres_printmsg=False, **kwargs):
+                 suppress_printmsg=False, **kwargs):
     """
     Scatter-plot of ``Trajectory``, ``TrajectoryGroup``, or ``Cluster`` data.
 
@@ -26,7 +26,7 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
     zorder : int
         Default 19.  Data zorder.
     colormap : colormap
-        Default ``plt.cm.Blues``.  Any ``matplotlib`` colormap.
+        Default ``plt.cm.viridis``.  Any ``matplotlib`` colormap.
     edgecolor : string, tuple
         Default 'none'.  Any ``matplotlib``-accepted color
     size : int
@@ -84,11 +84,11 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
         norm = clr.LogNorm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'ln':
         data = np.log(data)
-        if not suppres_printmsg:
+        if not suppress_printmsg:
             print(msg, '\nnatural log normalization')
     elif cnormalize is 'sqrt':
         data = np.sqrt(data)
-        if not suppres_printmsg:
+        if not suppress_printmsg:
             print(msg, '\nsqrt normalization')
     else:
         try:
@@ -106,42 +106,6 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.Blues,
                        edgecolor=edgecolor, norm=norm, latlon=True, **kwargs)
 
     return cm
-
-
-def traj_path(hymap, lons, lats, color, lw, marker=None, linestyle='-',
-              markeredgecolor='none', zorder=19, **kwargs):
-    """
-    Line plot of ``Trajectory`` or ``cluster`` path.
-
-    Parameters
-    ----------
-    hymap : Basemap instance
-        Any ``Basemap`` instance.  For easy map creation, see ``MapDesign``
-        class
-    lons : 1D ndarray of floats, ints
-        X-coordinates of ``data`` in decimal degrees
-    lats : 1D ndarray of floats, ints
-        Y-coordinates of ``data`` in decimal degrees
-    color : string, tuple
-        ``Trajectory`` path and/or marker color.  Any ``matplotlib``-accepted
-        color
-    lw : int
-        ``Trajectory`` path linewidth
-    marker : string
-        Default ``None``.  The timestep marker style.
-    linestyle : string
-        Default '-'.  The ``Trajectory`` path linestyle.
-    markeredgecolor : string, tuple
-        Default 'none'.  The time step marker edge color.
-    zorder : int
-        Default 19.  The zorder of the ``Trajectory`` path.
-    **kwargs
-        Passed to ``Basemap.plot()`` and ``Axes.plot()``
-
-    """
-    hymap.plot(lons, lats, color, linewidth=lw, linestyle=linestyle,
-               marker=marker, latlon=True, zorder=zorder,
-               markeredgecolor=markeredgecolor, **kwargs)
 
 
 def meteo_contouring(hymap, data, longitudes, latitudes, contourf=True,
