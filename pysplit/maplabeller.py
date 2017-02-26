@@ -24,32 +24,16 @@ def map_labeller(basemap, which, labels, labelstyle, labelzorder):
     labelstyle : list of dictionaries
         List of dictonaries that contain label formatting parameters
 
-    Returns
-    -------
-    basemap : ``Basemap`` instance
-        Labelled instance of ``Basemap``
-
     """
     # Initialize lists of labels and coordinates
-    sea_labels = labels[0]
-    sea_coords = labels[1]
-    sea_style = labelstyle[0]
+    (sea_labels, sea_coords,
+     cities_labels, cities_coords,
+     country_labels, country_coords,
+     ocean_labels, ocean_coords,
+     place_labels, place_coords) = labels
 
-    cities_labels = labels[2]
-    cities_coords = labels[3]
-    cities_style = labelstyle[1]
-
-    country_labels = labels[4]
-    country_coords = labels[5]
-    country_style = labelstyle[2]
-
-    ocean_labels = labels[6]
-    ocean_coords = labels[7]
-    ocean_style = labelstyle[3]
-
-    place_labels = labels[8]
-    place_coords = labels[9]
-    place_style = labelstyle[4]
+    (sea_style, cities_style, country_style, ocean_style,
+     place_style) = labelstyle
 
     # Initialize formatting dictionaries
     sea_dict = {'place': sea_labels,
@@ -128,8 +112,6 @@ def map_labeller(basemap, which, labels, labelstyle, labelzorder):
                             verticalalignment=j['va'],
                             fontsize=j['fs'], weight=j['wt'],
                             fontstyle=j['fst'], zorder=j['zrd'])
-
-    return basemap
 
 
 def labelfile_reader(labelfile):
@@ -218,7 +200,7 @@ def labelfile_reader(labelfile):
     return labels, labelstyle
 
 
-def labelfile_generator(labelfile):
+def labelfile_generator(labelfile, example='east'):
     """
     Generate a label file template.
 
@@ -226,34 +208,57 @@ def labelfile_generator(labelfile):
     ----------
     labelfile : string
         Full or relative path to template location
+    example : string
+        Default 'east'.  Also accepts 'west'.  Sample
+        label file for each hemisphere.  Each has slightly different
+        formatting.
 
     """
     # Open new file
-    with open(labelfile, 'w') as labelfile:
+    lbdict = {'east': ['File header\n',
+                       'SEA\n',
+                       '  fontstyle=italic   weight=normal   fontsize=16\n',
+                       '  16.00    88.50     Bay of\\nBengal\n',
+                       ' -15.05   115.00     South\\nChina\\nSea\n',
+                       '  27.00   125.00     East\\nChina\\nSea\n',
+                       'CITY\n',
+                       '  fontstyle=normal   weight=normal   fontsize=15\n',
+                       '  39.91   116.39     Beijing\n',
+                       '  32.05   118.77     Nanjing\n',
+                       '  25.27   110.28     Guilin\n',
+                       'COUNTRY\n',
+                       '  fontstyle=normal   weight=bold     fontsize=20\n',
+                       '  35.00   100.00     CHINA\n',
+                       'OCEAN\n',
+                       '  fontstyle=italic   weight=bold     fontsize=20\n',
+                       '  27.00   150.00     Pacific\\n\\nOcean\n',
+                       '  -5.00    70.00     Indian Ocean\n',
+                       'PLACE\n',
+                       '  fontstyle=normal   weight=normal   fontsize=15\n',
+                       '  32.29   119.05     Hulu Cave\n'],
+              'west': ['File header\n',
+                       'SEA\n',
+                       '  fontstyle=italic   weight=normal   fontsize=13\n',
+                       '  26.00   -90.00     Gulf of\\nMexico\n',
+                       'CITY\n',
+                       '  fontstyle=normal   weight=normal   fontsize=15\n',
+                       '  44.98   -93.26     Minneapolis\n',
+                       'COUNTRY\n',
+                       '  fontstyle=normal   weight=normal   fontsize=15\n',
+                       '  40.00   -110.00    United\\nStates\n',
+                       'OCEAN\n',
+                       '  fontstyle=italic   weight=normal   fontsize=18\n',
+                       '  25.00  -150.00     Pacific\\n\\nOcean\n',
+                       'PLACE\n',
+                       '  fontstyle=normal   weight=normal   fontsize=15\n',
+                       '  38.98  -114.30     Great Basin\\nNational Park\n']}
 
-        labels = ['File header\n',
-                  'SEA\n',
-                  '  fontstyle=italic   weight=normal   fontsize=16\n',
-                  '  16.00    88.50     Bay of\\nBengal\n',
-                  ' -15.05   115.00     South\\nChina\\nSea\n',
-                  '  27.00   125.00     East\\nChina\\nSea\n',
-                  'CITY\n',
-                  '  fontstyle=normal   weight=normal   fontsize=15\n',
-                  '  39.91   116.39     Beijing\n',
-                  '  32.05   118.77     Nanjing\n',
-                  '  25.27   110.28     Guilin\n',
-                  'COUNTRY\n',
-                  '  fontstyle=normal   weight=bold     fontsize=20\n',
-                  '  35.00   100.00     CHINA\n',
-                  'OCEAN\n',
-                  '  fontstyle=italic   weight=bold     fontsize=20\n',
-                  '  27.00   150.00     Pacific\\n\\nOcean\n',
-                  '  -5.00    70.00     Indian Ocean\n',
-                  'PLACE\n',
-                  '  fontstyle=normal   weight=normal   fontsize=15\n',
-                  '  32.29   119.05     Hulu\n',
-                  '  25.28   108.08     Dongge\n',
-                  '  39.41   115.39     Kulishu\n']
+    if example is not 'east' and example is not 'west':
+        example = 'east'
+
+    labels = lbdict['example']
+
+    with open(labelfile, 'w') as labelfile:
 
         labelfile.writelines(labels)
         labelfile.flush()
