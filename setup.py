@@ -13,11 +13,11 @@ trajectory paths and meteorology.
 DISTNAME            = 'PySPLIT'
 DESCRIPTION         = 'HYSPLIT trajectory analysis, automation, & visualization'
 LONG_DESCRIPTION    = descr
-MAINTAINER          = 'Mellissa Cross'
-MAINTAINER_EMAIL    = 'mellissa.cross@gmail.com'
+MAINTAINER          = 'Mellissa S. C. Warner'
+MAINTAINER_EMAIL    = 'mellissa.s.c.warner@gmail.com'
 LICENSE             = 'Modified BSD'
 DOWNLOAD_URL        = ''
-VERSION             = '0.3.1'
+VERSION             = '0.3.2'
 PYTHON_VERSION      = (2, 6)
 DEPENDENCIES        = {'numpy': (1, 6),
                        'matplotlib': (1, 2),
