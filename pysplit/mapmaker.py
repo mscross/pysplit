@@ -78,8 +78,6 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.viridis,
             vmax = data.max()
         bounds = np.linspace(vmin, vmax, levels)
         norm = clr.BoundaryNorm(bounds, colormap.N)
-    elif cnormalize is 'norm':
-        norm = clr.Norm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'log':
         norm = clr.LogNorm(vmin=vmin, vmax=vmax)
     elif cnormalize is 'ln':
@@ -90,7 +88,7 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.viridis,
         data = np.sqrt(data)
         if not suppress_printmsg:
             print(msg, '\nsqrt normalization')
-    else:
+    elif cnormalize is not None:
         try:
             norm = clr.PowerNorm(cnormalize, vmin=vmin, vmax=vmax)
         except:
