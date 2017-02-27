@@ -40,7 +40,7 @@ from .clusgroup import print_clusterprocedure, Cluster, ClusterGroup
 
 from .mapdesigner import MapDesign
 
-from .mapmaker import (traj_scatter, traj_path, meteo_contouring,
+from .mapmaker import (traj_scatter, meteo_contouring,
                        adjust_contourparams, make_cbar, make_cax_cbar,
                        edit_cbar)
 
