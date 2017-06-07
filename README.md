@@ -1,6 +1,8 @@
 # PySPLIT
 
-A package for generating [HYSPLIT] (http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.  For a basic overview of PySPLIT, see the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  A new, updated technical paper is in the works.
+A package for generating [HYSPLIT] (http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.  For a basic overview of PySPLIT, see the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
+
+A new, updated technical paper is coming soon!  Current status: accepted, contingent on minor revisions!
 
 ## Recent Updates
 
@@ -21,7 +23,7 @@ A package for generating [HYSPLIT] (http://ready.arl.noaa.gov/HYSPLIT.php) air p
 * Check out the growing library of examples!
 ## Installing PySPLIT
 
-PySPLIT is compatible with Python 2.7 and 3.5.  It depends on:
+PySPLIT is compatible with Python 2.7 and 3.5.  3.6 compatibility forthcoming.  It depends on:
 * NumPy >= 1.6
 * matplotlib >= 1.2
 * Basemap >= 1.0
@@ -75,4 +77,4 @@ Within your virtual environment, install PySPLIT as above.
 
 ## Using PySPLIT
 
-Updated examples can be found in docs/examples, and an updated technical paper is in the works.  For now, if you use PySPLIT in your work, please cite the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  Many thanks are due to the NOAA Air Research Laboratory for providing the HYSPLIT model.
+Updated examples can be found in docs/examples, and an updated technical paper is pending.  For now, if you use PySPLIT in your work, please cite the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  Many thanks are due to the NOAA Air Research Laboratory for providing the HYSPLIT model.
