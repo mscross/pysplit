@@ -15,10 +15,5 @@ def test_bogus_filenames():
     assert_raises(IOError, make_trajectorygroup, filenames)
 
 
-def test_non_trajectory():
-    signature = './test*'
-    assert_raises(IOError, make_trajectorygroup, signature)
-
-
 if __name__ == '__main__':
     np.testing.run_module_suite()
