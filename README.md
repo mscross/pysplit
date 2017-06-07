@@ -20,10 +20,11 @@ A new, updated technical paper is coming soon!  Current status: accepted, contin
   * Use *any* weekly or semi-monthly meteorology data (see docs for required filename format), not just gdas1
   * Generate trajectories for every day in each month *OR* for particular slice of days in each month
   * Generate reverse trajectories at time of bulk trajectory generation OR during your analysis workflow!
+* Removal of certain assumptions about trajectory file structure for HYSPLIT January 2017 (854) compatibility.
 * Check out the growing library of examples!
 ## Installing PySPLIT
 
-PySPLIT is compatible with Python 2.7 and 3.5.  3.6 compatibility forthcoming.  It depends on:
+PySPLIT is compatible with Python 2.7 and 3.5.  Python 3.6 compatibility forthcoming.  It depends on:
 * NumPy >= 1.6
 * matplotlib >= 1.2
 * Basemap >= 1.0
