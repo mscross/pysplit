@@ -302,9 +302,9 @@ class MapDesign(object):
 
         # Draw labels
         if self.labels is not None:
-                basemap = map_labeller(basemap, self.labelgroup,
-                                       self.labels, self.labelstyle,
-                                       self.label_zorder)
+            map_labeller(basemap, self.labelgroup,
+                         self.labels, self.labelstyle,
+                         self.label_zorder)
 
         # Draw countries, states, coastlines, and map boundary
         if self.drawstates:
