@@ -32,7 +32,9 @@ def make_trajectorygroup(signature):
 
     """
     # Get list of hysplit files matching signature
-    if not isinstance(signature, str):
+    if 'basestring' not in globals():  # Python 2/3 compat
+        basestring = str
+    if not isinstance(signature, basestring):
         hyfiles = [os.path.split(hyfile)[-1] for hyfile in signature]
         folder, _ = os.path.split(signature[0])
     else:

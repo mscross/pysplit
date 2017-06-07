@@ -1,8 +1,9 @@
 from __future__ import division, print_function
-import numpy as np
-import pandas as pd
+
 import os
 import fnmatch
+import numpy as np
+import pandas as pd
 
 
 def hysplit_filelister(signature):
@@ -46,6 +47,11 @@ def hysplit_filelister(signature):
 
     finally:
         os.chdir(orig_dir)
+
+    if len(matching_files) == 0:
+        raise LookupError("Could not find any files matching the provided "
+                          "signature `{0}`, please check your paths and "
+                          "try again.".format(signature))
 
     return matching_files
 
@@ -152,6 +158,13 @@ def load_hysplitfile(filename):
                 atdata = True
                 arr_ind = 0
                 continue
+
+    # Catch the vast majority of non-HYSPLIT files if passed
+    # Works because the above conditionals fall through; vars never defined
+    if 'multiline' or 'date0' not in globals():
+        raise IOError("The file, `{0}`, does not appear to be "
+                      "a valid HYSPLIT file. Please double check "
+                      "your paths.".format(filename))
 
     datestrings = []
     for d in date0:
