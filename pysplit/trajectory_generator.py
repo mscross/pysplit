@@ -9,7 +9,7 @@ from calendar import monthrange
 def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
                       months, hours, altitudes, coordinates, run,
                       monthslice=slice(0, 32, 1), meteo_bookends=([4, 5], [1]),
-                      get_reverse=False, get_clipped=True,
+                      get_reverse=False, get_clipped=False,
                       hysplit="C:\\hysplit4\\exec\\hyts_std"):
     """
     Generate sequence of trajectories within given time frame(s).
@@ -65,10 +65,11 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
         trajectory a new parcel will be launched in the opposite direction.
         These reverse trajectories are stored in a subfolder in ``output_dir``
     get_clipped : Boolean
-        Default ``True``.   Takes a trajectory file and outputs a version of
-        the file containing only path information.  Provided to support
-        clustering of trajectories with multiline data
-        (more than 7 along-trajectory output variables)
+        Default ``False``.   If ``True``, takes a trajectory file and
+        outputs a version of the file containing only path information.
+        Provided to support clustering of trajectories with multiline data,
+        which was produced in HSYPLI versions prior to January 2017 (854)
+        when more than 7 along-trajectory output variables were selected.
     hysplit : string
         Default "C:\\hysplit4\\exec\\hyts_std".  The location of the "hyts_std"
         executable that generates trajectories.  This is the default location
@@ -188,37 +189,24 @@ def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
     final_rtrajpath = os.path.join(output_rdir, reversetrajname)
 
     with open(trajname) as traj:
-        # Read lines until PRESSURE marker, find number of variables
-        while True:
-            line = traj.readline()
-            if 'PRESSURE' in line:
-                variable_count = int(line.split()[0])
-                break
+        contents = traj.readlines()
 
-        # Find linelength
-        line = traj.readline()
+        last_timepoint = -1
 
-        if variable_count > 8:
-            line1 = traj.readline()
-            linelength = len(line) + len(line1)
-        else:
-            linelength = len(line)
+        # for multiline files, critical information is in contents[-2]
+        if len(contents[-1]) < len(contents[-2]):
+            last_timepoint = -2
 
-        # Find the start of the last line from the end of the file
-        lastline_start = (linelength + 1) * -1
-
-        # Skip to the last line, read it in
-        traj.seek(lastline_start, 2)
-        last_step = traj.readline().split()
+        data = contents[last_timepoint].split()
 
     # Get reverse trajectory start information
-    year = int(last_step[2])
-    mon  = int(last_step[3])
-    day  = int(last_step[4])
-    hour = int(last_step[5])
-    lat  = float(last_step[9])
-    lon  = float(last_step[10])
-    alt  = float(last_step[11])
+    year = int(data[2])
+    mon  = int(data[3])
+    day  = int(data[4])
+    hour = int(data[5])
+    lat  = float(data[9])
+    lon  = float(data[10])
+    alt  = float(data[11])
     run  = run * -1
 
     # Sometimes start height is greater than 10000 m model top
@@ -276,7 +264,7 @@ def _cliptraj(output_cdir, trajname):
         multiline = False
 
         # Iterate through lines
-        for line in contents:
+        for ind, line in enumerate(contents):
             # Skip line only triggered if multiline, after at data
             if skip:
                 skip = False
@@ -291,11 +279,10 @@ def _cliptraj(output_cdir, trajname):
 
             # PRESSURE marker tripped first
             if 'PRESSURE' in line:
-                # Number in front of PRESSURE indicates number of variables
-                if int(line.split()[0]) > 8:
+                if len(contents[ind + 1]) > len(contents[ind + 2]):
                     multiline = True
                 # Append last line of header, now at data
-                clipdata.append('     1 PRESSURE\n')
+                clipdata.append(line[:15] + '\n')
                 atdata = True
                 continue
 
