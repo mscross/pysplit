@@ -145,7 +145,9 @@ def load_hysplitfile(filename):
                 header.extend(new_header)
 
                 multiline = False
-                if columns > 20:
+                # Pre-Jan 2017 files may have timepoints running onto second
+                # lines, which are always short
+                if len(contents[ind + 1]) > len(contents[ind + 2]):
                     multiline = True
 
                     # Data file is only half as many lines as it looks
@@ -161,7 +163,7 @@ def load_hysplitfile(filename):
 
     # Catch the vast majority of non-HYSPLIT files if passed
     # Works because the above conditionals fall through; vars never defined
-    if 'multiline' or 'date0' not in globals():
+    if 'multiline' not in globals() or 'date0' not in globals():
         raise IOError("The file, `{0}`, does not appear to be "
                       "a valid HYSPLIT file. Please double check "
                       "your paths.".format(filename))
