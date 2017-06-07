@@ -37,6 +37,13 @@ except ImportError:
     from distutils.command.build_py import build_py
 
 
+with open('pysplit/__init__.py') as fid:
+    for line in fid:
+        if line.startswith('__version__'):
+            VERSION = line.strip().split()[-1][1:-1]
+            break
+
+
 def check_requirements():
     if sys.version_info < PYTHON_VERSION:
         raise SystemExit('Python version %d.%d required; found %d.%d.'
@@ -73,20 +80,6 @@ def get_package_version(package_version):
     return tuple(version)
 
 
-def write_version_py(filename='pysplit/version.py'):
-    template = """# THIS FILE IS GENERATED FROM THE PYSPLIT SETUP.PY
-version='%s'
-"""
-
-    vfile = open(os.path.join(os.path.dirname(__file__),
-                              filename), 'w')
-
-    try:
-        vfile.write(template % VERSION)
-    finally:
-        vfile.close()
-
-
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
         os.remove('MANIFEST')
@@ -107,7 +100,6 @@ def configuration(parent_package='', top_path=None):
 
 if __name__ == '__main__':
     check_requirements()
-    write_version_py()
 
     setup(
         name=DISTNAME,
