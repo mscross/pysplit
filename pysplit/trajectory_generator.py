@@ -154,7 +154,159 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
     finally:
         os.chdir(cwd)
 
+def generate_loopbulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
+                          months, hours, altitudes, coordinates, run,
+                          monthslice=slice(0, 32, 1), meteo_bookends=([4, 5], [1]),
+                          get_reverse=False, get_clipped=False,
+                          hysplit="C:\\hysplit4\\exec\\hyts_std"):
 
+    """
+    Generate sequence of trajectories within given time frame(s).
+    
+    Run bulk sequence of HYSPLIT simulations over a given time and at different
+    altitudes (likely in meters above ground level).  Uses either weekly or
+    semi-monthly data with the filename format of *mon*YY*#.
+    Results are written to ``output_dir``.
+
+    This does not set along-trajectory meteorological output- edit SETUP.CFG
+    in the HYSPLIT working directory or in the HYSPLIT4 GUI to reflect
+    desired output variables.  It is also recommended to change TRATIO
+    in the SETUP file to 0.25 to limit integration error.
+
+    Parameters
+    ----------
+    basename : string
+        Base for all files output in this run
+    hysplit_working : string
+        Full or relative path to the HYSPLIT working directory.
+    output_dir : string
+        Full or relative path to the desired output directory.
+    meteo_dir : string
+        Full or relative path to the location of the meteorology files.
+    years : list of ints
+        The year(s) to run simulations
+    months : list of ints
+        The month(s) to run simulations
+    hours : list of ints
+        Parcel launching times in UTC.
+    altitudes : list of ints
+        The altitudes (usually meters above ground level) from which
+        parcels will be launched.  Must be less than model top (10000 m)
+    coordinates : tuple of floats
+        The parcel (latitude, longitude) launch location in decimal degrees.
+    run : int
+        Length in hours of simulation.  To calculate back trajectories,
+        ``run`` must be negative.
+    monthslice : slice object
+        Default slice(0, 32, 1).  Slice to apply to range of days in month.
+        Use to target particular day or range of days, every x number of days,
+        etc.  NOTE: slice is 0 indexed, days start with 1.
+    meteo_bookends : tuple of lists of ints
+        Default ([4, 5], [1]).  To calculate a month of trajectories, files
+        from the previous and month must be included.  The default is optimized
+        for weekly meteorology and indicates that weeks 4 and 5 from the
+        previous month and the first week of the next month must be included
+        to run the entire current month of trajectories.  The user is
+        responsible for making sure the correct bookends for their trajectory
+        length and meteorology file periods are provided.
+    get_reverse : Boolean
+        Default ``False``.  If ``True``, then from the last point of each
+        trajectory a new parcel will be launched in the opposite direction.
+        These reverse trajectories are stored in a subfolder in ``output_dir``
+    get_clipped : Boolean
+        Default ``False``.   If ``True``, takes a trajectory file and
+        outputs a version of the file containing only path information.
+        Provided to support clustering of trajectories with multiline data,
+        which was produced in HSYPLI versions prior to January 2017 (854)
+        when more than 7 along-trajectory output variables were selected.
+    hysplit : string
+        Default "C:\\hysplit4\\exec\\hyts_std".  The location of the "hyts_std"
+        executable that generates trajectories.  This is the default location
+        for a typical PC installation of HYSPLIT
+        
+    """
+
+    controlfname = 'CONTROL'
+    # Get directory information, make directories if necessary
+    cwd = os.getcwd()
+
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    output_rdir = os.path.join(output_dir, 'reversetraj')
+    output_cdir = os.path.join(output_dir, 'clippedtraj')
+    meteo_dir = meteo_dir.replace('\\', '/')
+
+    if get_reverse and not os.path.isdir(output_rdir):
+        os.mkdir(os.path.join(output_rdir))
+
+    if get_clipped and not os.path.isdir(output_cdir):
+        os.mkdir(os.path.join(output_cdir))
+
+    # Initialize dictionary of months, seasons
+
+    n_hemisphere = True
+    if coordinates[0] < 0:
+        n_hemisphere = False
+
+    mon_dict = _mondict(n_hem=n_hemisphere)
+
+    try:
+        os.chdir(hysplit_working)
+
+        # Iterate over years and months
+
+        for y, m in itertools.izip(years, months):
+            season = mon_dict[m][0]
+            m_str = mon_dict[m][1]
+            m_len = monthrange(y, m)[1]
+            
+            days = range(1, m_len + 1)[monthslice]
+
+            # Assemble list of meteorology files
+            meteofiles = _meteofinder(meteo_dir, meteo_bookends, m, y,
+                                      mon_dict)
+
+            yr = _year2string(y)
+
+            # Iterate over days, hours, altitudes
+            for d, h, a in itertools.izip(days, hours, altitudes):
+              
+                # Add timing and altitude to basename to create unique name
+                trajname = (basename + m_str + '{:04}'.format(a) + season +
+                            yr + "{0:02}{1:02}{2:02}".format(m, d, h))
+
+                final_trajpath = os.path.join(output_dir, trajname)
+                
+                # Remove any existing CONTROL or temp files
+
+                _try_to_remove(controlfname)
+                _try_to_remove(trajname)
+                _try_to_remove(final_trajpath)
+
+                # Populate CONTROL file with trajectory initialization data
+                _populate_control(coordinates, yr, m, d, h, a, meteo_dir,
+                                  meteofiles, run, controlfname, trajname)
+
+                # Call executable to calculate trajectory
+                call(hysplit)
+
+                # Generate reverse and/or clipped trajectories, if indicated
+                if get_reverse:
+                    _reversetraj_whilegen(trajname, run, hysplit, output_rdir,
+                                          meteo_dir, meteofiles, controlfname)
+
+                if get_clipped:
+                    _cliptraj(output_cdir, trajname)
+
+                # Move the trajectory file to output directory
+                os.rename(trajname, final_trajpath)
+
+    # Revert current working directory
+    finally:
+        os.chdir(cwd)
+        
+        
 def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
                           meteofiles, controlfname):
     """
