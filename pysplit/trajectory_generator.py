@@ -256,7 +256,7 @@ def generate_loopbulktraj(basename, hysplit_working, output_dir, meteo_dir, year
 
         # Iterate over years and months
 
-        for y, m in itertools.izip(years, months):
+        for y, m in zip(years, months):
             season = mon_dict[m][0]
             m_str = mon_dict[m][1]
             m_len = monthrange(y, m)[1]
@@ -270,7 +270,7 @@ def generate_loopbulktraj(basename, hysplit_working, output_dir, meteo_dir, year
             yr = _year2string(y)
 
             # Iterate over days, hours, altitudes
-            for d, h, a in itertools.izip(days, hours, altitudes):
+            for d, h, a in zip(days, hours, altitudes):
               
                 # Add timing and altitude to basename to create unique name
                 trajname = (basename + m_str + '{:04}'.format(a) + season +
