@@ -154,17 +154,17 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
     finally:
         os.chdir(cwd)
 
-def generate_loopbulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
+def generate_traj(basename, hysplit_working, output_dir, meteo_dir, years,
                           months, hours, altitudes, coordinates, run,
                           monthslice=slice(0, 32, 1), meteo_bookends=([4, 5], [1]),
                           get_reverse=False, get_clipped=False,
                           hysplit="C:\\hysplit4\\exec\\hyts_std"):
 
     """
-    Generate sequence of trajectories within given time frame(s).
+    Generate trajectory with given time frame.
     
-    Run bulk sequence of HYSPLIT simulations over a given time and at different
-    altitudes (likely in meters above ground level).  Uses either weekly or
+    Run a HYSPLIT simulation over a given time and 
+    altitude (likely in meters above ground level).  Uses either weekly or
     semi-monthly data with the filename format of *mon*YY*#.
     Results are written to ``output_dir``.
 
@@ -183,26 +183,26 @@ def generate_loopbulktraj(basename, hysplit_working, output_dir, meteo_dir, year
         Full or relative path to the desired output directory.
     meteo_dir : string
         Full or relative path to the location of the meteorology files.
-    years : list of ints
-        The year(s) to run simulations
-    months : list of ints
-        The month(s) to run simulations
-    hours : list of ints
-        Parcel launching times in UTC.
-    altitudes : list of ints
-        The altitudes (usually meters above ground level) from which
-        parcels will be launched.  Must be less than model top (10000 m)
+    year : 
+        The year to run simulation
+    month : 
+        The month to run simulation
+    hour : 
+        Parcel launching time in UTC.
+    altitude :
+        The altitude (usually meters above ground level) from which
+        parcel will be launched.  Must be less than model top (10000 m)
     coordinates : tuple of floats
         The parcel (latitude, longitude) launch location in decimal degrees.
     run : int
         Length in hours of simulation.  To calculate back trajectories,
         ``run`` must be negative.
     monthslice : slice object
-        Default slice(0, 32, 1).  Slice to apply to range of days in month.
-        Use to target particular day or range of days, every x number of days,
+        Default slice(0, 32, 1).  Slice to apply to day in month.
+        Use to target particular day,
         etc.  NOTE: slice is 0 indexed, days start with 1.
     meteo_bookends : tuple of lists of ints
-        Default ([4, 5], [1]).  To calculate a month of trajectories, files
+        Default ([4, 5], [1]).  To calculate a trajectory, files
         from the previous and month must be included.  The default is optimized
         for weekly meteorology and indicates that weeks 4 and 5 from the
         previous month and the first week of the next month must be included
@@ -210,7 +210,7 @@ def generate_loopbulktraj(basename, hysplit_working, output_dir, meteo_dir, year
         responsible for making sure the correct bookends for their trajectory
         length and meteorology file periods are provided.
     get_reverse : Boolean
-        Default ``False``.  If ``True``, then from the last point of each
+        Default ``False``.  If ``True``, then from the last point of
         trajectory a new parcel will be launched in the opposite direction.
         These reverse trajectories are stored in a subfolder in ``output_dir``
     get_clipped : Boolean
@@ -638,9 +638,9 @@ def _monyearstrings(mon, year, mon_dict):
 
     w = '*'
 
-    prv = w + mon_dict[prev_mon][1] + w + _year2string(prev_year) + w
-    nxt = w + mon_dict[next_mon][1] + w + _year2string(next_year) + w
-    now = w + mon_dict[mon][1] + w + _year2string(year) + w
+    prv = w + mon_dict[prev_mon][1] + w + str(prev_year) + w
+    nxt = w + mon_dict[next_mon][1] + w + str(next_year) + w
+    now = w + mon_dict[mon][1] + w + str(year) + w
 
     return prv, nxt, now
 
