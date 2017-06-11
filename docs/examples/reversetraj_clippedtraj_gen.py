@@ -62,28 +62,30 @@ Now we generate the reverse trajectories and create the clipped trajectory
 files.
 
 In ``Trajectory.generate_reversetraj()``, the arguments are
-the storage location for the reverse trajectory files, the HYSPLIT
-working directory, and the meteorology file location.  The kwargs
+the HYSPLIT working directory, and the meteorology file location.  The kwargs
 indicate the interval between meteorology files ('monthly', 'semimonthly',
-'weekly', 'daily') and the location of the hysplit executable.
+'weekly', 'daily'), the directory to store the reverse trajectories in, if 
+some location other than the default (in a folder in the trajectory directory)
+is desired; and the location of the hysplit executable.
 
-In ``Trajectory.generate_clippedtraj()``, the argument is the storage
-location for the clipped trajectory files.
+In ``Trajectory.generate_clippedtraj()``, the kwarg is the storage
+location for the clipped trajectory files, if some location other than the default
+is desired.  We use the default locations for clipped and reverse trajectories
+in this example.
 
 If any clipped or reverse trajectories corresponding to the trajectories
-in ``warm_trajgroup`` exist in the given directories, they will be overwritten.
+in ``warm_trajgroup`` exist in the storage directories, they will be overwritten.
 
-If the given reverse and clipped directories don't exist, they will be
+If the reverse and clipped directories don't exist, they will be
 created. 
 
 """
 for traj in warm_trajgroup:
-    traj.generate_reversetraj(r'C:/trajectories/umn_example/reversetraj',
-                              r'C:/hysplit4/working', r'E:/gdas',
+    traj.generate_reversetraj(r'C:/hysplit4/working', r'E:/gdas',
                               meteo_interval='weekly',
                               hysplit="C:\\hysplit4\\exec\\hyts_std")
 
-    traj.generate_clippedtraj(r'C:/trajectories/umn_example/clippedtraj')
+    traj.generate_clippedtraj()
 
 """
 Loading and Mapping Reverse Trajectories
