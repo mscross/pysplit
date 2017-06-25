@@ -323,7 +323,7 @@ class Trajectory(HyPath):
                 self.uptake.loc[w - interval, 'q'])
 
         # Set geometry for new gdf
-        self.uptake['geometry'] = points
+        self.uptake['geometry'] = points[::-1]
 
         # Check that mixing depth data actually exists for this trajectory
         if self.data.loc[:, 'Mixing_Depth'].all(None):
