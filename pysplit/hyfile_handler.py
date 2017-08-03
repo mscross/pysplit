@@ -4,6 +4,7 @@ import os
 import fnmatch
 import numpy as np
 import pandas as pd
+import re
 
 
 def hysplit_filelister(signature):
@@ -100,17 +101,22 @@ def load_hysplitfile(filename):
                 skip = False
                 continue
 
+            # This happens third and goes until end
             if atdata:
                 data = [float(x) for x in line.split()]
                 if multiline:
                     data.extend([float(x) for x in contents[ind + 1].split()])
                     skip = True
 
-                # Don't need date/timestep info in each file line
-                # Got the date, time direction from the OMEGA line
-                del data[1:8]
-                hydata[arr_ind, :] = data[:2] + data[5:]
-                pathdata[arr_ind, :] = data[2:5]
+                # year, month, day, hour, minute
+                timedata[arr_ind, :] = data[2:7]
+
+                # parcel, timestep, along-traj data
+                hydata[arr_ind, :] = [data[0]] + [data[8]] + data[12:]
+
+                # lats, lons, altitude
+                pathdata[arr_ind, :] = data[9:12]
+
                 arr_ind += 1
                 continue
 
@@ -123,18 +129,8 @@ def load_hysplitfile(filename):
                     multiple_traj = True
 
                 # Number of data rows = length of contents minus the number of
-                # lines before OMEGA, OMEGA, andbetween OMEGA and first time pt
+                # lines before OMEGA, @OMEGA, between OMEGA and first time pt
                 flen = len(contents) - (2 + num_parcels) - ind
-
-                # Determine timepoint freq, get all the initialization dates
-                date0 = []
-                freq = 'H'
-
-                if 'BACKWARD' in line:
-                    freq = '-1H'
-
-                for i in range(1, num_parcels + 1):
-                    date0.append(contents[ind + i].split()[:4])
 
                 continue
 
@@ -153,44 +149,43 @@ def load_hysplitfile(filename):
                     # Data file is only half as many lines as it looks
                     flen /= 2
 
-                # Initialize empty data array
-                # 10 dropped columns include date, time step, etc
+                # Initialize empty data arrays
                 hydata = np.empty((int(flen), columns - 10))
                 pathdata = np.empty((int(flen), 3))
+                timedata = np.empty((int(flen), 5))
                 atdata = True
                 arr_ind = 0
+
                 continue
 
     # Catch the vast majority of non-HYSPLIT files if passed
     # Works because the above conditionals fall through; vars never defined
-    if 'multiline' not in locals() or 'date0' not in locals():
+    if 'multiline' not in locals() or 'flen' not in locals():
         raise IOError("The file, `{0}`, does not appear to be "
                       "a valid HYSPLIT file. Please double check "
                       "your paths.".format(filename))
 
-    datestrings = []
-    for d in date0:
-        datestrings.append("20" +
-            "{0:02}{1:02}{2:02}{3:02}".format(*[int(x) for x in d]) +
-            '0000')
+    # Determine what century files are from
+    # Requires a length 10 run of digits in filename
+    # If unable to determine, defaults to 2000
+    century = _getcentury(filename)
 
     # Get pathdata in x, y, z from lats (y), lons (x), z
     pathdata = pathdata[:, np.array([1, 0, 2])]
 
     # Split hydata into individual trajectories (in case there are multiple)
     if multiple_traj:
-        hydata, pathdata, datetime = trajsplit(hydata, pathdata, datestrings,
-                                               freq)
+        hydata, pathdata, datetime = _trajsplit(hydata, pathdata, timedata,
+                                                century)
     else:
-        datetime = pd.date_range(datestrings[0], freq=freq,
-                                 periods=pathdata.shape[0])
+        datetime = _getdatetime(century, timedata)
 
     return hydata, pathdata, header, datetime, multiple_traj
 
 
-def trajsplit(hydata, pathdata, datestrings, freq):
+def _trajsplit(hydata, pathdata, timedata, century):
     """
-    Split an array of hysplit data into list of unique trajectory arrays.
+    Split arrays into lists of arrays by unique trajectory.
 
     Parameters
     ----------
@@ -199,10 +194,11 @@ def trajsplit(hydata, pathdata, datestrings, freq):
         data file.
     pathdata : (L, 3) ndarray of floats
         Array with L rows and x, y z (lons, lats, altitude) columns
-    datestrings : list of strings
-        String representations of trajectory initialization date and time
-    freq : string
-        Either 'H' or '-1H', indicating a forwards or backwards trajectory
+    timedata : (L, 5) ndarray of floats
+        Array with L rows and year, month, day, hour, and minute
+        columns
+    century : int
+        The century at time 0 of the trajectories
 
     Returns
     -------
@@ -210,9 +206,9 @@ def trajsplit(hydata, pathdata, datestrings, freq):
         ``hydata`` split into individual trajectories
     split_pathdata : list of (?, 3) ndarrays of floats
         ``pathdata split into individual trajectories
-    datetime : list of pandas date ranges
-        List of ranges of DateTime objects for each array within
-        ``split_hydata`` and ``split_pathdata``
+    datetime : list of pandas DatetimeIndex
+        List of DatetimeIndex
+
     """
     # Find number of unique trajectories within `hydata`
     unique_traj = np.unique(hydata[:, 0])
@@ -222,6 +218,7 @@ def trajsplit(hydata, pathdata, datestrings, freq):
     sorted_indices = np.argsort(hydata[:, 0], kind='mergesort')
     sorted_hydata = hydata[sorted_indices, :]
     sorted_pathdata = pathdata[sorted_indices, :]
+    sorted_timedata = timedata[sorted_indices, :]
 
     # Find first occurrence of each traj, except for the first
     # which is obviously 0
@@ -232,10 +229,11 @@ def trajsplit(hydata, pathdata, datestrings, freq):
     # array per traj.  May or may not be equal sizes
     split_hydata = np.split(sorted_hydata, first_occurrence)
     split_pathdata = np.split(sorted_pathdata, first_occurrence)
+    split_timedata = np.split(sorted_timedata, first_occurrence)
 
     datetime = []
-    for p, d in zip(split_pathdata, datestrings):
-        datetime.append(pd.date_range(d, freq=freq, periods=p.shape[0]))
+    for t in split_timedata:
+        datetime.append(_getdatetime(century, t))
 
     return split_hydata, split_pathdata, datetime
 
@@ -297,3 +295,81 @@ def load_clusteringresults(clusterfilename):
         os.chdir(orig_dir)
 
     return cluster_trajlist, totalclusters
+
+
+def _getcentury(filename):
+    """
+    Introspect trajectory century from `filename`.
+
+    Defaults to 2000 if unknown.
+
+    Parameters
+    ----------
+    filename : string
+        Full, relative, and/or partial path to
+        trajectory file.
+
+    Returns
+    -------
+    century : int
+        The introspected century, or 2000
+
+    """
+    century = 2000
+    fname = os.path.split(filename)[1]
+
+    # Find string of at least 10 digits
+    # the first four will be the year
+    datestring = re.findall(r'(\d{10})', fname)
+
+    if len(datestring) == 1:
+        baseyear = int(datestring[0][:4])
+        century = baseyear - (baseyear % 100)
+
+    return century
+
+
+def _getdatetime(century, timedata):
+    """
+    Create DatetimeIndex from century, trajectory time info.
+
+    Parameters
+    ----------
+    century : int
+        The century at time 0 of the trajectory
+    timedata : (N, 5) array of floats
+        The (1 or 2 digit) year, month, day hour, minute
+        trajectory time information
+
+    Returns
+    -------
+    pandas DatetimeIndex
+
+    """
+    times = []
+    numdates = timedata.shape[0]
+
+    diffs = np.diff(timedata[:, 0])
+    centuries = np.full((numdates, ), century, dtype=np.float64)
+
+    try:
+        # Find where year decreasing to previous century
+        i = np.nonzero(diffs == 99.)[0][0] + 1
+    except IndexError:
+        try:
+            # Find where year increasing to next century
+            i = np.nonzero(diffs == -99.)[0][0] + 1
+        except IndexError:
+            # print("Same century")
+            pass
+        else:
+            centuries[i:] += 100
+    else:
+        centuries[i:] -= 100
+
+    timedata[:, 0] = timedata[:, 0] + centuries
+
+    for i in timedata:
+        times.append(pd.datetime(*[int(x) for x in i]))
+
+    return pd.DatetimeIndex(times)

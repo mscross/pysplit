@@ -8,6 +8,7 @@ from calendar import monthrange
 
 def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
                       months, hours, altitudes, coordinates, run,
+                      meteoyr_2digits=True, outputyr_2digits=False,
                       monthslice=slice(0, 32, 1), meteo_bookends=([4, 5], [1]),
                       get_reverse=False, get_clipped=False,
                       hysplit="C:\\hysplit4\\exec\\hyts_std"):
@@ -16,7 +17,7 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
 
     Run bulk sequence of HYSPLIT simulations over a given time and at different
     altitudes (likely in meters above ground level).  Uses either weekly or
-    semi-monthly data with the filename format of *mon*YY*#.
+    semi-monthly data with the filename format of *mon*YY*# or *mon*YYYY*#.
     Results are written to ``output_dir``.
 
     This does not set along-trajectory meteorological output- edit SETUP.CFG
@@ -48,10 +49,19 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
     run : int
         Length in hours of simulation.  To calculate back trajectories,
         ``run`` must be negative.
+    meteoyr_2digits : Boolean
+        Default True.  Indicates whether to search for meteorology files using
+        the last 2 or all 4 digits of the years.  Must set to False if have
+        multiple decades of meteorology files in meteo_dir.
+    outputyr_2digits : Boolean
+        Default False.  Old behavior == True.  The number of digits (2 or 4) to 
+        use to identify year in trajectory filename.  Must keep as False if
+        wish PySPLIT to correctly identify non-21st century trajectories later
     monthslice : slice object
         Default slice(0, 32, 1).  Slice to apply to range of days in month.
         Use to target particular day or range of days, every x number of days,
-        etc.  NOTE: slice is 0 indexed, days start with 1.
+        etc.  NOTE: slice is 0 indexed, days start with 1.  For example,
+        slice(0, 32, 2) will yield every odd day.
     meteo_bookends : tuple of lists of ints
         Default ([4, 5], [1]).  To calculate a month of trajectories, files
         from the previous and month must be included.  The default is optimized
@@ -76,6 +86,20 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
         for a typical PC installation of HYSPLIT
 
     """
+    # Set year formatting in 3 places
+    yr_is2digits = {True : _year2string,
+                    False : str}
+    
+    controlyearfunc = yr_is2digits[True]
+    meteoyearfunc = yr_is2digits[meteoyr_2digits]
+    fnameyearfunc = yr_is2digits[outputyr_2digits]
+    
+    if outputyr_2digits is False or meteoyr_2digits is False:
+        for year in years:
+            if len(str(year)) != 4:
+                raise ValueError("%d is not a valid year for given" \
+                                 " meteoyr_2digits, outputyr_2digits" %year)
+
     controlfname = 'CONTROL'
 
     # Get directory information, make directories if necessary
@@ -114,16 +138,17 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
 
             # Assemble list of meteorology files
             meteofiles = _meteofinder(meteo_dir, meteo_bookends, m, y,
-                                      mon_dict)
+                                      mon_dict, meteoyearfunc)
 
-            yr = _year2string(y)
+            controlyr = controlyearfunc(y)
+            fnameyr = fnameyearfunc(y)
 
             # Iterate over days, hours, altitudes
             for d, h, a in itertools.product(days, hours, altitudes):
 
                 # Add timing and altitude to basename to create unique name
                 trajname = (basename + m_str + '{:04}'.format(a) + season +
-                            yr + "{0:02}{1:02}{2:02}".format(m, d, h))
+                            fnameyr + "{0:02}{1:02}{2:02}".format(m, d, h))
 
                 final_trajpath = os.path.join(output_dir, trajname)
 
@@ -133,7 +158,7 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
                 _try_to_remove(final_trajpath)
 
                 # Populate CONTROL file with trajectory initialization data
-                _populate_control(coordinates, yr, m, d, h, a, meteo_dir,
+                _populate_control(coordinates, controlyr, m, d, h, a, meteo_dir,
                                   meteofiles, run, controlfname, trajname)
 
                 # Call executable to calculate trajectory
@@ -213,6 +238,7 @@ def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
     if alt >= 10000:
         alt = 9999
 
+    # Always 2 digit year for CONTROL
     yr = '{:02}'.format(year)
 
     # Remove (if present) any existing CONTROL or temp files
@@ -300,7 +326,8 @@ def _cliptraj(output_cdir, trajname):
     os.rename(clippedtrajname, final_ctrajpath)
 
 
-def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
+def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict,
+                 meteoyearfunc):
     """
     Get list of meteorology files.
 
@@ -332,6 +359,9 @@ def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
         2 string to find meteorology files.
     mon_dict : dictionary
         Dictionary keyed by month integer, with lists of [season, mon]
+    meteoyearfunc : function
+        Function that formats the year string to length 2 or 4 to identify
+        appropriate meteorology files
 
     Returns
     -------
@@ -349,7 +379,7 @@ def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
 
     # Get the strings that will match files for the previous, next,
     # and current months
-    prv, nxt, now = _monyearstrings(mon, year, mon_dict)
+    prv, nxt, now = _monyearstrings(mon, year, mon_dict, meteoyearfunc)
 
     # Change directory and walk through files
     try:
@@ -371,9 +401,19 @@ def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict):
     finally:
         os.chdir(orig_dir)
 
-    if len(meteofiles) == 0:
+    num_files = len(meteofiles)
+
+    if num_files == 0:
         raise OSError('0 files found for month/year %(mon)d / %(year)d'
                       %{'mon': mon, 'year': year})
+        
+    if num_files > 12:
+        print(meteofiles)
+        raise OSError('%(f)d files found for month/year %(mon)d / %(year)d.'\
+                      '  Maximum 12 allowed.  If wrong years are included, '\
+                      'identify files by 4 digit years (meteoyr_2digits=True).'\
+                      '  May require renaming meteorology files.'
+                      %{'f': num_files, 'mon': mon, 'year': year})
 
     return meteofiles
 
@@ -446,7 +486,7 @@ def _year2string(year):
     return '{0:02}'.format(year % 100)
 
 
-def _monyearstrings(mon, year, mon_dict):
+def _monyearstrings(mon, year, mon_dict, meteoyearfunc):
     """
     Increment the months and potentially the years.
 
@@ -460,6 +500,9 @@ def _monyearstrings(mon, year, mon_dict):
         Integer representation of the year
     mon_dict : dictionary
         Dictionary keyed by month integer, with lists of [season, mon]
+    meteoyearfunc : function
+        Function that formats the year string to length 2 or 4 to identify
+        appropriate meteorology files
 
     Returns
     -------
@@ -486,9 +529,9 @@ def _monyearstrings(mon, year, mon_dict):
 
     w = '*'
 
-    prv = w + mon_dict[prev_mon][1] + w + _year2string(prev_year) + w
-    nxt = w + mon_dict[next_mon][1] + w + _year2string(next_year) + w
-    now = w + mon_dict[mon][1] + w + _year2string(year) + w
+    prv = w + mon_dict[prev_mon][1] + w + meteoyearfunc(prev_year) + w
+    nxt = w + mon_dict[next_mon][1] + w + meteoyearfunc(next_year) + w
+    now = w + mon_dict[mon][1] + w + meteoyearfunc(year) + w
 
     return prv, nxt, now
 
