@@ -30,7 +30,7 @@ __all__ = ['Trajectory',
            'load_clusteringresults',
            'generate_bulktraj']
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 from .traj import Trajectory
 

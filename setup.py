@@ -17,7 +17,6 @@ MAINTAINER          = 'Mellissa S. C. Warner'
 MAINTAINER_EMAIL    = 'mellissa.s.c.warner@gmail.com'
 LICENSE             = 'Modified BSD'
 DOWNLOAD_URL        = ''
-VERSION             = '0.3.2'
 PYTHON_VERSION      = (2, 6)
 DEPENDENCIES        = {'numpy': (1, 6),
                        'matplotlib': (1, 2),
