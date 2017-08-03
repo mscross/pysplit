@@ -247,7 +247,10 @@ class Trajectory(HyPath):
                 `starting_timepoint` will set its initial conditions to the
                 conditions at -30.  Then uptakes/decreases will be calculated
                 for the -29 to -24, -23 to -18, -17 to -12, -11 to -6,
-                and -5 to 0 windows.  The `uptake` `GeoDataFrame` will have
+                and -5 to 0 windows by finding the average pressure, altitude
+                for each window, and comparing the humidity at -24 to -30,
+                -18 to -24, -12 to -18, -6 to -12, and 0 to -6.
+                The `uptake` `GeoDataFrame` will have
                 information at -30, -24, -18, -12, -6, and 0.
         starting_timepoint : int
             Default None.  The timepoint at which to start the calculation.
