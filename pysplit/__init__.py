@@ -27,7 +27,6 @@ __all__ = ['Trajectory',
            'spawn_clusters',
            'hysplit_filelister',
            'load_hysplitfile',
-           'trajsplit',
            'load_clusteringresults',
            'generate_bulktraj']
 
@@ -49,7 +48,7 @@ from .maplabeller import map_labeller, labelfile_reader, labelfile_generator
 
 from .hy_processor import make_trajectorygroup, spawn_clusters
 
-from .hyfile_handler import (hysplit_filelister, load_hysplitfile, trajsplit,
+from .hyfile_handler import (hysplit_filelister, load_hysplitfile,
                              load_clusteringresults)
 
 from .trajectory_generator import (generate_bulktraj)
