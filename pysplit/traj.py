@@ -219,8 +219,9 @@ class Trajectory(HyPath):
                 self.data.get(humidity).iloc[:-1])
 
     def moisture_uptake(self, precipitation, evaporation, interval=6,
-                        vlim='prs', pressure_level=900.0,
-                        mixdepth_factor=1, humidity='Specific_Humidity'):
+                        starting_timepoint=None, vlim='prs',
+                        pressure_level=900.0, mixdepth_factor=1,
+                        humidity='Specific_Humidity'):
         """
         Moisture uptakes for back trajectories.
 
@@ -233,12 +234,27 @@ class Trajectory(HyPath):
             Suggested 0.2 to 0.5.  The change in humidity above
             (not inclusive) which evaporation is considered to have occurred
         interval : int
-            Default 6. The number of hourly timesteps between humidity checks.
-            Assumes that either evaporation or precipitation dominate over
+            Default 6. The length of a calculation window in timesteps.
+            -HYSPLIT by default has timesteps 1 hr apart.
+            -Assumes that either evaporation or precipitation dominate over
             a short period of time (like 6 hours).
-            Example:  a 30-hour back trajectory will have an initial
-                humidity data point at -30, then check again at -24, -18, -12,
-                -6, and 0.
+            -Windows are counted UP from the earliest timepoint (or given
+            `starting_timepoint`).  If the length in timesteps of the
+            trajectory is not equally divisible by `interval`, then to end at
+            0 you must change `starting_timepoint`.
+
+            Example:  a 30-hour back trajectory with a default
+                `starting_timepoint` will set its initial conditions to the
+                conditions at -30.  Then uptakes/decreases will be calculated
+                for the -29 to -24, -23 to -18, -17 to -12, -11 to -6,
+                and -5 to 0 windows by finding the average pressure, altitude
+                for each window, and comparing the humidity at -24 to -30,
+                -18 to -24, -12 to -18, -6 to -12, and 0 to -6.
+                The `uptake` `GeoDataFrame` will have
+                information at -30, -24, -18, -12, -6, and 0.
+        starting_timepoint : int
+            Default None.  The timepoint at which to start the calculation.
+            If None, then calculation will start at the end of the trajectory.
         vlim : string
             Default 'pbl'.  ['pbl'|'prs'|'both']
             Criterion for distinguishing surficial and other moisture sources:
@@ -259,8 +275,24 @@ class Trajectory(HyPath):
         """
         points = []
 
-        # Gives 164, 158, 152, 146 ... 0 etc
-        windows = self.data.index[::-interval]
+        if starting_timepoint is None:
+            # Gives -164, -158, -152, -146 ... 0 etc
+            windows = self.data.index[::-interval]
+        else:
+            index = self.data.index.tolist()
+            if starting_timepoint > 0:
+                raise ValueError('`starting_timepoint` must be negative')
+            try:
+                i = index.index(starting_timepoint)
+            except ValueError:
+                print('`starting_timepoint` of ' +
+                      str(starting_timepoint) + ' not found in index ' +
+                      'of trajectory ' +
+                      self.trajid + '. \nDefaulting to end of trajectory at ' +
+                      str(self.data.index[-1]))
+                windows = self.data.index[::-interval]
+            else:
+                windows = self.data.index[:i + 1][::-interval]
 
         self.uptake = gp.GeoDataFrame(data=np.empty((windows.size, 13)),
                                       columns=['DateTime', 'Timestep',
