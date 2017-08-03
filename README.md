@@ -1,8 +1,8 @@
 # PySPLIT
 
-A package for generating [HYSPLIT] (http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.  For a basic overview of PySPLIT, see the [SciPy 2015 conference proceedings] (http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
+A package for generating [HYSPLIT](http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.  For a basic overview of PySPLIT, see the [SciPy 2015 conference proceedings](http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
 
-A new, updated technical paper is coming soon!  Current status: accepted!
+A new, updated technical paper is coming soon in *Computing in Science and Engineering*!  Current status: accepted!
 
 ## Recent Updates
 
