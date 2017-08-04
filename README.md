@@ -6,7 +6,7 @@ A new, updated technical paper is coming soon in *Computing in Science and Engin
 
 ## Recent Updates
 
-### If you are running version 3.3 from PyPi or have not recently updated your PySPLIT from GitHub and are performing moisture uptake analyses, please update to 3.4 and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
+### If you are running version 0.3.3 from PyPi or have not recently updated your PySPLIT from GitHub and are performing moisture uptake analyses, please update to 0.3.4 and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
 
 * PySPLIT now uses the power of GeoPandas rather than pure NumPy
 * Faster trajectory file loading/``Trajectory`` object initialization
