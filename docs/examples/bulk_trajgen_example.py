@@ -23,8 +23,20 @@ The location of the `hyts_std` executable must be known.
 Meteorology
 ~~~~~~~~~~~
 
-Meteorology data sets corresponding to the desired time and geospatial
-extent must be available to successfully generate trajectories.
+This example uses the following GDAS files, freely available from the ARL:
+* Weeks 1 - 5 of:
+  * January 2007
+  * August 2011
+  * January 2011
+  * August 2011
+* Weeks 4 and 5 of:
+  * December 2006
+  * July 2007
+  * December 2010
+  * July 2011
+
+As a general principle, meteorology data sets corresponding to the desired time
+and geospatial extent must be available to successfully generate trajectories.
 These data sets must be in the ARL-packed format.  All meteorology downloaded
 through the HYSPLIT ARL data FTP is already in this format, and HYSPLIT
 contains some utilities to convert other file types to this format. 
@@ -35,11 +47,11 @@ Guide<http://www.arl.noaa.gov/documents/reports/hysplit_user_guide.pdf`_
 if necessary before proceeding.
 
 Prior to attempting trajectory generation with PySPLIT, the user should ensure
-that meteorology file names follow a format of '*mon*YY*#*', where:
+that meteorology file names follow a format of '*mon*YY*#*' or '*mon*YYYY*#*' where:
 
 * '*' is a Bash-style wildcard
 * 'mon' is a three-letter lower-case abbreviation of the month
-* 'YY' is a two digit integer representation of the year
+* 'YY' or 'YYYY' is a two or four digit integer representation of the year 
 * '#' is the number of the file within the month
 
 For example, '*jan*07*2' will match files named 'gdas1.jan2007.w2' and
@@ -50,6 +62,9 @@ determine which meteorology files correspond to the desired date of
 trajectory launch.  It is strongly recommended that users keep meteorology
 files of different types/origins, like the two files in the example above,
 in separate directories as PySPLIT does not differentiate between the two.
+
+By default, PySPLIT will search for meteorology files using a 2 digit integer
+representation of the year.  
 
 Output along-trajectory meteorology variables may be selected by interacting
 with HYSPLIT.
@@ -102,7 +117,7 @@ location = (42.82, -75.54)
 runtime = -120
 
 """
-There are five keyword arguments in this method.  The first is a slice object
+There are seven keyword arguments in this method.  The first is a slice object
 that is applied to the range of days in each month, allowing us to generate
 trajectories for all (default ``slice(0, 32, 1)) or a subset of days in each
 month.  Here we choose to launch trajectories every other day. 
@@ -117,12 +132,22 @@ weeks 4 (days 22-28) and weeks 5.  The default value (``[[4, 5], [1]]``)
 also includes the first week of next month, but that's ok to include.
 
 The keywords ``get_reverse`` (default False) and ``get_clipped`` (default
-True) control whether additional trajectory files are created.  A 'reverse'
+False) control whether additional trajectory files are created.  A 'reverse'
 trajectory is one launched from the endpoint of an original trajectory, and
 run in the opposite direction.  A 'clipped' trajectory does not require
 additional calculation, but is a copy of the original trajectory file
-containing only path information.  We will acquire both reverse and clipped
-trajectories.
+containing only path information.  This latter type is only strictly necessary
+if using a version of HYSPLIT older than January 2017 (854), but we will acquire both
+reverse and clipped trajectories anyway.
+
+The keywords ``meteoyr_2digits`` (default True) and ``outputyr_2digits``
+(default False) are critical in situations where users are dealing with
+decades of meteorology files and trajectories.  In such a situation,
+``meteoyr_2digits`` should be set to False.  If a user requires the old
+file naming convention, ``outputyr_2digits`` should be set to True.
+In this example, we have only 21st century data and
+our trajectory files will be generated just fine with the
+default behavior of both keywords.
 
 The final keyword argument is the location of the HYSPLIT trajectory
 executable.  On Windows systems, this will usually be
@@ -136,7 +161,8 @@ minutes to complete, depending on your system parameters.
 
 pysplit.generate_bulktraj(basename, working_dir, storage_dir, meteo_dir,
                           years, months, hours, altitudes, location, runtime,
-                          monthslice=slice(0, 32, 2), get_reverse=True)
+                          monthslice=slice(0, 32, 2), get_reverse=True,
+                          get_clipped=True)
 
 """
 When complete, ``storage_dir``, will contain 576 trajectory files, as well as two
