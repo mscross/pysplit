@@ -22,8 +22,7 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
 
     This does not set along-trajectory meteorological output- edit SETUP.CFG
     in the HYSPLIT working directory or in the HYSPLIT4 GUI to reflect
-    desired output variables.  It is also recommended to change TRATIO
-    in the SETUP file to 0.25 to limit integration error.
+    desired output variables.
 
     Parameters
     ----------
