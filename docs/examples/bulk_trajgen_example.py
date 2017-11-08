@@ -26,7 +26,7 @@ Meteorology
 This example uses the following GDAS files, freely available from the ARL:
 * Weeks 1 - 5 of:
   * January 2007
-  * August 2011
+  * August 2007
   * January 2011
   * August 2011
 * Weeks 4 and 5 of:
@@ -34,7 +34,14 @@ This example uses the following GDAS files, freely available from the ARL:
   * July 2007
   * December 2010
   * July 2011
-
+* Week 1 of:
+  * February 2007
+  * September 2007
+  * February 2011
+  * September 2011
+  
+As GDAS files are in 3 hour intervals, the very last trajectories in January
+and August will not generate properly without the third group of weeks.
 As a general principle, meteorology data sets corresponding to the desired time
 and geospatial extent must be available to successfully generate trajectories.
 These data sets must be in the ARL-packed format.  All meteorology downloaded
@@ -62,9 +69,6 @@ determine which meteorology files correspond to the desired date of
 trajectory launch.  It is strongly recommended that users keep meteorology
 files of different types/origins, like the two files in the example above,
 in separate directories as PySPLIT does not differentiate between the two.
-
-By default, PySPLIT will search for meteorology files using a 2 digit integer
-representation of the year.  
 
 Output along-trajectory meteorology variables may be selected by interacting
 with HYSPLIT.
@@ -94,7 +98,8 @@ meteo_dir = r'E:/gdas'
 """
 The next argument is the basename of each trajectory.  Each trajectory
 filename will consist of this basename followed by the altitude and season,
-and then the year, month, day, and hour in the format YYMMDDHH.
+and then the year, month, day, and hour in the format YYYYMMDDHH (unless
+otherwise specified as YYMMDDHH)..
 """
 
 basename = 'colgate'
@@ -129,7 +134,8 @@ we need meteorology data from the previous month.  The ``meteo_bookends``
 indicates which meteorology files from the previous and next months are
 needed.  As we are using weekly datasets, we need
 weeks 4 (days 22-28) and weeks 5.  The default value (``[[4, 5], [1]]``)
-also includes the first week of next month, but that's ok to include.
+also includes the first week of next month, which is critical when generating
+trajectories with t=0 at the very end of the day..
 
 The keywords ``get_reverse`` (default False) and ``get_clipped`` (default
 False) control whether additional trajectory files are created.  A 'reverse'
@@ -144,7 +150,10 @@ The keywords ``meteoyr_2digits`` (default True) and ``outputyr_2digits``
 (default False) are critical in situations where users are dealing with
 decades of meteorology files and trajectories.  In such a situation,
 ``meteoyr_2digits`` should be set to False.  If a user requires the old
-file naming convention, ``outputyr_2digits`` should be set to True.
+file naming convention, ``outputyr_2digits`` should be set to True.  However,
+``outputyr_2digits == False`` is preferred in general, and is required when
+running non-21st century trajectories, as the file name will be the only
+indication during trajectory loading of the century to which these trajectories belong.
 In this example, we have only 21st century data and
 our trajectory files will be generated just fine with the
 default behavior of both keywords.
@@ -166,5 +175,6 @@ pysplit.generate_bulktraj(basename, working_dir, storage_dir, meteo_dir,
 
 """
 When complete, ``storage_dir``, will contain 576 trajectory files, as well as two
-folders, 'reversetraj' and 'clippedtraj', each containing 576 files.
+folders, 'reversetraj' and 'clippedtraj', each containing 576 files.  Each file name
+will end with a 10 digit string representing the date as YYYYMMDDHH.
 """
