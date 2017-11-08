@@ -10,7 +10,38 @@ from .trajgroup import TrajectoryGroup
 from .clusgroup import Cluster, ClusterGroup
 
 
-def make_trajectorygroup(signature):
+def _get_files_folder(signature):
+    """
+    Get a list of HYSPLIT files.
+
+    Parameters
+    ----------
+    signature : string or iterable of strings
+        A signature shared by a group of HYSPLIT simulation files or an
+        iterable of paths to specific HYSPLIT files all contained in same
+        folder.
+
+    Returns
+    -------
+    hyfiles : list of strings
+        A list of files in or matching `signature`
+    folder : string
+        The path to the folder containing the files in `hyfiles`
+
+    """
+    if 'basestring' not in globals():  # Python 2/3 compat
+        basestring = str
+    if not isinstance(signature, basestring):
+        hyfiles = [os.path.split(hyfile)[-1] for hyfile in signature]
+        folder, _ = os.path.split(signature[0])
+    else:
+        hyfiles = hysplit_filelister(signature)
+        folder, _ = os.path.split(signature)
+
+    return hyfiles, folder
+
+
+def make_trajectorygroup(signature, filesort=(slice(-1, -9, -1), -1)):
     """
     Initialize ``Trajectory`` instances from HYSPLIT trajectory data files.
 
@@ -18,7 +49,7 @@ def make_trajectorygroup(signature):
     ----------
     signature : string or iterable of strings
         Signature shared by a group of HYSPLIT simulation files from one or
-        multiple model runs (if multiple, must contain same output variables).
+        multiple model runs.
         This is a Bash-style signature, not a real expression.  The `*` char is
         a wildcard. Can include an absolute or relative path, or no path to
         target the current directory. If ``signature`` is not a string, it is
@@ -32,14 +63,7 @@ def make_trajectorygroup(signature):
 
     """
     # Get list of hysplit files matching signature
-    if 'basestring' not in globals():  # Python 2/3 compat
-        basestring = str
-    if not isinstance(signature, basestring):
-        hyfiles = [os.path.split(hyfile)[-1] for hyfile in signature]
-        folder, _ = os.path.split(signature[0])
-    else:
-        hyfiles = hysplit_filelister(signature)
-        folder, _ = os.path.split(signature)
+    hyfiles, folder = _get_files_folder(signature)
 
     orig_dir = os.getcwd()
     trajectories = []
@@ -48,16 +72,11 @@ def make_trajectorygroup(signature):
     try:
         os.chdir(folder)
 
-        # Sort list of hysplit files by the datestring at the end
-        # Will also sort in ascending altitude within each same datestring
-        hyfiles.sort(key=lambda x: x[-8:])
-
-        clipdir = os.path.join(folder, 'clippedtraj')
-        if not os.path.isdir(clipdir):
-            clipdir = None
+        # Sort list of hysplit files by substring
+        if filesort is not None:
+            hyfiles.sort(key=lambda x: x[filesort[0]][::filesort[1]])
 
         # Load in the hysplit file data
-        # Get lists of the datestrings and filenames of the hysplit files
         for hyfile in hyfiles:
 
             data, path, head, datetime, multitraj = load_hysplitfile(hyfile)
@@ -69,15 +88,12 @@ def make_trajectorygroup(signature):
                     # Get rid of parcel number in d
                     # Get rid of parcel #, lat, lon, altitude in head
                     trajectories.append(Trajectory(d, p, dt, head,
-                                                   folder, hyfile, clipdir,
-                                                   multitraj))
+                                                   folder, hyfile, multitraj))
 
             else:
                 trajectories.append(Trajectory(data, path, datetime, head,
-                                               folder, hyfile, clipdir,
-                                               multitraj))
+                                               folder, hyfile, multitraj))
 
-        # initialize trajectory group
         trajectories = TrajectoryGroup(trajectories)
     finally:
         # Restore current working directory no matter what
