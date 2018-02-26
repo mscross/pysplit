@@ -8,19 +8,19 @@ from .maplabeller import map_labeller, labelfile_reader
 
 
 class MapDesign(object):
-    """
-    Class for holding map design elements
-
-    """
+    """Class for holding map design elements."""
 
     def __init__(self, mapcorners, standard_pm, projection='cyl',
                  mapcolor='light', maplabels=None, area_threshold=10000,
-                 resolution='c', zborder=14, lat_labels=['left'],
+                 resolution='c', zborder=14, zlandfill=12,
+                 zmapbound=16, zlatlon=11, lat_labels=['left'],
                  lon_labels=['top'], latlon_labelspacing=(10, 20),
                  latlon_fs=20, latlon_spacing=(10, 20), drawstates=False,
-                 drawoutlines=True, draw_latlons=True):
+                 drawoutlines=True, draw_latlons=True, land_alpha=0.85):
         """
         Initialize ``MapDesign`` instance.
+
+        Is your map blank?  Try changing zmapbound to 10.
 
         Parameters
         ----------
@@ -66,7 +66,17 @@ class MapDesign(object):
             Crude, low, intermediate, high, full. The relative resolution of
             map boundaries.  Drops off by about 80 percent between datasets.
         zborder : int
-            Default 14. The zorder of country and coastal outlines
+            Default 14. The zorder of country and coastal outlines.
+        zlandfill : int
+            Default 12.  The zorder of the continent fill color.
+        zmapbound : int
+            Default 16.  The zorder of the map boundary in older versions of
+            basemap (background correctly put at bottom of stack),
+            and zorder of the ocean/background in newer versions (boundary
+            correctly put at top of stack).
+            Try zmapbound=10 if 16 yields a blank map.
+        zlatlon : int
+            Default 11. The zorder of the lines of latitutde and longitude.
         lat_labels : list of strings
             Default ['right'].
             The sides of the map that should have the latitudes labelled.
@@ -85,14 +95,16 @@ class MapDesign(object):
             Default True.  Draw country and coastal outlines on ``Basemap``.
         draw_latlons : Boolean
             Default True.  Draw and label lines of latitude and longitude.
+        land_alpha : float
+            Default 0.85.  The alpha value of the continent fill.
 
         """
-
         # Initialize
         self.mapcorners = mapcorners
         self.standard_pm = standard_pm
 
         self.mapcolor = mapcolor
+        self.land_alpha = land_alpha
         self.coloropts = {'light': {'water': None,
                                     'land': '0.95'},
                           'medium': {'water': '0.625',
@@ -103,6 +115,9 @@ class MapDesign(object):
         self.area_threshold = area_threshold
         self.resolution = resolution
         self.zborder = zborder
+        self.zlandfill = zlandfill
+        self.zmapbound = zmapbound
+        self.zlatlon = zlatlon
 
         # Initialize projection
         self._set_projection(projection)
@@ -146,7 +161,6 @@ class MapDesign(object):
             The sides of the map with latitude labels.
 
         """
-
         meridian_labels = [0, 0, 0, 0]
         parallel_labels = [0, 0, 0, 0]
 
@@ -182,7 +196,6 @@ class MapDesign(object):
             'splaea' : South polar azimuthal (equal area)
 
         """
-
         available_proj = {'cyl': 'Equidistant cylindrical',
                           'cea': 'Equal Area cylindrical',
                           'lcc': 'Lambert Conformal Conic',
@@ -201,6 +214,8 @@ class MapDesign(object):
 
     def make_basemap(self, ax=None, figsize=(10, 10)):
         """
+        Produce an actual map.
+
         Takes the MapDesign attributes plus a figure size and creates a map
         on which data can be plotted.
 
@@ -220,7 +235,6 @@ class MapDesign(object):
             via ``basemap.ax`` and ``basemap.ax.get_figure()``, respectively.
 
         """
-
         if ax is None:
             # Create figure instance
             fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -308,7 +322,7 @@ class MapDesign(object):
 
         # Draw countries, states, coastlines, and map boundary
         if self.drawstates:
-            basemap.drawstates(zorder=14)
+            basemap.drawstates(zorder=self.zborder)
         if self.drawoutlines:
             basemap.drawcountries(zorder=self.zborder)
             basemap.drawcoastlines(zorder=self.zborder)
@@ -322,37 +336,43 @@ class MapDesign(object):
             if self.lonstep > self.lonspacing:
 
                 basemap.drawmeridians(np.arange(-180, 180, self.lonspacing),
-                                      labels=[0, 0, 0, 0], zorder=11)
+                                      labels=[0, 0, 0, 0], zorder=self.zlatlon)
                 basemap.drawmeridians(np.arange(-180, 180, self.lonstep),
-                                      labels=meridian_labels, zorder=11,
+                                      labels=meridian_labels,
+                                      zorder=self.zlatlon,
                                       fontsize=self.latlon_fs)
             else:
                 basemap.drawmeridians(np.arange(-180, 180, self.lonstep),
-                                      labels=meridian_labels, zorder=11,
+                                      labels=meridian_labels,
+                                      zorder=self.zlatlon,
                                       fontsize=self.latlon_fs)
 
             # Draw and label lines of latitude
             if self.latstep > self.latspacing:
 
                 basemap.drawparallels(np.arange(-90, 90, self.latspacing),
-                                      labels=[0, 0, 0, 0], zorder=11)
+                                      labels=[0, 0, 0, 0], zorder=self.zlatlon)
                 basemap.drawparallels(np.arange(lat, 90, self.latstep),
-                                      labels=parallel_labels, zorder=11,
+                                      labels=parallel_labels,
+                                      zorder=self.zlatlon,
                                       fontsize=self.latlon_fs)
             else:
                 basemap.drawparallels(np.arange(lat, 90, self.latstep),
-                                      labels=parallel_labels, zorder=11,
+                                      labels=parallel_labels,
+                                      zorder=self.zlatlon,
                                       fontsize=self.latlon_fs)
 
         # Map color defaults to white for ortho projection
         if self.mapcolor is not None:
             if self.projection is not 'ortho':
                 colors = self.coloropts[self.mapcolor]
-
-                basemap.drawmapboundary(zorder=16, fill_color=colors['water'])
-                basemap.fillcontinents(color=colors['land'], zorder=12,
-                                       alpha=0.85, lake_color=colors['water'])
+                basemap.drawmapboundary(zorder=self.zmapbound,
+                                        fill_color=colors['water'])
+                basemap.fillcontinents(color=colors['land'],
+                                       zorder=self.zlandfill, alpha=0.85,
+                                       lake_color=colors['water'])
             else:
-                basemap.fillcontinents(color='0.99', zorder=12, alpha=0.85)
+                basemap.fillcontinents(color='0.99', zorder=self.zlandfill,
+                                       alpha=0.85)
 
         return basemap
