@@ -20,7 +20,9 @@ class MapDesign(object):
         """
         Initialize ``MapDesign`` instance.
 
-        Is your map blank?  Try changing zmapbound to 10.
+        Is your map blank?  Try changing zmapbound to 10.  Basemap appears to
+        have changed which element (map boundary or background fill) is 
+        prioritized when setting the map boundary zorder.
 
         Parameters
         ----------
