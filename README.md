@@ -4,9 +4,21 @@ A package for generating [HYSPLIT](http://ready.arl.noaa.gov/HYSPLIT.php) air pa
 
 A new, updated technical paper is coming soon in *Computing in Science and Engineering*!  Current status: accepted!
 
-## Recent Updates
-
 ### If you are running version 0.3.3 from PyPi or have not recently updated your PySPLIT from GitHub and are performing moisture uptake analyses, please update to 0.3.4 and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
+
+## Coming Soon
+* Python 3.6 support!
+* HYSPLIT clustering fully in PySPLIT
+* Increased trajectory generation functionality:
+  * New modes
+  * More control over trajectory initialization conditons
+  * Improved meteorology discovery and better support for sub-weekly files
+* Support for matrix and ensemble trajectories
+* Extended library of examples
+* Various quality of life/convenience updates and more!
+
+
+## Past Updates
 
 * PySPLIT now uses the power of GeoPandas rather than pure NumPy
 * Faster trajectory file loading/``Trajectory`` object initialization
