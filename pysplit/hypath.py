@@ -139,10 +139,11 @@ class HyPath(object):
 
         self.data[labels[reverse][1]] = np.cumsum(dist_ptp)
 
-        dist_to0 = np.empty((lat.size))
+        dist_to0 = (np.arccos(np.sin(lat) * np.sin(lat[0]) +
+                              np.cos(lat) * np.cos(lat[0]) *
+                              np.cos(lon[0] - lon)) * 6371) * 1000
 
-        self.data[labels[reverse][2]] = 0.0
-        self.data.loc[self.data.index[1:], labels[reverse][2]] = dist_to0
+        self.data[labels[reverse][2]] = dist_to0
 
     def distance_between2pts(self, coord0, coord1, in_xy=False):
         """
