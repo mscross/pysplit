@@ -20,6 +20,7 @@ A new, updated technical paper is coming soon in *Computing in Science and Engin
 
 ## Past Updates
 
+* Support for Python 3.6
 * PySPLIT now uses the power of GeoPandas rather than pure NumPy
 * Faster trajectory file loading/``Trajectory`` object initialization
 * Need help clustering?  ``pysplit.print_clusteringprocedure()``.
@@ -40,7 +41,7 @@ A new, updated technical paper is coming soon in *Computing in Science and Engin
 * Check out the growing library of examples!
 ## Installing PySPLIT
 
-PySPLIT is compatible with Python 2.7 and 3.5.  Python 3.6 compatibility forthcoming.  It depends on:
+PySPLIT is compatible with Python 2.7, 3.5, and 3.6.  It depends on:
 * NumPy >= 1.6
 * matplotlib >= 1.2
 * Basemap >= 1.0
@@ -66,7 +67,7 @@ $ python setup.py develop
 
 ### Installing in a conda virtual environment:
 
-Installation difficulties with PySPLIT are typically related to GeoPandas dependencies.  An easy work-around is installing PySPLIT in a new conda virtual environment.  First, add the conda-forge channel:
+Installation difficulties with PySPLIT are typically related to GeoPandas dependencies.  An easy work-around is installing PySPLIT in a new conda virtual environment.  This is the recommended installation method.  First, add the conda-forge channel:
 ```
 $ conda config --add channels conda-forge
 ```
@@ -74,6 +75,11 @@ $ conda config --add channels conda-forge
 Next, create the conda environment.  For a Python 3.5 environment named `pysplitenv`, run:
 ```
 $ conda create --name pysplitenv python=3.5 numpy matplotlib pandas basemap six fiona shapely geopandas
+```
+
+Similarly, for a Python 3.6 environment named `pysplitenv`, run:
+```
+$ conda create --name pysplitenv python=3.6 numpy matplotlib pandas basemap six fiona shapely geopandas
 ```
 
 Or, to create a Python 2.7 environment named `pysplitenv`, run:
