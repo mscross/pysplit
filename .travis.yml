@@ -5,6 +5,7 @@ matrix:
     - python: 2.7
     - python: 3.4
     - python: 3.5
+    - python: 3.6
     - python: "nightly"
       env: PRE=--pre
   allow_failures:
