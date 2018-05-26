@@ -13,16 +13,14 @@ class MapDesign(object):
     def __init__(self, mapcorners, standard_pm, projection='cyl',
                  mapcolor='light', maplabels=None, area_threshold=10000,
                  resolution='c', zborder=14, zlandfill=12,
-                 zmapbound=16, zlatlon=11, lat_labels=['left'],
+                 zmapbound=10, zlatlon=11, lat_labels=['left'],
                  lon_labels=['top'], latlon_labelspacing=(10, 20),
                  latlon_fs=20, latlon_spacing=(10, 20), drawstates=False,
                  drawoutlines=True, draw_latlons=True, land_alpha=0.85):
         """
         Initialize ``MapDesign`` instance.
 
-        Is your map blank?  Try changing zmapbound to 10.  Basemap appears to
-        have changed which element (map boundary or background fill) is 
-        prioritized when setting the map boundary zorder.
+        Is your map blank?  Try changing zmapbound.
 
         Parameters
         ----------
