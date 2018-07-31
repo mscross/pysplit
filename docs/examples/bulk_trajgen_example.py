@@ -54,7 +54,7 @@ Guide<http://www.arl.noaa.gov/documents/reports/hysplit_user_guide.pdf`_
 if necessary before proceeding.
 
 Prior to attempting trajectory generation with PySPLIT, the user should ensure
-that meteorology file names follow a format of '*mon*YY*#*' or '*mon*YYYY*#*' where:
+that meteorology file names follow a format of '*mon*YY*#' or '*mon*YYYY*#' where:
 
 * '*' is a Bash-style wildcard
 * 'mon' is a three-letter lower-case abbreviation of the month
