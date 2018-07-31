@@ -2,7 +2,7 @@
 
 A package for generating [HYSPLIT](http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.  For a basic overview of PySPLIT, see the [SciPy 2015 conference proceedings](http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
 
-A new, updated technical paper is coming soon in *Computing in Science and Engineering*!  Current status: accepted!
+A new, updated technical paper will be appearing the Sept/Oct 2018 issue of *Computing in Science and Engineering*!
 
 ### If you are running version 0.3.3 from PyPi or have not recently updated your PySPLIT from GitHub and are performing moisture uptake analyses, please update to 0.3.4 and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
 
