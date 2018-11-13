@@ -1,5 +1,6 @@
 from __future__ import division
 import os
+import shutil
 from subprocess import call
 import itertools
 import fnmatch
@@ -172,7 +173,7 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
                     _cliptraj(output_cdir, trajname)
 
                 # Move the trajectory file to output directory
-                os.rename(trajname, final_trajpath)
+                shutil.move(trajname, final_trajpath)
 
     # Revert current working directory
     finally:
@@ -253,7 +254,7 @@ def _reversetraj_whilegen(trajname, run, hysplit, output_rdir, meteo_dir,
     call(hysplit)
 
     # Move the trajectory file to the desired output directory
-    os.rename(reversetrajname, final_rtrajpath)
+    shutil.move(reversetrajname, final_rtrajpath)
 
 
 def _cliptraj(output_cdir, trajname):
@@ -322,7 +323,7 @@ def _cliptraj(output_cdir, trajname):
     with open(clippedtrajname, 'w') as ctraj:
         ctraj.writelines(clipdata)
 
-    os.rename(clippedtrajname, final_ctrajpath)
+    shutil.move(clippedtrajname, final_ctrajpath)
 
 
 def _meteofinder(meteo_dir, meteo_bookends, mon, year, mon_dict,
