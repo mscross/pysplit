@@ -5,7 +5,7 @@ import matplotlib.colors as clr
 import numpy as np
 
 
-def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.viridis,
+def traj_scatter(data, lons, lats, hymap, zorder=19, colormap='default',
                  edgecolor='none', size=25, sizedata=None, cnormalize=None,
                  snormalize=None, vmin=None, vmax=None, levels=11,
                  suppress_printmsg=False, **kwargs):
@@ -26,7 +26,8 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.viridis,
     zorder : int
         Default 19.  Data zorder.
     colormap : colormap
-        Default ``plt.cm.viridis``.  Any ``matplotlib`` colormap.
+        Default 'default' is ``plt.cm.jet`` if Python 2.7/matplotlib <=1.4.3.
+        Otherwise ``plt.cm.viridis`` .  Any ``matplotlib`` colormap.
     edgecolor : string, tuple
         Default 'none'.  Any ``matplotlib``-accepted color
     size : int
@@ -70,6 +71,13 @@ def traj_scatter(data, lons, lats, hymap, zorder=19, colormap=plt.cm.viridis,
     transform_dict = {'sqrt': np.sqrt,
                       'log': np.log10,
                       'ln': np.log}
+
+    if colormap is 'default':
+        try:
+            colormap = plt.cm.viridis
+        except AttributeError:
+            colormap = plt.cm.jet
+
 
     if cnormalize is 'boundary':
         if vmin is None:
