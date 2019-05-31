@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 
 matrix:
@@ -39,8 +40,9 @@ install:
 
   # Replace dep1 dep2 ... with your dependencies
   # - conda install --yes python=$TRAVIS_PYTHON_VERSION pip nose coverage flake8 numpy matplotlib pandas basemap geopandas
-  - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose flake8 numpy matplotlib pandas basemap geopandas
+  - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose flake8 numpy matplotlib pandas geopandas
   - source activate test-environment
+  - conda install basemap
   - pip install coveralls
   - python setup.py install
   # - wget https://downloads.sourceforge.net/project/matplotlib/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz
