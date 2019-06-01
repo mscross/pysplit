@@ -1,13 +1,12 @@
 # PySPLIT
 
-A package for generating [HYSPLIT](http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.  For a basic overview of PySPLIT, see the [SciPy 2015 conference proceedings](http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
+A package for generating [HYSPLIT](http://ready.arl.noaa.gov/HYSPLIT.php) air parcel trajectories trajectories, performing moisture uptake analyses, expediting HYSPLIT cluster analysis, and for visualizing trajectories, clusters, and along-trajectory meteorological data.
 
-A new, updated technical paper will be appearing the Sept/Oct 2018 issue of *Computing in Science and Engineering*!
+For an overview and brief history of PySPLIT, a new, updated technical paper- Introduction to PySPLIT: A Python Toolkit for NOAA ARL’s HYSPLIT Model- can be found in the Sept/Oct 2018 (vol 20, issue 5, p. 47-62 ) issue of *Computing in Science and Engineering*!  This supercedes the [SciPy 2015 conference proceedings](http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
 
 ### If you are running version 0.3.3 from PyPi or have not recently updated your PySPLIT from GitHub and are performing moisture uptake analyses, please update to 0.3.4 and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
 
 ## Coming Soon
-* Python 3.6 support!
 * HYSPLIT clustering fully in PySPLIT
 * Increased trajectory generation functionality:
   * New modes
@@ -20,7 +19,7 @@ A new, updated technical paper will be appearing the Sept/Oct 2018 issue of *Com
 
 ## Past Updates
 
-* Support for Python 3.6
+* Support for Python 3.6 and 3.7
 * PySPLIT now uses the power of GeoPandas rather than pure NumPy
 * Faster trajectory file loading/``Trajectory`` object initialization
 * Need help clustering?  ``pysplit.print_clusteringprocedure()``.
@@ -41,7 +40,7 @@ A new, updated technical paper will be appearing the Sept/Oct 2018 issue of *Com
 * Check out the growing library of examples!
 ## Installing PySPLIT
 
-PySPLIT is compatible with Python 2.7, 3.5, and 3.6.  It depends on:
+PySPLIT is compatible with Python 2.7, 3.6, and 3.7.  It depends on:
 * NumPy >= 1.6
 * matplotlib >= 1.2
 * Basemap >= 1.0
@@ -72,14 +71,14 @@ Installation difficulties with PySPLIT are typically related to GeoPandas depend
 $ conda config --add channels conda-forge
 ```
 
-Next, create the conda environment.  For a Python 3.5 environment named `pysplitenv`, run:
-```
-$ conda create --name pysplitenv python=3.5 numpy matplotlib pandas basemap six fiona shapely geopandas
-```
-
-Similarly, for a Python 3.6 environment named `pysplitenv`, run:
+Next, create the conda environment.  For a Python 3.6 environment named `pysplitenv`, run:
 ```
 $ conda create --name pysplitenv python=3.6 numpy matplotlib pandas basemap six fiona shapely geopandas
+```
+
+Similarly, for a Python 3.7 environment named `pysplitenv`, run:
+```
+$ conda create --name pysplitenv python=3.7 numpy matplotlib pandas basemap six fiona shapely geopandas
 ```
 
 Or, to create a Python 2.7 environment named `pysplitenv`, run:
@@ -100,4 +99,4 @@ Within your virtual environment, install PySPLIT as above.
 
 ## Using PySPLIT
 
-Updated examples can be found in docs/examples, and an updated technical paper is pending.  For now, if you use PySPLIT in your work, please cite the [SciPy 2015 conference proceedings](http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).  Many thanks are due to the NOAA Air Research Laboratory for providing the HYSPLIT model.
+Examples can be found in docs/examples.  PySPLIT is currently tested on Windows 7 using HYSPLIT revision 927 (Feb. 2018) and the preferred PySPLIT installation methods listed above.   Many thanks are due to the NOAA Air Research Laboratory for providing the HYSPLIT model.
