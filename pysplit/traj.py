@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 # External imports
 import os
+import shutil
 import numpy as np
 import pandas as pd
 import geopandas as gp
@@ -664,7 +665,7 @@ class Trajectory(HyPath):
 
             call(hysplit)
 
-            os.rename(reversetrajname, final_rtrajpath)
+            shutil.move(reversetrajname, final_rtrajpath)
 
         finally:
             os.chdir(orig_dir)
