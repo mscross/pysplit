@@ -4,7 +4,7 @@ A package for generating [HYSPLIT](http://ready.arl.noaa.gov/HYSPLIT.php) air pa
 
 For an overview and brief history of PySPLIT, a new, updated technical paper- Introduction to PySPLIT: A Python Toolkit for NOAA ARL’s HYSPLIT Model- can be found in the Sept/Oct 2018 (vol 20, issue 5, p. 47-62 ) issue of *Computing in Science and Engineering*!  This supercedes the [SciPy 2015 conference proceedings](http://conference.scipy.org/proceedings/scipy2015/mellissa_cross_p.html).
 
-### If you are running version 0.3.3 from PyPi or have not recently updated your PySPLIT from GitHub and are performing moisture uptake analyses, please update to 0.3.4 and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
+### If you are running version 0.3.3 or older and are performing moisture uptake analyses, please update PySPLIT and rerun your moisture uptake analyses immediately.  Geographic points were previously assigned to ``Trajectory.uptake`` backwards.  This has been corrected.
 
 ## Coming Soon
 * HYSPLIT clustering fully in PySPLIT
