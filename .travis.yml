@@ -42,7 +42,7 @@ install:
 
   # Replace dep1 dep2 ... with your dependencies
   # - conda install --yes python=$TRAVIS_PYTHON_VERSION pip nose coverage flake8 numpy matplotlib pandas basemap geopandas cartopy
-  - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose flake8 numpy matplotlib pandas basemap geopandas proj4=5.2.0
+  - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose flake8 numpy matplotlib pandas basemap geopandas cartopy proj4=5.2.0
   # - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose flake8 numpy matplotlib pandas geopandas cartopy
   - source activate test-environment
   # - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
