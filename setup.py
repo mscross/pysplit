@@ -21,7 +21,8 @@ PYTHON_VERSION      = (2, 6)
 DEPENDENCIES        = {'numpy': (1, 6),
                        'matplotlib': (1, 2),
                        'basemap': (1, 0),
-                       'geopandas': (0, 1)}
+                       'geopandas': (0, 1),
+                       'cartopy':(0, 15)}
 
 
 import os

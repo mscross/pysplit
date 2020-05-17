@@ -19,6 +19,7 @@ For an overview and brief history of PySPLIT, a new, updated technical paper- In
 
 ## Past Updates
 
+* Support for Cartopy (basemap use to be deprecated in future update)
 * Support for Python 3.6 and 3.7
 * PySPLIT now uses the power of GeoPandas rather than pure NumPy
 * Faster trajectory file loading/``Trajectory`` object initialization
@@ -45,6 +46,7 @@ PySPLIT is compatible with Python 2.7, 3.6, and 3.7.  It depends on:
 * matplotlib >= 1.2
 * Basemap >= 1.0
 * GeoPandas >= 0.1
+* Cartopy >= 0.15
 
 and is available on PyPi.  You can install the latest stable release by running:
 
@@ -73,17 +75,17 @@ $ conda config --add channels conda-forge
 
 Next, create the conda environment.  For a Python 3.6 environment named `pysplitenv`, run:
 ```
-$ conda create --name pysplitenv python=3.6 numpy matplotlib pandas basemap six fiona shapely geopandas
+$ conda create --name pysplitenv python=3.6 numpy matplotlib pandas basemap six fiona shapely geopandas cartopy
 ```
 
 Similarly, for a Python 3.7 environment named `pysplitenv`, run:
 ```
-$ conda create --name pysplitenv python=3.7 numpy matplotlib pandas basemap six fiona shapely geopandas
+$ conda create --name pysplitenv python=3.7 numpy matplotlib pandas basemap six fiona shapely geopandas cartopy
 ```
 
 Or, to create a Python 2.7 environment named `pysplitenv`, run:
 ```
-$ conda create --name pysplitenv python=2.7 numpy matplotlib pandas basemap six fiona=1.5.1 shapely geopandas
+$ conda create --name pysplitenv python=2.7 numpy matplotlib pandas basemap six fiona=1.5.1 shapely geopandas cartopy
 ```
 
 Activate `pysplitenv` by running the following on Windows:
