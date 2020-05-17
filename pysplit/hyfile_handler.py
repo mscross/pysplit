@@ -5,6 +5,7 @@ import fnmatch
 import numpy as np
 import pandas as pd
 import re
+import datetime as dt
 
 
 def hysplit_filelister(signature):
@@ -370,6 +371,6 @@ def _getdatetime(century, timedata):
     timedata[:, 0] = timedata[:, 0] + centuries
 
     for i in timedata:
-        times.append(pd.datetime(*[int(x) for x in i]))
+        times.append(dt.datetime(*[int(x) for x in i]))
 
     return pd.DatetimeIndex(times)
