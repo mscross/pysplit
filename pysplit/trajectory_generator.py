@@ -24,17 +24,19 @@ def generate_bulktraj(basename, hysplit_working, output_dir, meteo_dir, years,
     This does not set along-trajectory meteorological output- edit SETUP.CFG
     in the HYSPLIT working directory or in the HYSPLIT4 GUI to reflect
     desired output variables.
+    
+    Absolute paths strongly recommended over relative paths.
 
     Parameters
     ----------
     basename : string
         Base for all files output in this run
     hysplit_working : string
-        Full or relative path to the HYSPLIT working directory.
+        Absolute or relative path to the HYSPLIT working directory.
     output_dir : string
-        Full or relative path to the desired output directory.
+        Absolute or relative path to the desired output directory.
     meteo_dir : string
-        Full or relative path to the location of the meteorology files.
+        Absolute or relative path to the location of the meteorology files.
     years : list of ints
         The year(s) to run simulations
     months : list of ints
