@@ -223,7 +223,10 @@ def _trajsplit(hydata, pathdata, timedata, century):
 
     # Find first occurrence of each traj, except for the first
     # which is obviously 0
-    first_occurrence = [np.nonzero(sorted_indices == u)[0][0]
+
+    # bug reported on 2021-April-7  
+    #first_occurrence = [np.nonzero(sorted_indices == u)[0][0]
+    first_occurrence = [np.nonzero(sorted_hydata[:,0] == u)[0][0]
                         for u in unique_traj[1:]]
 
     # Split `hydata` and `pathdata` into list of arrays, one
